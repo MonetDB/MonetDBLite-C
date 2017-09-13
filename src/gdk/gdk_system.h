@@ -9,15 +9,8 @@
 #ifndef _GDK_SYSTEM_H_
 #define _GDK_SYSTEM_H_
 
-#ifdef NATIVE_WIN32
-#ifndef LIBGDK
-#define gdk_export extern __declspec(dllimport)
-#else
-#define gdk_export extern __declspec(dllexport)
-#endif
-#else
+// greatly simplified
 #define gdk_export extern
-#endif
 
 /*
  * @- pthreads Includes and Definitions

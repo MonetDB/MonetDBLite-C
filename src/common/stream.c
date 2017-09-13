@@ -193,14 +193,6 @@ mnstr_init(void)
 	if (inited)
 		return 0;
 
-#ifdef NATIVE_WIN32
-	{
-		WSADATA w;
-
-		if (WSAStartup(0x0101, &w) != 0)
-			return -1;
-	}
-#endif
 	inited = 1;
 	return 0;
 }

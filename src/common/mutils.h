@@ -9,15 +9,7 @@
 #ifndef _MUTILS_H_
 #define _MUTILS_H_
 
-#ifdef NATIVE_WIN32
-#if !defined(LIBMUTILS) && !defined(LIBGDK) && !defined(LIBMEROUTIL)
-#define mutils_export extern __declspec(dllimport)
-#else
-#define mutils_export extern __declspec(dllexport)
-#endif
-#else
 #define mutils_export extern
-#endif
 
 
 #ifndef S_IRUSR
@@ -47,5 +39,11 @@
 #define F_LOCK	1		/* lock a region for exclusive use */
 
 mutils_export int MT_lockf(char *filename, int mode, off_t off, off_t len);
+
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+extern int fsync (int fd);
+extern int winerror(int e);
+#endif
+
 
 #endif	/* _MUTILS_H_ */

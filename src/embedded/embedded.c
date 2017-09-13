@@ -59,22 +59,21 @@ typedef struct {
 
 monetdb_connection monetdb_connect(void) {
 	Client conn = NULL;
-	str msg;
 	mvc *m;
 	if (!monetdb_embedded_initialized) {
 		return NULL;
 	}
 	conn = MCforkClient(&mal_clients[0]);
-	if (!MCvalid((Client) conn)) {
+	if (!MCvalid(conn)) {
 		return NULL;
 	}
 	if (SQLinitClient(conn) != MAL_SUCCEED) {
 		return NULL;
 	}
-	if ((msg = getSQLContext(conn, NULL, &m, NULL)) != MAL_SUCCEED)
-		return msg;
+	if (getSQLContext(conn, NULL, &m, NULL) != MAL_SUCCEED) {
+		return NULL;
+	}
 	m->session->auto_commit = 1;
-
 	return conn;
 }
 
