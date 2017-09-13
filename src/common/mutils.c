@@ -40,6 +40,8 @@
 
 #include <stdio.h>
 
+extern int winerror(int e);
+
 /* translate Windows error code (GetLastError()) to Unix-style error */
 int
 winerror(int e)

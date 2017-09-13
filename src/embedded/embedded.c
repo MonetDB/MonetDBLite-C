@@ -295,7 +295,8 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 			goto cleanup;
 		}
 		*result  = (monetdb_result*) res_internal;
-
+		res_internal->res.type = (char) m->results->query_type;
+		res_internal->res.id = (size_t) m->results->query_id;
 		// tODO: check alloc
 		m->results = NULL;
 	}

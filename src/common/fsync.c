@@ -35,8 +35,9 @@
 # include <io.h>
 
 
+extern int fsync (int fd);
 
-extern int
+int
 fsync (int fd)
 {
   HANDLE h = (HANDLE) _get_osfhandle (fd);

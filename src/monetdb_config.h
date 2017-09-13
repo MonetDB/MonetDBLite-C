@@ -43,6 +43,9 @@
 /* Directory separator */
 #define DIR_SEP_STR "/"
 
+#define LLFMT "%lld"
+#define ULLFMT "%llu"
+
 #else
 
 /* Directory separator */
@@ -50,6 +53,9 @@
 
 /* Directory separator */
 #define DIR_SEP_STR "\\"
+
+#define LLFMT "%I64d"
+#define ULLFMT "%I64u"
 
 #endif
 
@@ -494,8 +500,6 @@
 ///* location where libraries are installed */
 //#define LIBDIR "/usr/local/lib"
 
-/* Format to print 64 bit signed integers. */
-#define LLFMT "%lld"
 //
 ///* modifiable single-machine data */
 //#define LOCALSTATEDIR "/usr/local/var"
@@ -603,8 +607,6 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 /* #undef TM_IN_SYS_TIME */
 
-/* Format to print 64 bit unsigned integers. */
-#define ULLFMT "%llu"
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
