@@ -280,6 +280,10 @@ BATimprints(BAT *b)
 	Imprints *imprints;
 	lng t0 = 0;
 
+	if (GDKinmemory()) {
+		return GDK_SUCCEED;
+	}
+
 	/* we only create imprints for types that look like types we know */
 	switch (ATOMbasetype(b->ttype)) {
 	case TYPE_bte:
