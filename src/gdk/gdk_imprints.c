@@ -281,7 +281,7 @@ BATimprints(BAT *b)
 	lng t0 = 0;
 
 	if (GDKinmemory()) {
-		return GDK_SUCCEED;
+		return GDK_FAIL;
 	}
 
 	/* we only create imprints for types that look like types we know */
