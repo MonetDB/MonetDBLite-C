@@ -4071,6 +4071,7 @@ sql_storage(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 								sql_column *c = (sql_column *) ncol->data;
 								BAT *bn;
 								lng sz;
+								str phys;
 
 								if( cname && strcmp(bc->name, cname) )
 									continue;
@@ -4105,7 +4106,11 @@ sql_storage(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 									goto bailout;
 
 								/*printf(" loc %s", BBP_physical(bn->batCacheid)); */
-								if (BUNappend(loc, BBP_physical(bn->batCacheid), FALSE) != GDK_SUCCEED)
+								phys = BBP_physical(bn->batCacheid);
+								if (phys == NULL) {
+									phys = ":memory:";
+								}
+								if (BUNappend(loc, phys, FALSE) != GDK_SUCCEED)
 									goto bailout;
 								/*printf(" width %d", bn->twidth); */
 								w = bn->twidth;
@@ -4185,6 +4190,7 @@ sql_storage(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 								if (idx_has_column(c->type)) {
 									BAT *bn = store_funcs.bind_idx(tr, c, RDONLY);
 									lng sz;
+									str phys;
 
 									if (bn == NULL)
 										throw(SQL, "sql.storage", "Can not access column");
@@ -4217,7 +4223,11 @@ sql_storage(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 										goto bailout;
 
 									/*printf(" loc %s", BBP_physical(bn->batCacheid)); */
-									if (BUNappend(loc, BBP_physical(bn->batCacheid), FALSE) != GDK_SUCCEED)
+									phys = BBP_physical(bn->batCacheid);
+									if (phys == NULL) {
+										phys = ":memory:";
+									}
+									if (BUNappend(loc, phys, FALSE) != GDK_SUCCEED)
 										goto bailout;
 									/*printf(" width %d", bn->twidth); */
 									w = bn->twidth;
