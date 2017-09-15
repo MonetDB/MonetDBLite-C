@@ -40,9 +40,9 @@
 
 mutils_export int MT_lockf(char *filename, int mode, off_t off, off_t len);
 
-#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
-extern int fsync (int fd);
-extern int winerror(int e);
+#if ((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__) || (defined(HAVE_EMBEDDED_JAVA) && defined(NATIVE_WIN32))
+mutils_export int fsync (int fd);
+mutils_export int winerror(int e);
 #endif
 
 
