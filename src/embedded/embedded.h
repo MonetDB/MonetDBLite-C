@@ -13,7 +13,7 @@
 #ifndef _EMBEDDED_LIB_
 #define _EMBEDDED_LIB_
 
-#include <stddef.h> /* only for size_t */
+#include "monetdb_config.h"
 #include <stdint.h>
 
 typedef struct append_data {
