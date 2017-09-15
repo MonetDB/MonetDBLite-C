@@ -1369,7 +1369,6 @@ void
 BBPresetfarms(void)
 {
 	BBPexit();
-	BBPunlock();
 	BBPsize = 0;
 	if (BBPfarms[0].dirname != NULL) {
 		GDKfree((void*) BBPfarms[0].dirname);
@@ -1518,7 +1517,7 @@ BBPexit(void)
 	/* free all memory (just for leak-checking in Purify) */
 	do {
 		skipped = 0;
-		for (i = 0; i < (bat) ATOMIC_GET(BBPsize, BBPsizeLock); i++) {
+		for (i = 0; i < (bat) BBPsize; i++) {
 			if (BBPvalid(i)) {
 				BAT *b = BBP_desc(i);
 
@@ -1572,6 +1571,7 @@ BBPexit(void)
 	backup_dir = 0;
 	backup_subdir = 0;
 
+	BBPunlock();
 }
 
 /*

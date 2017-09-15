@@ -1858,8 +1858,11 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	mvc *m = NULL;
 	BAT *order = NULL, *b = NULL, *tbl = NULL, *atr = NULL, *tpe = NULL,*len = NULL,*scale = NULL;
 	res_table *t = NULL;
-
+#ifdef HAVE_EMBEDDED
+	backend *be = (backend *) cntxt->sqlcontext;
+#else
 	(void) format;
+#endif
 
 	if ((msg = getSQLContext(cntxt, mb, &m, NULL)) != NULL)
 		return msg;
@@ -1951,11 +1954,34 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 				      filename?filename:"stdout", strerror(errnr));
 		goto wrapup_result_set1;
 	}
+
+#ifdef HAVE_EMBEDDED
+	if(strncmp(format, "csv", 3) == 0) {
+		be->output_format = OFMT_CSV;
+	} else if(strncmp(format, "json", 4) == 0) {
+		be->output_format = OFMT_JSON;
+	} else {
+		be->output_format = OFMT_NONE;
+	}
+	if (!m->sa) {
+		m->sa = sa_create();
+	}
+	if (!m->sa) {
+		msg = createException(SQL, "sql.resultSet", MAL_MALLOC_FAIL);
+		goto wrapup_result_set2;
+	}
+#endif
+
 	if (mvc_export_result(cntxt->sqlcontext, s, res))
 		msg = createException(SQL, "sql.resultset", "failed");
+
+#ifdef HAVE_EMBEDDED
+wrapup_result_set2:
+	be->output_format = OFMT_NONE; //in MonetDBLite keep the no output
+#endif
 	if( s != cntxt->fdout)
 		close_stream(s);
-  wrapup_result_set1:
+wrapup_result_set1:
 	BBPunfix(order->batCacheid);
 	if( tbl) BBPunfix(tblId);
 	if( atr) BBPunfix(atrId);

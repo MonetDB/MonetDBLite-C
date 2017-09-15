@@ -168,7 +168,9 @@ struct stream {
 	union {
 		void *p;
 		int i;
+#if !defined(HAVE_EMBEDDED_JAVA) || !defined(NATIVE_WIN32)
 		SOCKET s;
+#endif
 	} stream_data;
 	int errnr;
 	ssize_t (*read)(stream *s, void *buf, size_t elmsize, size_t cnt);

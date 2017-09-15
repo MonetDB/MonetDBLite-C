@@ -195,10 +195,16 @@ gdk_export int win_mkdir(const char *, const int mode);
 
 #endif	/* NATIVE_WIN32 */
 
-
-#ifdef HAVE_EMBEDDED_R
-	gdk_export char* monetdb_lib_path;
+#if defined(HAVE_EMBEDDED_R) || defined(HAVE_EMBEDDED_JAVA)
+gdk_export char* monetdb_lib_path;
 #endif
 
+#ifdef HAVE_EMBEDDED_JAVA
+gdk_export void freeMonetDB5LibraryPath(void);
+gdk_export int setMonetDB5LibraryPath(const char* path);
+#ifdef NATIVE_WIN32
+gdk_export int __popcountdi2(unsigned long long a);
+#endif
+#endif
 
 #endif /* GDK_POSIX_H */

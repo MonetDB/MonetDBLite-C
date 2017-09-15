@@ -208,6 +208,7 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 	char* nq;
 	buffer query_buf;
 	stream *query_stream;
+	monetdb_result_internal *res_internal = NULL;
 
 	// TODO what about execute flag?! remove when result set is there for prepared stmts
 	(void) execute;
@@ -270,17 +271,34 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 		goto cleanup;
 	}
 
-	if (!m->results && m->rowcnt >= 0 && affected_rows) {
+	if (affected_rows) {
 		*affected_rows = m->rowcnt;
 	}
 
+#ifdef HAVE_EMBEDDED_JAVA
+	res_internal = GDKzalloc(sizeof(monetdb_result_internal));
+	if (!res_internal) {
+		res = GDKstrdup("Malloc fail");
+		goto cleanup;
+	}
+	if (m->emode == m_execute) {
+		res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
+	} else if (m->emode & m_prepare) {
+		res_internal->res.type = (char) Q_PREPARE;
+	} else {
+		res_internal->res.type = (char) m->type;
+	}
+#endif
 
 	if (result && m->results) {
-		monetdb_result_internal *res_internal = GDKzalloc(sizeof(monetdb_result_internal));
+#ifndef HAVE_EMBEDDED_JAVA
+		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
 		if (!res_internal) {
 			res = GDKstrdup("Malloc fail");
 			goto cleanup;
 		}
+		res_internal->res.type = (char) m->results->query_type;
+#endif
 		res_internal->res.ncols = m->results->nr_cols;
 		if (m->results->nr_cols > 0) {
 			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
@@ -293,12 +311,15 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 			GDKfree(res_internal);
 			goto cleanup;
 		}
-		*result  = (monetdb_result*) res_internal;
-		res_internal->res.type = (char) m->results->query_type;
-		res_internal->res.id = (size_t) m->results->query_id;
-		// tODO: check alloc
-		m->results = NULL;
 	}
+	res_internal->res.id = (size_t) m->last_id;
+	if(result && res_internal) {
+		*result = (monetdb_result*) res_internal;
+	} else if(res_internal) {
+		monetdb_cleanup_result(conn, (monetdb_result*) res_internal);
+	}
+	// tODO: check alloc
+	m->results = NULL;
 
 cleanup:
 
@@ -340,6 +361,9 @@ char* monetdb_append(monetdb_connection conn, const char* schema, const char* ta
 	SQLtrans(m);
 	if (!m->sa) { // unclear why this is required
 		m->sa = sa_create();
+	}
+	if (!m->sa) {
+		return GDKstrdup("Malloc fail");
 	}
 	{
 		sql_rel *rel;
