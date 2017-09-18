@@ -156,7 +156,11 @@ extern stmt *stmt_catalog(backend *be, int type, stmt *args);
 
 extern stmt *stmt_temp(backend *be, sql_subtype *t);
 extern stmt *stmt_atom(backend *be, atom *a);
+#ifdef HAVE_EMBEDDED
+extern stmt *stmt_atom_string(backend *be, const char *s, int escape);
+#else
 extern stmt *stmt_atom_string(backend *be, const char *s);
+#endif
 extern stmt *stmt_atom_string_nil(backend *be);
 extern stmt *stmt_atom_int(backend *be, int i);
 extern stmt *stmt_atom_lng(backend *be, lng i);

@@ -4565,7 +4565,11 @@ rel2bin_output(backend *be, sql_rel *rel, list *refs)
 
 	if (n->next->next->next->next) {
 		fn = E_ATOM_STRING(n->next->next->next->next->data);
+#ifdef HAVE_EMBEDDED
+		fns = stmt_atom_string(be, sa_strdup(sql->sa, fn), 0);
+#else
 		fns = stmt_atom_string(be, sa_strdup(sql->sa, fn));
+#endif
 	}
 	list_append(slist, stmt_export(be, s, tsep, rsep, ssep, ns, fns));
 	if (s->type == st_list && ((stmt*)s->op4.lval->h->data)->nrcols != 0) {

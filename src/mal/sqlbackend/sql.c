@@ -2736,7 +2736,7 @@ mvc_bin_import_table_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 			throw(SQL, "sql.attach", MAL_MALLOC_FAIL);
 #if defined(HAVE_EMBEDDED) && defined(WIN32)
 		// fix single backslash file separator on windows
-		strcpy((char*)fn, filename);
+		strcpy((char*)fn, fname);
 #else
 		GDKstrFromStr((unsigned char *) fn, (const unsigned char *) fname, flen);
 #endif
