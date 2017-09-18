@@ -1836,7 +1836,7 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	int *res_id =getArgReference_int(stk,pci,0);
 	str filename = *getArgReference_str(stk,pci,1);
 	str format = *getArgReference_str(stk,pci,2);
-	unsigned char *tsep = NULL, *rsep = NULL, *ssep = NULL, *ns = NULL;
+	unsigned char *tsep = NULL, *rsep = NULL, *ssep = NULL, *ns = NULL, *fn = NULL;
 	unsigned char *T = (unsigned char *) *getArgReference_str(stk, pci, 3);
 	unsigned char *R = (unsigned char *) *getArgReference_str(stk, pci, 4);
 	unsigned char *S = (unsigned char *) *getArgReference_str(stk, pci, 5);
@@ -1849,7 +1849,7 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	bat scaleId= *getArgReference_bat(stk, pci,11);
 	stream *s;
 	bat bid;
-	int i,res;
+	int i,res, flen;
 	size_t l;
 	str tblname, colname, tpename, msg= MAL_SUCCEED;
 	int *digits, *scaledigits;
@@ -1946,13 +1946,27 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	/* now select the file channel */
 	if ( strcmp(filename,"stdout") == 0 )
 		s= cntxt->fdout;
-	else if ( (s = open_wastream(filename)) == NULL || mnstr_errnr(s)) {
-		int errnr = mnstr_errnr(s);
-		if (s)
-			mnstr_destroy(s);
-		msg=  createException(IO, "streams.open", "could not open file '%s': %s",
-				      filename?filename:"stdout", strerror(errnr));
-		goto wrapup_result_set1;
+	else {
+		flen = strlen(filename);
+		if ((fn = GDKmalloc(flen + 1)) == NULL) {
+			msg = createException(SQL, "sql.resultSet", MAL_MALLOC_FAIL);
+			goto wrapup_result_set1;
+		}
+#if defined(HAVE_EMBEDDED) && defined(WIN32)
+		// fix single backslash file separator on windows
+		strcpy((char*)fn, filename);
+#else
+		GDKstrFromStr(fn, (unsigned char*)filename, len);
+#endif
+		if ( (s = open_wastream((const char *) fn)) == NULL || mnstr_errnr(s)) {
+			int errnr = mnstr_errnr(s);
+			if (s)
+				mnstr_destroy(s);
+			msg = createException(IO, "streams.open", "could not open file '%s': %s", fn, strerror(errnr));
+			GDKfree(fn);
+			goto wrapup_result_set1;
+		}
+		GDKfree(fn);
 	}
 
 #ifdef HAVE_EMBEDDED
@@ -2721,7 +2735,12 @@ mvc_bin_import_table_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 		fn = GDKmalloc(flen + 1);
 		if(fn == NULL)
 			throw(SQL, "sql.attach", MAL_MALLOC_FAIL);
+#if defined(HAVE_EMBEDDED) && defined(WIN32)
+		// fix single backslash file separator on windows
+		strcpy((char*)fn, filename);
+#else
 		GDKstrFromStr((unsigned char *) fn, (const unsigned char *) fname, flen);
+#endif
 		if (fn == NULL)
 			throw(SQL, "sql", MAL_MALLOC_FAIL);
 		f = fopen(fn, "r");
@@ -2744,43 +2763,64 @@ mvc_bin_import_table_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 		if (strcmp(fname, str_nil) == 0) {
 			// no filename for this column, skip for now because we potentially don't know the count yet
 			continue;
-		} else if (tpe < TYPE_str || tpe == TYPE_date || tpe == TYPE_daytime || tpe == TYPE_timestamp) {
-			c = BATattach(col->type.type->localtype, fname, TRANSIENT);
-			if (c == NULL)
-				throw(SQL, "sql", "Failed to attach file %s", fname);
-			BATsetaccess(c, BAT_READ);
-		} else if (tpe == TYPE_str) {
-			/* get the BAT and fill it with the strings */
-			c = COLnew(0, TYPE_str, 0, TRANSIENT);
-			if (c == NULL)
+		} else {
+			flen =  strlen(fname);
+			fn = GDKmalloc(flen + 1);
+			if(fn == NULL)
 				throw(SQL, "sql", MAL_MALLOC_FAIL);
-			/* this code should be extended to deal with larger text strings. */
-			f = fopen(*getArgReference_str(stk, pci, i), "r");
-			if (f == NULL) {
-				BBPreclaim(c);
-				throw(SQL, "sql", "Failed to re-open file %s", fname);
-			}
-
-			buf = GDKmalloc(bufsiz);
-			if (!buf) {
-				fclose(f);
-				BBPreclaim(c);
-				throw(SQL, "sql", "Failed to create buffer");
-			}
-			while (fgets(buf, bufsiz, f) != NULL) {
-				char *t = strrchr(buf, '\n');
-				if (t)
-					*t = 0;
-				if (BUNappend(c, buf, FALSE) != GDK_SUCCEED) {
-					BBPreclaim(c);
-					fclose(f);
+#if defined(HAVE_EMBEDDED) && defined(WIN32)
+			// fix single backslash file separator on windows
+			strcpy((char*)fn, fname);
+#else
+			GDKstrFromStr((unsigned char *) fn, (const unsigned char *) fname, flen);
+#endif
+			if (tpe < TYPE_str || tpe == TYPE_date || tpe == TYPE_daytime || tpe == TYPE_timestamp) {
+				c = BATattach(col->type.type->localtype, fname, TRANSIENT);
+				if (c == NULL) {
+					GDKfree(fn);
+					throw(SQL, "sql", "Failed to attach file %s", fname);
+				}
+				BATsetaccess(c, BAT_READ);
+				GDKfree(fn);
+			} else if (tpe == TYPE_str) {
+				/* get the BAT and fill it with the strings */
+				c = COLnew(0, TYPE_str, 0, TRANSIENT);
+				if (c == NULL) {
+					GDKfree(fn);
 					throw(SQL, "sql", MAL_MALLOC_FAIL);
 				}
+				/* this code should be extended to deal with larger text strings. */
+				f = fopen(*getArgReference_str(stk, pci, i), "r");
+				if (f == NULL) {
+					BBPreclaim(c);
+					GDKfree(fn);
+					throw(SQL, "sql", "Failed to re-open file %s", fname);
+				}
+				buf = GDKmalloc(bufsiz);
+				if (!buf) {
+					fclose(f);
+					BBPreclaim(c);
+					GDKfree(fn);
+					throw(SQL, "sql", "Failed to create buffer");
+				}
+				while (fgets(buf, bufsiz, f) != NULL) {
+					char *t = strrchr(buf, '\n');
+					if (t)
+						*t = 0;
+					if (BUNappend(c, buf, FALSE) != GDK_SUCCEED) {
+						BBPreclaim(c);
+						fclose(f);
+						GDKfree(fn);
+						throw(SQL, "sql", MAL_MALLOC_FAIL);
+					}
+				}
+				fclose(f);
+				GDKfree(buf);
+				GDKfree(fn);
+			} else {
+				GDKfree(fn);
+				throw(SQL, "sql", "Failed to attach file %s", fname);
 			}
-			fclose(f);
-			GDKfree(buf);
-		} else {
-			throw(SQL, "sql", "Failed to attach file %s", fname);
 		}
 		if (init && cnt != BATcount(c)) {
 			BBPunfix(c->batCacheid);
