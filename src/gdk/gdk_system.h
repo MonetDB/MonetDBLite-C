@@ -327,4 +327,10 @@ gdk_export int MT_check_nr_cores(void);
 gdk_export lng GDKusec(void);
 gdk_export int GDKms(void);
 
+#ifdef HAVE_EMBEDDED
+#define HOST_LITTLE_ENDIAN 1
+#define HOST_BIG_ENDIAN 2
+gdk_export int MT_check_endianness(void);
+#endif
+
 #endif /*_GDK_SYSTEM_H_*/

@@ -1956,7 +1956,7 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 		// fix single backslash file separator on windows
 		strcpy((char*)fn, filename);
 #else
-		GDKstrFromStr(fn, (unsigned char*)filename, len);
+		GDKstrFromStr(fn, (unsigned char*)filename, flen);
 #endif
 		if ( (s = open_wastream((const char *) fn)) == NULL || mnstr_errnr(s)) {
 			int errnr = mnstr_errnr(s);
@@ -2702,7 +2702,8 @@ mvc_bin_import_table_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 	sql_table *t;
 	node *n;
 	FILE *f;
-	char *buf;
+	char *buf, *fn;
+	size_t flen;
 	int bufsiz = 128 * BLOCK;
 
 	if ((msg = getSQLContext(cntxt, mb, &m, NULL)) != NULL)
@@ -2721,8 +2722,6 @@ mvc_bin_import_table_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 	for (i = pci->retc + 2, n = t->columns.set->h; i < pci->argc && n; i++, n = n->next) {
 		sql_column *col = n->data;
 		const char *fname = *getArgReference_str(stk, pci, i);
-		size_t flen;
-		char *fn;
 
 		if (strcmp(fname, str_nil) == 0)  {
 			// no file name passed for this column

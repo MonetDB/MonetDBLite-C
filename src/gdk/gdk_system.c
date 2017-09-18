@@ -531,17 +531,26 @@ MT_check_nr_cores(void)
 	return ncpus;
 }
 
-
-
 lng
 GDKusec(void)
 {
-return 0; // hahahahahahah
+	return 0; // hahahahahahah
 }
-
 
 int
 GDKms(void)
 {
 	return (int) (GDKusec() / 1000);
 }
+
+#ifdef HAVE_EMBEDDED
+int
+MT_check_endianness(void) {
+	int num = 1;
+	if(*(char *)&num == 1) {
+		return HOST_LITTLE_ENDIAN;
+	} else {
+		return HOST_BIG_ENDIAN;
+	}
+}
+#endif
