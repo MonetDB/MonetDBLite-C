@@ -202,9 +202,6 @@ gdk_export char* monetdb_lib_path;
 #ifdef HAVE_EMBEDDED_JAVA
 gdk_export void freeMonetDB5LibraryPath(void);
 gdk_export int setMonetDB5LibraryPath(const char* path);
-#ifdef NATIVE_WIN32
-gdk_export int __popcountdi2(unsigned long long a);
-#endif
 #endif
 
 #endif /* GDK_POSIX_H */
