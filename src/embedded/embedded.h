@@ -16,10 +16,6 @@
 #include <stddef.h> /* only for size_t */
 #include <stdint.h>
 
-#ifdef __MINGW32__
-#define __int64 int64_t
-#endif
-
 typedef struct append_data {
 	char* colname;
 	size_t batid; /* Disclaimer: this header is GDK-free */

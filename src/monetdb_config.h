@@ -18,7 +18,6 @@
 #ifdef __MINGW32__
 #define NATIVE_WIN32 1
 #pragma GCC diagnostic ignored "-Wattributes"
-#define __int64 int64_t
 #endif
 
 #ifdef NATIVE_WIN32
