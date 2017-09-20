@@ -13,7 +13,12 @@
 #ifndef _EMBEDDED_LIB_
 #define _EMBEDDED_LIB_
 
-#include <stdlib.h>
+#include <stddef.h> /* only for size_t */
+#include <stdint.h>
+
+#ifdef __MINGW32__
+#define __int64 int64_t
+#endif
 
 typedef struct append_data {
 	char* colname;
