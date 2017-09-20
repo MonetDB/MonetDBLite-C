@@ -275,38 +275,36 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 		*affected_rows = m->rowcnt;
 	}
 
-	res_internal = GDKzalloc(sizeof(monetdb_result_internal));
-	if (!res_internal) {
-		res = GDKstrdup("Malloc fail");
-		goto cleanup;
-	}
-	if (m->emode == m_execute) {
-		res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
-	} else if (m->emode & m_prepare) {
-		res_internal->res.type = (char) Q_PREPARE;
-	} else {
-		res_internal->res.type = (char) m->type;
-	}
-
-	if (result && m->results) {
-		res_internal->res.ncols = m->results->nr_cols;
-		if (m->results->nr_cols > 0) {
-			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
-			BBPunfix(m->results->cols[0].b);
-		}
-		res_internal->monetdb_resultset = m->results;
-		res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column*) * res_internal->res.ncols);
-		if (!res_internal->converted_columns) {
+	if (result) {
+		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
+		if (!res_internal) {
 			res = GDKstrdup("Malloc fail");
-			GDKfree(res_internal);
 			goto cleanup;
 		}
-	}
-	res_internal->res.id = (size_t) m->last_id;
-	if(result && m->results) {
+		if (m->emode == m_execute) {
+			res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
+		} else if (m->emode & m_prepare) {
+			res_internal->res.type = (char) Q_PREPARE;
+		} else {
+			res_internal->res.type = (char) m->type;
+		}
+		res_internal->res.id = (size_t) m->last_id;
+
+		if (m->results) {
+			res_internal->res.ncols = m->results->nr_cols;
+			if (m->results->nr_cols > 0) {
+				res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
+				BBPunfix(m->results->cols[0].b);
+			}
+			res_internal->monetdb_resultset = m->results;
+			res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column *) * res_internal->res.ncols);
+			if (!res_internal->converted_columns) {
+				res = GDKstrdup("Malloc fail");
+				GDKfree(res_internal);
+				goto cleanup;
+			}
+		}
 		*result = (monetdb_result*) res_internal;
-	} else if(res_internal) {
-		monetdb_cleanup_result(conn, (monetdb_result*) res_internal);
 	}
 	// tODO: check alloc
 	m->results = NULL;
