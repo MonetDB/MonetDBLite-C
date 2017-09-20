@@ -1,0 +1,15 @@
+version: '{build}'
+environment:
+  matrix:
+    - compiler: gcc-mingw-32
+      mingw_bin: 'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    - compiler: gcc-mingw-64
+      mingw_bin: 'C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw32\bin'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+install:
+  - set "PATH=%mingw_bin%;%PATH%"
+build_script:
+  - make -j
+test_script:
+  - make test
