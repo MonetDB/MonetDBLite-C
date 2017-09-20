@@ -21,9 +21,6 @@
 #endif
 
 #ifdef NATIVE_WIN32
-#ifdef HAVE_EMBEDDED_JAVA
-#include "../embeddedjava/incwindows/mingw.h"
-#endif
 #include <windows.h>
 #undef ERROR
 #endif

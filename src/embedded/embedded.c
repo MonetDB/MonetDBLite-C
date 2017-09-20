@@ -275,7 +275,6 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 		*affected_rows = m->rowcnt;
 	}
 
-#ifdef HAVE_EMBEDDED_JAVA
 	res_internal = GDKzalloc(sizeof(monetdb_result_internal));
 	if (!res_internal) {
 		res = GDKstrdup("Malloc fail");
@@ -288,17 +287,8 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 	} else {
 		res_internal->res.type = (char) m->type;
 	}
-#endif
 
 	if (result && m->results) {
-#ifndef HAVE_EMBEDDED_JAVA
-		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
-		if (!res_internal) {
-			res = GDKstrdup("Malloc fail");
-			goto cleanup;
-		}
-		res_internal->res.type = (char) m->results->query_type;
-#endif
 		res_internal->res.ncols = m->results->nr_cols;
 		if (m->results->nr_cols > 0) {
 			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
@@ -313,7 +303,7 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 		}
 	}
 	res_internal->res.id = (size_t) m->last_id;
-	if(result && res_internal) {
+	if(result && m->results) {
 		*result = (monetdb_result*) res_internal;
 	} else if(res_internal) {
 		monetdb_cleanup_result(conn, (monetdb_result*) res_internal);

@@ -42,11 +42,8 @@
 #include "monetdb_config.h"
 #include "gdk.h"
 #include "gdk_private.h"
-
-#if defined(HAVE_EMBEDDED) && defined(HAVE_EMBEDDED_JAVA)
 #include "gdk_system.h"
 #include "stream.h"
-#endif
 
 #ifdef ALIGN
 #undef ALIGN
