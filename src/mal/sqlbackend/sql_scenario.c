@@ -248,15 +248,17 @@ SQLinit(void)
 	}
 	SQLinitialized = TRUE;
 	MT_lock_unset(&sql_contextLock);
-	if (MT_create_thread(&sqllogthread, (void (*)(void *)) mvc_logmanager, NULL, MT_THR_JOINABLE) != 0) {
-		throw(SQL, "SQLinit", "Starting log manager failed");
-	}
-	GDKregister(sqllogthread);
-	if (!(SQLdebug&1024)) {
-		if (MT_create_thread(&idlethread, (void (*)(void *)) mvc_idlemanager, NULL, MT_THR_JOINABLE) != 0) {
-			throw(SQL, "SQLinit", "Starting idle manager failed");
+	if (!GDKinmemory()) {
+		if (MT_create_thread(&sqllogthread, (void (*)(void *)) mvc_logmanager, NULL, MT_THR_JOINABLE) != 0) {
+			throw(SQL, "SQLinit", "Starting log manager failed");
 		}
-		GDKregister(idlethread);
+		GDKregister(sqllogthread);
+		if (!(SQLdebug&1024)) {
+			if (MT_create_thread(&idlethread, (void (*)(void *)) mvc_idlemanager, NULL, MT_THR_JOINABLE) != 0) {
+				throw(SQL, "SQLinit", "Starting idle manager failed");
+			}
+			GDKregister(idlethread);
+		}
 	}
 	return MAL_SUCCEED;
 }
