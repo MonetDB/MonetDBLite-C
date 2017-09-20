@@ -669,11 +669,6 @@ mdlopen(const char *library, int mode)
 #ifdef _MSC_VER
 #include <io.h>
 #endif /* _MSC_VER */
-#ifdef HAVE_EMBEDDED_JAVA
-#include <psapi.h>
-#else
-#include <Psapi.h>
-#endif
 
 #define MT_SMALLBLOCK 256
 
