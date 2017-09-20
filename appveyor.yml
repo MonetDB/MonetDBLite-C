@@ -10,6 +10,6 @@ environment:
 install:
   - set "PATH=%mingw_bin%;%PATH%"
 build_script:
-  - mingw32-make -j
+  - mingw32-make
 test_script:
   - mingw32-make test
