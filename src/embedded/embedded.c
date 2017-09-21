@@ -130,17 +130,11 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	embedded_stdout = fopen(NULLFILE, "w");
 	embedded_stderr = embedded_stdout;
 
-	if (dbdir) {
-		BBPaddfarm(dbdir, (1 << PERSISTENT) | (1 << TRANSIENT));
-	}
 	if (GDKinit(dbdir) == 0) {
 		retval = GDKstrdup("GDKinit() failed");
 		goto cleanup;
 	}
-	GDKsetenv("monet_mod_path", "");
-	GDKsetenv("max_clients", "256");
 
-	GDKsetenv("mapi_disable", "true");
 	if (sequential) {
 		GDKsetenv("sql_optimizer", "sequential_pipe");
 	}

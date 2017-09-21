@@ -344,6 +344,11 @@ GDKinit(str dbpath)
 	char buf[16];
 
 
+	if (dbpath) {
+		BBPaddfarm(dbpath, (1 << PERSISTENT) | (1 << TRANSIENT));
+	}
+
+
 #ifdef NEED_MT_LOCK_INIT
 	MT_lock_init(&MT_system_lock,"MT_system_lock");
 	ATOMIC_INIT(GDKstoppedLock);
@@ -443,6 +448,9 @@ GDKinit(str dbpath)
 	GDKsetenv("sql_optimizer", "default_pipe");
 	GDKsetenv("sql_debug", "0");
 
+	GDKsetenv("monet_mod_path", "");
+	GDKsetenv("max_clients", "256");
+	GDKsetenv("mapi_disable", "true");
 
 	if (!GDKinmemory()) {
 		if ((p = GDKgetenv("gdk_dbpath")) != NULL &&
