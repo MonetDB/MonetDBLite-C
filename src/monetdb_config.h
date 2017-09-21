@@ -181,7 +181,7 @@
 /* #undef HAVE_IEEEFP_H */
 
 /* Define to 1 if the system has the type `intptr_t'. */
-#define HAVE_INTPTR_T 1
+#define HAVE_INTPTR_T 0
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
