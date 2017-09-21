@@ -4,6 +4,15 @@
 #include <stdlib.h>
 
 
+
+#ifndef _WIN32
+#define LLFMT "%lld"
+#else
+#define LLFMT "%I64d"
+#endif
+
+
+
 int main(int argc, char** argv) {
 	char* err = 0;
 	void* conn = 0;
@@ -72,8 +81,8 @@ int main(int argc, char** argv) {
 		return -2;
 	}
 
-	fprintf(stderr, "Query result with %zu cols and %zu rows\n", result->ncols,
-			result->nrows);
+	fprintf(stderr, "Query result with %d cols and %d rows\n", (int) result->ncols,
+			(int) result->nrows);
 
 	for (r = 0; r < result->nrows; r++) {
 		for (c = 0; c < result->ncols; c++) {
@@ -100,7 +109,7 @@ int main(int argc, char** argv) {
 			case monetdb_int64_t: {
 				monetdb_column_int64_t * col =
 						(monetdb_column_int64_t *) actual_column;
-				printf("%lld", (long long int) col->data[r]);
+				printf(LLFMT, (long long int) col->data[r]);
 				break;
 			}
 			case monetdb_float: {
@@ -162,8 +171,8 @@ int main(int argc, char** argv) {
 		return -2;
 	}
 
-	fprintf(stderr, "Query result with %zu cols and %zu rows\n", result->ncols,
-			result->nrows);
+	fprintf(stderr, "Query result with %d cols and %d rows\n", (int) result->ncols,
+			(int) result->nrows);
 	monetdb_cleanup_result(conn, result);
 
 
