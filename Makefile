@@ -112,7 +112,6 @@ src/mal/modules/01_calc.mal \
 src/mal/sqlbackend/40_sql.mal 
 
 COBJECTS=\
-$(OBJDIR)/common/monet_options.o \
 $(OBJDIR)/common/stream.o \
 $(OBJDIR)/common/mutils.o \
 $(OBJDIR)/embedded/embedded.o \

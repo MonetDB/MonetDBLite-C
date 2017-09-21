@@ -336,12 +336,10 @@ static MT_Lock mallocsuccesslock MT_LOCK_INITIALIZER("mallocsuccesslock");
 #endif
 
 int
-GDKinit(opt *set, int setlen)
+GDKinit(str dbpath)
 {
-	char *dbpath = mo_find_option(set, setlen, "gdk_dbpath");
 	char *p;
-	opt *n;
-	int i, nlen = 0;
+	int i;
 	int farmid;
 	char buf[16];
 
@@ -370,9 +368,6 @@ GDKinit(opt *set, int setlen)
 	errno = 0;
 	if (!GDKenvironment(dbpath))
 		return 0;
-
-	if ((p = mo_find_option(set, setlen, "gdk_debug")))
-		GDKdebug = strtol(p, NULL, 10);
 
 	if (mnstr_init() < 0)
 		return 0;
@@ -419,29 +414,6 @@ GDKinit(opt *set, int setlen)
 	GDK_mem_maxsize = GDK_VM_MAXSIZE;
 	GDK_vm_maxsize = GDK_VM_MAXSIZE;
 
-
-	n = (opt *) malloc(setlen * sizeof(opt));
-	if (n == NULL)
-		GDKfatal("GDKinit: malloc failed\n");
-	for (i = 0; i < setlen; i++) {
-		int done = 0;
-		int j;
-
-		for (j = 0; j < nlen; j++) {
-			if (strcmp(n[j].name, set[i].name) == 0) {
-				if (n[j].kind < set[i].kind) {
-					n[j] = set[i];
-				}
-				done = 1;
-				break;
-			}
-		}
-		if (!done) {
-			n[nlen] = set[i];
-			nlen++;
-		}
-	}
-
 	GDKkey = COLnew(0, TYPE_str, 100, TRANSIENT);
 	GDKval = COLnew(0, TYPE_str, 100, TRANSIENT);
 	if (GDKkey == NULL || GDKval == NULL) {
@@ -452,15 +424,25 @@ GDKinit(opt *set, int setlen)
 	    BBPrename(GDKval->batCacheid, "environment_val") != 0)
 		GDKfatal("GDKinit: BBPrename failed");
 
-	/* store options into environment BATs */
-	for (i = 0; i < nlen; i++)
-		if (GDKsetenv(n[i].name, n[i].value) != GDK_SUCCEED)
-			GDKfatal("GDKinit: GDKsetenv failed");
-	free(n);
 
 	GDKnr_threads = GDKgetenv_int("gdk_nr_threads", 0);
 	if (GDKnr_threads == 0)
 		GDKnr_threads = MT_check_nr_cores();
+
+	if (dbpath) {
+		GDKsetenv("gdk_dbpath", dbpath);
+	}
+	GDKsetenv("gdk_debug", "0");
+	GDKsetenv("gdk_vmtrim", "no");
+
+	GDKsetenv("mapi_open", "false");
+	GDKsetenv("monet_daemon", "no");
+	GDKsetenv("monet_prompt", ">");
+	GDKsetenv("mapi_autosense", "false");
+
+	GDKsetenv("sql_optimizer", "default_pipe");
+	GDKsetenv("sql_debug", "0");
+
 
 	if (!GDKinmemory()) {
 		if ((p = GDKgetenv("gdk_dbpath")) != NULL &&

@@ -14,7 +14,6 @@
 #include "embedded.h"
 
 #include "monetdb_config.h"
-#include "monet_options.h"
 #include "mal.h"
 #include "mal_client.h"
 #include "mal_builder.h"
@@ -94,8 +93,6 @@ void monetdb_disconnect(monetdb_connection conn) {
 #define EMBEDDED_SCRIPT_SIZE_MAX 10485760 // 10 MB
 
 char* monetdb_startup(char* dbdir, char silent, char sequential) {
-	opt *set = NULL;
-	volatile int setlen = 0;
 	str retval = MAL_SUCCEED;
 	char* sqres = NULL;
 	monetdb_result* res = NULL;
@@ -133,12 +130,10 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	embedded_stdout = fopen(NULLFILE, "w");
 	embedded_stderr = embedded_stdout;
 
-	setlen = mo_builtin_settings(&set);
 	if (dbdir) {
-		setlen = mo_add_option(&set, setlen, opt_cmdline, "gdk_dbpath", dbdir);
 		BBPaddfarm(dbdir, (1 << PERSISTENT) | (1 << TRANSIENT));
 	}
-	if (GDKinit(set, setlen) == 0) {
+	if (GDKinit(dbdir) == 0) {
 		retval = GDKstrdup("GDKinit() failed");
 		goto cleanup;
 	}
@@ -188,7 +183,6 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 
 
 cleanup:
-	mo_free_options(set, setlen);
 	return retval;
 }
 
