@@ -34,8 +34,8 @@ int main(void) {
 	if (err != 0)
 		error(err)
 
-	fprintf(stdout, "Query result with %zu cols and %zu rows\n", result->ncols,
-			result->nrows);
+	fprintf(stdout, "Query result with %d cols and %d rows\n", (int) result->ncols,
+			(int) result->nrows);
 
 	for (r = 0; r < result->nrows; r++) {
 		for (c = 0; c < result->ncols; c++) {
