@@ -12,8 +12,6 @@
 #ifndef _SQL_CATALOG_H
 #define _SQL_CATALOG_H
 
-#define sql5_export extern
-
 #include <sql.h>
 #include <mal_backend.h>
 #include <sql_atom.h>
