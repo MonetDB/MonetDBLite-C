@@ -24,17 +24,6 @@ SOEXT=so
 ifeq ($(OS),Windows_NT)
 	SOEXT=dll
 	CC=gcc
-    CFLAGS += -DWIN32 -D__CYGWIN__
-#    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
-#        CFLAGS += -D AMD64
-#    else
-#        ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
-#            CFLAGS += -D AMD64
-#        endif
-#        ifeq ($(PROCESSOR_ARCHITECTURE),x86)
-#            CFLAGS += -D IA32
-#        endif
-#    endif
 else
     UNAME_S := $(shell uname -s)
     CFLAGS += -fPIC
