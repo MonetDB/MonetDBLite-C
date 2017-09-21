@@ -1,6 +1,7 @@
 # MonetDBLite for C
 
-[![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C.svg)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C)
+[![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C.svg)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C)[![Build Status](https://ci.appveyor.com/api/projects/status/github/hannesmuehleisen/MonetDBLite-C?branch=master&svg=true)](https://ci.appveyor.com/project/hannesmuehleisen/MonetDBLite-C)
+
 
 MonetDBLite is an embedded SQL database that runs inside another program and does not require the installation of any external software. MonetDBLite is based on free and open-source [MonetDB](https://www.monetdb.org/Home), a product of the [Centrum Wiskunde & Informatica](http://www.cwi.nl).
 
