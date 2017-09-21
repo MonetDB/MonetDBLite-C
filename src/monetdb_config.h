@@ -20,6 +20,11 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 
+#ifdef NATIVE_WIN32
+#include <windows.h>
+#undef ERROR
+#endif
+
 
 ///* Define if building universal (internal helper macro) */
 ///* #undef AC_APPLE_UNIVERSAL_BUILD */
@@ -420,7 +425,7 @@
 #define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#define HAVE_SYS_TYPES_H 1
+#define HAVE_SYS_TYPES_H 0
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #define HAVE_SYS_UIO_H 1
@@ -868,13 +873,6 @@ typedef lng ptrdiff_t;
 #ifdef HAVE_EMBEDDED
 #include "embedded/undef.h"
 #endif
-
-
-#ifdef NATIVE_WIN32
-#include <windows.h>
-//#undef ERROR
-#endif
-
 
 #define PROMPT1		"\001\001\n"	/* prompt: ready for new query */
 #define PROMPT2		"\001\002\n"	/* prompt: more data needed */
