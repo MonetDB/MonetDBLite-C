@@ -11,9 +11,7 @@ endif
 DEPSDIR=$(OBJDIR)/deps
 
 CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM
-
-
-LDFLAGS=-lm -lpthread
+LDFLAGS=-lm
 INCLUDE_FLAGS= -Isrc/ -Isrc/common  \
 -Isrc/embedded -Isrc/gdk \
 -Isrc/mal/mal -Isrc/mal/modules -Isrc/mal/optimizer -Isrc/mal/sqlbackend \
@@ -23,11 +21,12 @@ SOEXT=so
 		
 ifeq ($(OS),Windows_NT)
 	SOEXT=dll
+	LDFLAGS += -Wl,-Bstatic,--whole-archive -lwinpthread
 	CC=gcc
 else
     UNAME_S := $(shell uname -s)
     CFLAGS += -fPIC
-    LDFLAGS += -ldl
+    LDFLAGS += -ldl -lpthread
     ifeq ($(UNAME_S),Linux)
 		LDFLAGS += -lrt
     endif

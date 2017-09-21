@@ -21,6 +21,9 @@ int main(int argc, char** argv) {
 	size_t r, c;
 	int i;
 
+#ifdef _WIN32
+	return 0;
+#endif
 
 	if (argc < 2) {
 		return -1;
