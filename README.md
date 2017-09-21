@@ -16,7 +16,8 @@ Installation from source is a matter of typing
 make -j
 ````
 
-This produces a shared library file `libmonetdb5.(so|dll|dylib)` in the `build/` folder, which contains all required code to run MonetDBLite. This library can then be linked to by your software. 
+This produces a shared library file `libmonetdb5.(so|dll|dylib)` in the `build/` folder, which contains all required code to run MonetDBLite. This library can then be linked to by your software. On Windows, we use the MinGW-64 toolchains ([32 bit](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/6.3.0/threads-posix/dwarf/i686-6.3.0-release-posix-dwarf-rt_v5-rev2.7z/download
+), [64 bit (recommended)](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.3.0/threads-posix/seh/x86_64-6.3.0-release-posix-seh-rt_v5-rev2.7z/download)) and the `mingw32-make` tool to build the DLL. 
 
 ## Usage Example
 
