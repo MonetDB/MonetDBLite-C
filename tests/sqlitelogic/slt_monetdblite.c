@@ -2,6 +2,13 @@
 #include <stdio.h>
 #include "embedded.h"
 
+
+#ifndef _WIN32
+#define LLFMT "%lld"
+#else
+#define LLFMT "%I64d"
+#endif
+
 static int monetdbliteConnect(
   void *NotUsed,              /* Argument from DbEngine object.  Not used */
   const char *zConnectStr,    /* Connection string */
@@ -83,7 +90,7 @@ static int monetdbliteQuery(
 				if (col->is_null(col->data[r])) {
 					snprintf(buffer, BUFSIZ,  "%s", "NULL");
 				} else {
-					snprintf(buffer, BUFSIZ,  "%lld", (long long int) col->data[r]);
+					snprintf(buffer, BUFSIZ,  LLFMT, (long long int) col->data[r]);
 				}
 				break;
 			}
