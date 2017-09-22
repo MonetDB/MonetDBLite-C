@@ -9,7 +9,6 @@
 #ifndef _GDK_UTILS_H_
 #define _GDK_UTILS_H_
 
-#include <monet_options.h>
 #include <setjmp.h>
 
 gdk_export BAT *GDKkey;
@@ -74,7 +73,7 @@ gdk_export size_t _MT_pagesize;
 #define MT_npages()	_MT_npages
 
 gdk_export void MT_init(void);	/*  init the package. */
-gdk_export int GDKinit(opt *set, int setlen);
+gdk_export int GDKinit(str dbpath);
 
 /* used for testing only */
 gdk_export void GDKsetmallocsuccesscount(lng count);

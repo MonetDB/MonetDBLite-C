@@ -836,7 +836,7 @@ TYPE##Write(const TYPE *a, stream *s, size_t cnt)			\
 atom_io(bat, Int, int)
 atom_io(bit, Bte, bte)
 
-atomtostr(bte, "%hhd", )
+atomtostr(bte, "%hd", (sht))
 atom_io(bte, Bte, bte)
 
 atomtostr(sht, "%hd", )

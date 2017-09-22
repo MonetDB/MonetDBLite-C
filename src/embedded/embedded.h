@@ -16,6 +16,16 @@
 #include <stddef.h> /* only for size_t */
 #include <stdint.h>
 
+#ifdef _WIN32
+#ifdef MONETDBLITE_COMPILE
+    #define embedded_export __declspec(dllexport)
+#else
+    #define embedded_export __declspec(dllimport)
+#endif
+#else
+	#define embedded_export
+#endif
+
 typedef struct append_data {
 	char* colname;
 	size_t batid; /* Disclaimer: this header is GDK-free */
@@ -95,24 +105,24 @@ DEFAULT_STRUCT_DEFINITION(monetdb_data_time, time);
 DEFAULT_STRUCT_DEFINITION(monetdb_data_timestamp, timestamp);
 
 
-monetdb_connection monetdb_connect(void);
-void  monetdb_disconnect(monetdb_connection conn);
-char* monetdb_startup(char* dbdir, char silent, char sequential);
-int   monetdb_is_initialized(void);
+embedded_export monetdb_connection monetdb_connect(void);
+embedded_export void  monetdb_disconnect(monetdb_connection conn);
+embedded_export char* monetdb_startup(char* dbdir, char silent, char sequential);
+embedded_export int   monetdb_is_initialized(void);
 
-char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long *affected_rows, long* prepare_id);
-monetdb_column* monetdb_result_fetch(monetdb_result* result, size_t column_index);
-void* monetdb_result_fetch_rawcol(monetdb_result* result, size_t column_index); // actually a res_col
+embedded_export char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long *affected_rows, long* prepare_id);
+embedded_export monetdb_column* monetdb_result_fetch(monetdb_result* result, size_t column_index);
+embedded_export void* monetdb_result_fetch_rawcol(monetdb_result* result, size_t column_index); // actually a res_col
 
-char* monetdb_append(monetdb_connection conn, const char* schema, const char* table, append_data *data, int ncols);
-void  monetdb_cleanup_result(monetdb_connection conn, monetdb_result* result);
+embedded_export char* monetdb_append(monetdb_connection conn, const char* schema, const char* table, append_data *data, int ncols);
+embedded_export void  monetdb_cleanup_result(monetdb_connection conn, monetdb_result* result);
 char* monetdb_get_columns(monetdb_connection conn, const char* schema_name, const char *table_name, int *column_count, char ***column_names, int **column_types);
 
 // progress monitoring
 typedef int (*monetdb_progress_callback)(monetdb_connection conn, void* data, size_t num_statements, size_t num_completed_statement, float percentage_done);
-void monetdb_register_progress(monetdb_connection conn, monetdb_progress_callback callback, void* data);
-void monetdb_unregister_progress(monetdb_connection conn);
+embedded_export void monetdb_register_progress(monetdb_connection conn, monetdb_progress_callback callback, void* data);
+embedded_export void monetdb_unregister_progress(monetdb_connection conn);
 
-void  monetdb_shutdown(void);
+embedded_export void  monetdb_shutdown(void);
 
 #endif

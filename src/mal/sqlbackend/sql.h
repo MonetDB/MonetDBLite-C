@@ -15,7 +15,12 @@
 #ifndef _SQL_H
 #define _SQL_H
 
+
+#ifdef WIN32
+#define sql5_export extern __declspec(dllexport)
+#else
 #define sql5_export extern
+#endif
 
 #include <sql_mem.h>
 

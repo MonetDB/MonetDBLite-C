@@ -17,6 +17,7 @@
 
 #ifdef __MINGW32__
 #define NATIVE_WIN32 1
+#define _Printf_format_string_
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 
@@ -181,7 +182,7 @@
 /* #undef HAVE_IEEEFP_H */
 
 /* Define to 1 if the system has the type `intptr_t'. */
-#define HAVE_INTPTR_T 1
+#define HAVE_INTPTR_T 0
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -425,7 +426,7 @@
 #define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#define HAVE_SYS_TYPES_H 1
+#define HAVE_SYS_TYPES_H 0
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #define HAVE_SYS_UIO_H 1

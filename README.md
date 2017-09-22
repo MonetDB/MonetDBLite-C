@@ -1,6 +1,7 @@
 # MonetDBLite for C
 
-[![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C.svg)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C)
+[![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C.svg)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C)[![Build Status](https://ci.appveyor.com/api/projects/status/github/hannesmuehleisen/MonetDBLite-C?branch=master&svg=true)](https://ci.appveyor.com/project/hannesmuehleisen/MonetDBLite-C)
+
 
 MonetDBLite is an embedded SQL database that runs inside another program and does not require the installation of any external software. MonetDBLite is based on free and open-source [MonetDB](https://www.monetdb.org/Home), a product of the [Centrum Wiskunde & Informatica](http://www.cwi.nl).
 
@@ -15,7 +16,8 @@ Installation from source is a matter of typing
 make -j
 ````
 
-This produces a shared library file `libmonetdb5.(so|dll|dylib)` in the `build/` folder, which contains all required code to run MonetDBLite. This library can then be linked to by your software. 
+This produces a shared library file `libmonetdb5.(so|dll|dylib)` in the `build/` folder, which contains all required code to run MonetDBLite. This library can then be linked to by your software. On Windows, we use the MinGW-64 toolchains ([32 bit](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/6.3.0/threads-posix/dwarf/i686-6.3.0-release-posix-dwarf-rt_v5-rev2.7z/download
+), [64 bit (recommended)](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.3.0/threads-posix/seh/x86_64-6.3.0-release-posix-seh-rt_v5-rev2.7z/download)) and the `mingw32-make` tool to build the DLL. 
 
 ## Usage Example
 
@@ -58,8 +60,8 @@ int main(void) {
 	if (err != 0)
 		error(err)
 
-	fprintf(stdout, "Query result with %zu cols and %zu rows\n", result->ncols,
-			result->nrows);
+	fprintf(stdout, "Query result with %d cols and %d rows\n", (int) result->ncols,
+			(int) result->nrows);
 
 	for (r = 0; r < result->nrows; r++) {
 		for (c = 0; c < result->ncols; c++) {

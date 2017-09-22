@@ -11,9 +11,7 @@ endif
 DEPSDIR=$(OBJDIR)/deps
 
 CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM
-
-
-LDFLAGS=-lm -lpthread -ldl
+LDFLAGS=-lm
 INCLUDE_FLAGS= -Isrc/ -Isrc/common  \
 -Isrc/embedded -Isrc/gdk \
 -Isrc/mal/mal -Isrc/mal/modules -Isrc/mal/optimizer -Isrc/mal/sqlbackend \
@@ -23,21 +21,13 @@ SOEXT=so
 		
 ifeq ($(OS),Windows_NT)
 	SOEXT=dll
+	LDFLAGS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
+
 	CC=gcc
-    CFLAGS += -DWIN32 -D__CYGWIN__
-#    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
-#        CFLAGS += -D AMD64
-#    else
-#        ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
-#            CFLAGS += -D AMD64
-#        endif
-#        ifeq ($(PROCESSOR_ARCHITECTURE),x86)
-#            CFLAGS += -D IA32
-#        endif
-#    endif
 else
     UNAME_S := $(shell uname -s)
     CFLAGS += -fPIC
+    LDFLAGS += -ldl -lpthread
     ifeq ($(UNAME_S),Linux)
 		LDFLAGS += -lrt
     endif
@@ -112,7 +102,6 @@ src/mal/modules/01_calc.mal \
 src/mal/sqlbackend/40_sql.mal 
 
 COBJECTS=\
-$(OBJDIR)/common/monet_options.o \
 $(OBJDIR)/common/stream.o \
 $(OBJDIR)/common/mutils.o \
 $(OBJDIR)/embedded/embedded.o \
@@ -321,18 +310,17 @@ inlines: $(MALSCRIPTS) $(SQLSCRIPTS)
 init: sqlparser inlines
 
 test: $(LIBFILE)
-	rm -rf build/tests
 	mkdir -p build/tests 
-	$(CC) $(OPTFLAGS) tests/readme/readme.c -o build/tests/readme -Isrc/embedded -Lbuild -lmonetdb5 $(LDFLAGS)
-		$(CC) $(OPTFLAGS) tests/tpchq1/test1.c -o build/tests/tpchq1 -Isrc/embedded -Lbuild -lmonetdb5 $(LDFLAGS)
-	$(CC) $(OPTFLAGS) tests/sqlitelogic/sqllogictest.c tests/sqlitelogic/md5.c -o build/tests/sqlitelogic -Itests/sqlitelogic -Isrc/embedded -Lbuild -lmonetdb5 $(LDFLAGS)
-	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/readme
-	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/tpchq1 $(shell pwd)/tests/tpchq1
-	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select1.test
-#	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select2.test
-#	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select3.test
-#	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select4.test
-#	PATH=${PATH}:build/ LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select5.test
+	$(CC) $(OPTFLAGS) tests/readme/readme.c -o build/test_readme -Isrc/embedded -Lbuild -lmonetdb5 $(LDFLAGS)
+		$(CC) $(OPTFLAGS) tests/tpchq1/test1.c -o build/test_tpchq1 -Isrc/embedded -Lbuild -lmonetdb5 $(LDFLAGS)
+	$(CC) $(OPTFLAGS) tests/sqlitelogic/sqllogictest.c tests/sqlitelogic/md5.c -o build/test_sqlitelogic -Itests/sqlitelogic -Isrc/embedded -Lbuild -lmonetdb5 $(LDFLAGS)
+	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/test_readme
+	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/test_tpchq1 $(shell pwd)/tests/tpchq1
+	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/test_sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select1.test
+#	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select2.test
+#	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select3.test
+#	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select4.test
+#	LD_LIBRARY_PATH=build/ DYLD_LIBRARY_PATH=build/ ./build/tests/sqlitelogic  --engine MonetDBLite --halt --verify tests/sqlitelogic/select5.test
 	
 
 DEPS = $(shell find $(DEPSDIR) -name "*.d")
@@ -340,7 +328,7 @@ DEPS = $(shell find $(DEPSDIR) -name "*.d")
 
 
 $(OBJDIR)/%.o: src/%.c
-	$(CC) $(CFLAGS) -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
+	$(CC) $(CFLAGS) -DMONETDBLITE_COMPILE -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
 
 $(LIBFILE): $(COBJECTS) 
 	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) -o $(LIBFILE) -shared
