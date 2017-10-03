@@ -1775,9 +1775,7 @@ store_manager(void)
 				GDKfatal("shared write-ahead log last transaction read failure");
 			}
 		}
-		if (gtrans == NULL) { // means store_exit was called
-			return;
-		}
+
 		MT_lock_set(&bs_lock);
 
 		if (GDKexiting() || logger_funcs.log_isdestroyed()) {
@@ -1823,6 +1821,10 @@ store_manager(void)
 
 		logging = 1;
 		/* make sure we reset all transactions on re-activation */
+		if (gtrans == NULL) { // means store_exit was called
+			MT_lock_unset(&bs_lock);
+			return;
+		}
 		gtrans->wstime = timestamp();
 		if (store_funcs.gtrans_update) {
 			store_funcs.gtrans_update(gtrans);
