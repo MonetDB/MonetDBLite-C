@@ -1775,8 +1775,11 @@ store_manager(void)
 				GDKfatal("shared write-ahead log last transaction read failure");
 			}
 		}
-
+		if (gtrans == NULL) { // means store_exit was called
+			return;
+		}
 		MT_lock_set(&bs_lock);
+
 		if (GDKexiting() || logger_funcs.log_isdestroyed()) {
 			MT_lock_unset(&bs_lock);
 			return;
