@@ -1777,6 +1777,7 @@ store_manager(void)
 		}
 
 		MT_lock_set(&bs_lock);
+
 		if (GDKexiting() || logger_funcs.log_isdestroyed()) {
 			MT_lock_unset(&bs_lock);
 			return;
@@ -1818,8 +1819,12 @@ store_manager(void)
 			MT_lock_set(&bs_lock);
 		}
 
-		logging = 1;
 		/* make sure we reset all transactions on re-activation */
+		if (gtrans == NULL) { // means store_exit was called
+			MT_lock_unset(&bs_lock);
+			return;
+		}
+		logging = 1;
 		gtrans->wstime = timestamp();
 		if (store_funcs.gtrans_update) {
 			store_funcs.gtrans_update(gtrans);
