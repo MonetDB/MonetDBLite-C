@@ -476,6 +476,10 @@ void monetdb_shutdown(void) {
 		SQLepilogue(NULL); // just do it here, i don't trust mserver_reset to call this
 		mserver_reset(0);
 		fclose(embedded_stdout);
+		GDKfree(mal_init_inline);
+		mal_init_inline = NULL;
+		GDKfree(createdb_inline);
+		createdb_inline = NULL;
 		monetdb_embedded_initialized = 0;
 	}
 }

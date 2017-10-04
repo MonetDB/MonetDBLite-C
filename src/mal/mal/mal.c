@@ -9,6 +9,7 @@
 /* (author) M. Kersten */
 #include <monetdb_config.h>
 #include <mal.h>
+#include <opt_pipes.h>
 
 char 	monet_cwd[PATHLENGTH] = { 0 };
 size_t 	monet_memory = 0;
@@ -131,6 +132,10 @@ void mserver_reset(int exit)
 	mal_linker_reset();
 	mal_runtime_reset();
 	mal_module_reset();
+	mal_namespace_reset();
+	if(!exit) {
+		cleanOptimizerPipe();
+	}
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;

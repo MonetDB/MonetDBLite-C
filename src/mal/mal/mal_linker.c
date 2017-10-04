@@ -150,7 +150,7 @@ mal_linker_reset(void)
 	MT_lock_set(&mal_contextLock);
 	for (i = 0; i < lastfile; i++){
 		if (filesLoaded[i].fullname) {
-			/* dlclose(filesLoaded[i].handle);*/
+			dlclose(filesLoaded[i].handle);
 			GDKfree(filesLoaded[i].modname);
 			GDKfree(filesLoaded[i].fullname);
 		}
