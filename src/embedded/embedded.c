@@ -45,8 +45,8 @@
 
 static int monetdb_embedded_initialized = 0;
 
-FILE* embedded_stdout;
-FILE* embedded_stderr;
+FILE* embedded_stdout = NULL;
+FILE* embedded_stderr = NULL;
 
 static void monetdb_destroy_column(monetdb_column* column);
 
@@ -94,9 +94,9 @@ void monetdb_disconnect(monetdb_connection conn) {
 
 char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	str retval = MAL_SUCCEED;
-	char* sqres = NULL;
 	monetdb_result* res = NULL;
 	void* c;
+	int failed = 0;
 
 	GDKfataljumpenable = 1;
 	if(setjmp(GDKfataljump) != 0) {
@@ -105,10 +105,13 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 		if (retval == NULL) {
 			retval = GDKstrdup("GDKfatal() with unspecified error?");
 		}
+		failed = 1;
+		monetdb_embedded_initialized = true;
 		goto cleanup;
 	}
 
 	if (monetdb_embedded_initialized) goto cleanup;
+	monetdb_embedded_initialized = true;
 
 	// decompress scripts
 	if (!mal_init_inline) {
@@ -118,20 +121,28 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 		createdb_inline = GDKzalloc(decompress_len_sql);
 		if (!mal_init_inline || !createdb_inline) {
 			retval = GDKstrdup("Memory allocation failed");
+			failed = 1;
 			goto cleanup;
 		}
 		if (mz_uncompress(mal_init_inline, &decompress_len_mal, mal_init_inline_arr, sizeof(mal_init_inline_arr)) != 0 ||
 			mz_uncompress(createdb_inline, &decompress_len_sql, createdb_inline_arr, sizeof(createdb_inline_arr)) != 0) {
 			retval = GDKstrdup("Script decompression failed");
+			failed = 1;
 			goto cleanup;
 		}
 	}
 
 	embedded_stdout = fopen(NULLFILE, "w");
+	if(!embedded_stdout) {
+		retval = GDKstrdup("Error while opening the null file descriptor");
+		failed = 1;
+		goto cleanup;
+	}
 	embedded_stderr = embedded_stdout;
 
 	if (GDKinit(dbdir) == 0) {
 		retval = GDKstrdup("GDKinit() failed");
+		failed = 1;
 		goto cleanup;
 	}
 
@@ -142,41 +153,48 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	if (silent) {
 		close_stream((stream*) THRdata[0]);
 		THRdata[0] = stream_blackhole_create();
+		if(!THRdata[0]) {
+			retval = GDKstrdup("Error while opening ");
+			failed = 1;
+			goto cleanup;
+		}
 	}
 
 	if (mal_init() != 0) {
 		retval = GDKstrdup("mal_init() failed");
+		failed = 1;
 		goto cleanup;
 	}
 	if (!SQLisInitialized()) {
 		retval = GDKstrdup("SQL initialization failed");
+		failed = 1;
 		goto cleanup;
 	}
 
 	if (silent) mal_clients[0].fdout = THRdata[0];
 
-	monetdb_embedded_initialized = true;
 	c = monetdb_connect();
 	if (c == NULL) {
-		monetdb_embedded_initialized = false;
 		retval = GDKstrdup("Failed to initialize client");
+		failed = 1;
 		goto cleanup;
 	}
 	GDKfataljumpenable = 0;
 
 	// we do not want to jump after this point, since we cannot do so between threads
 	// sanity check, run a SQL query
-	sqres = monetdb_query(c, "SELECT * FROM tables;", 1, &res, NULL, NULL);
-	if (sqres != NULL) {
-		monetdb_embedded_initialized = false;
-		retval = sqres;
-		goto cleanup;
+	retval = monetdb_query(c, "SELECT * FROM tables;", 1, &res, NULL, NULL);
+	if (retval != NULL) {
+		failed = 1;
 	}
 	monetdb_cleanup_result(c, res);
 	monetdb_disconnect(c);
 
-
 cleanup:
+	if(failed) {
+		monetdb_shutdown();
+		monetdb_embedded_initialized = false;
+	}
 	return retval;
 }
 
@@ -430,9 +448,13 @@ str monetdb_get_columns(monetdb_connection conn, const char* schema_name, const 
 	columns = t->columns.set->cnt;
 	*column_count = columns;
 	*column_names = GDKzalloc(sizeof(char*) * columns);
+	if (*column_names == NULL) {
+		return MAL_MALLOC_FAIL;
+	}
 	*column_types = GDKzalloc(sizeof(int) * columns);
-
-	if (*column_names == NULL || *column_types == NULL) {
+	if (*column_types == NULL) {
+		GDKfree(*column_names);
+		*column_names = NULL;
 		return MAL_MALLOC_FAIL;
 	}
 
@@ -475,11 +497,19 @@ void monetdb_shutdown(void) {
 	if (monetdb_embedded_initialized) {
 		SQLepilogue(NULL); // just do it here, i don't trust mserver_reset to call this
 		mserver_reset(0);
-		fclose(embedded_stdout);
-		GDKfree(mal_init_inline);
-		mal_init_inline = NULL;
-		GDKfree(createdb_inline);
-		createdb_inline = NULL;
+		if(embedded_stdout) {
+			fclose(embedded_stdout);
+			embedded_stdout = NULL;
+			embedded_stderr = NULL;
+		}
+		if(mal_init_inline) {
+			GDKfree(mal_init_inline);
+			mal_init_inline = NULL;
+		}
+		if(createdb_inline) {
+			GDKfree(createdb_inline);
+			createdb_inline = NULL;
+		}
 		monetdb_embedded_initialized = 0;
 	}
 }
