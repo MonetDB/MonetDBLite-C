@@ -133,9 +133,7 @@ void mserver_reset(int exit)
 	mal_runtime_reset();
 	mal_module_reset();
 	mal_namespace_reset();
-	if(!exit) {
-		cleanOptimizerPipe();
-	}
+	cleanOptimizerPipe();
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;
