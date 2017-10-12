@@ -48,6 +48,9 @@ static int monetdb_embedded_initialized = 0;
 FILE* embedded_stdout;
 FILE* embedded_stderr;
 
+MT_Lock embedded_lock MT_LOCK_INITIALIZER("embedded_lock");
+
+
 static void monetdb_destroy_column(monetdb_column* column);
 
 typedef struct {
@@ -97,7 +100,7 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	char* sqres = NULL;
 	monetdb_result* res = NULL;
 	void* c;
-
+	MT_lock_set(&embedded_lock);
 	GDKfataljumpenable = 1;
 	if(setjmp(GDKfataljump) != 0) {
 		retval = GDKfatalmsg;
@@ -177,6 +180,7 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 
 
 cleanup:
+	MT_lock_unset(&embedded_lock);
 	return retval;
 }
 
@@ -460,12 +464,14 @@ void monetdb_unregister_progress(monetdb_connection conn) {
 }
 
 void monetdb_shutdown(void) {
+	MT_lock_set(&embedded_lock);
 	if (monetdb_embedded_initialized) {
 		SQLepilogue(NULL); // just do it here, i don't trust mserver_reset to call this
 		mserver_reset(0);
 		fclose(embedded_stdout);
 		monetdb_embedded_initialized = 0;
 	}
+	MT_lock_unset(&embedded_lock);
 }
 
 
