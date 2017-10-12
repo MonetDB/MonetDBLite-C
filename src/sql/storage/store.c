@@ -1661,11 +1661,14 @@ store_exit(void)
 	}
 
 	/* Open transactions have a link to the global transaction therefore
-	   we need busy waiting until all transactions have ended or
-	   (current implementation) simply keep the gtrans alive and simply
-	   exit (but leak memory).
+	   we need busy waiting until all transactions have ended.
 	 */
-	if (!transactions) {
+	while (transactions > 0) {
+		MT_lock_unset(&bs_lock);
+		MT_sleep_ms(100);
+		MT_lock_set(&bs_lock);
+	}
+	if (transactions == 0 && gtrans) {
 		sql_trans_destroy(gtrans);
 		gtrans = NULL;
 	}
