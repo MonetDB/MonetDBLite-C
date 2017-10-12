@@ -1369,13 +1369,13 @@ void
 BBPresetfarms(void)
 {
 	BBPexit();
-	BBPunlock();
 	BBPsize = 0;
 	if (BBPfarms[0].dirname != NULL) {
 		GDKfree((void*) BBPfarms[0].dirname);
 	}
 	BBPfarms[0].dirname = NULL;
 	BBPfarms[0].roles = 0;
+	BBPunlock();
 }
 
 
