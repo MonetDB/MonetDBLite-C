@@ -189,7 +189,7 @@ int monetdb_is_initialized(void) {
 }
 
 
-char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id) {
+static char* monetdb_query_internal(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id, char language) {
 	str res = MAL_SUCCEED;
 	int sres;
 	Client c = (Client) conn;
@@ -236,7 +236,7 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 	}
 	bstream_next(c->fdin);
 
-	b->language = 'S';
+	b->language = language;
 	m->scanner.mode = LINE_N;
 	m->scanner.rs = c->fdin;
 	b->output_format = OFMT_NONE;
@@ -305,6 +305,21 @@ cleanup:
 	}
 	return res;
 }
+
+
+char* monetdb_set_autocommit(monetdb_connection conn, char val) {
+	char query[100];
+	if (val != 1 && val != 0) {
+		return GDKstrdup("Invalid value, need 0 or 1.");
+	}
+	sprintf(query, "auto_commit %i\n;", val);
+	return(monetdb_query_internal(conn, query, 1, NULL, NULL, NULL, 'X'));
+}
+
+char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id) {
+	return(monetdb_query_internal(conn, query, execute, result, affected_rows, prepare_id, 'S'));
+}
+
 
 char* monetdb_append(monetdb_connection conn, const char* schema, const char* table, append_data *data, int ncols) {
 	Client c = (Client) conn;
