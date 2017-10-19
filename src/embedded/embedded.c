@@ -312,14 +312,13 @@ char* monetdb_set_autocommit(monetdb_connection conn, char val) {
 	if (val != 1 && val != 0) {
 		return GDKstrdup("Invalid value, need 0 or 1.");
 	}
-	sprintf(query, "auto_commit %i\n;", val);
+	sprintf(query, "auto_commit %i", val);
 	return(monetdb_query_internal(conn, query, 1, NULL, NULL, NULL, 'X'));
 }
 
 char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id) {
 	return(monetdb_query_internal(conn, query, execute, result, affected_rows, prepare_id, 'S'));
 }
-
 
 char* monetdb_append(monetdb_connection conn, const char* schema, const char* table, append_data *data, int ncols) {
 	Client c = (Client) conn;
@@ -481,7 +480,6 @@ void monetdb_unregister_progress(monetdb_connection conn) {
 void monetdb_shutdown(void) {
 	MT_lock_set(&embedded_lock);
 	if (monetdb_embedded_initialized) {
-		SQLepilogue(NULL); // just do it here, i don't trust mserver_reset to call this
 		mserver_reset(0);
 		fclose(embedded_stdout);
 		monetdb_embedded_initialized = 0;

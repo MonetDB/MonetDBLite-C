@@ -176,8 +176,9 @@ SQLexit(Client c)
 	if (SQLinitialized) {
 		Scenario ms = findScenario("msql"), s = findScenario("sql");
 		for (c = mal_clients; c < mal_clients + MAL_MAXCLIENTS; c++) {
-			if (c->mode == RUNCLIENT){
-				SQLexitClient(c);
+			str msg = SQLexitClient(c);
+			if (msg) {
+				GDKfree(msg);
 			}
 		}
 		mvc_exit();

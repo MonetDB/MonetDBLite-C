@@ -33,6 +33,7 @@ int have_hge;
 #include "mal_runtime.h"
 #include "mal_dataflow.h"
 #include "mal_runtime.h"
+#include "sql_scenario.h"
 
 MT_Lock     mal_contextLock MT_LOCK_INITIALIZER("mal_contextLock");
 MT_Lock     mal_namespaceLock MT_LOCK_INITIALIZER("mal_namespaceLock");
@@ -116,24 +117,18 @@ int mal_init(void){
  */
 void mserver_reset(int exit)
 {
+	char* a = malloc(100);
+	(void) a;
 	GDKprepareExit();
 	MCstopClients(0);
 	mal_dataflow_reset();
-	if (mal_clients) {
-		THRdel(mal_clients->mythread);
-		GDKfree(mal_clients->errbuf);
-		mal_clients->fdin->s = NULL;
-		bstream_destroy(mal_clients->fdin);
-		GDKfree(mal_clients->prompt);
-		GDKfree(mal_clients->username);
-		freeStack(mal_clients->glb);
-		if (mal_clients->nspace)
-			freeModule(mal_clients->nspace);
-	}
-	mal_client_reset();
+
+	SQLepilogue(NULL);
+
 	mal_linker_reset();
 	mal_runtime_reset();
 	mal_module_reset();
+	mal_client_reset();
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;
