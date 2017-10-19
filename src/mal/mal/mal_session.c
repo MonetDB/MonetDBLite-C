@@ -27,48 +27,47 @@
 int
 malBootstrap(void)
 {
-	Client c;
-	str msg, bootfile = "mal_init", s = NULL;
+	Client c = NULL;
+	str msg = NULL, bootfile = "mal_init";
+	char ret = 0;
 
 	c = MCinitClient((oid) 0, 0, 0);
 	if (!c) {
 		GDKerror("malBootstrap: Failed to initialize client");
-		return 0;
+		goto cleanup;
 	}
 	c->nspace = newModule(NULL, putName("user"));
 	if ( (msg = defaultScenario(c)) ) {
-		freeException(msg);
-		MALexitClient(c);
 		GDKerror("malBootstrap: Failed to initialize default scenario");
-		return 0;
+		goto cleanup;
 	}
 	MSinitClientPrg(c, "user", "main");
 	if( MCinitClientThread(c) < 0){
-		MALexitClient(c);
 		GDKerror("malBootstrap: Failed to create client thread");
-		return 0;
+		goto cleanup;
 	}
-	s = malInclude(c, bootfile, 0);
-	if (s != NULL) {
-		GDKerror("malBootstrap: Failed to load startup script %s", s);
-		MALexitClient(c);
-		GDKfree(s);
-		return 0;
+	msg = malInclude(c, bootfile, 0);
+	if (msg != NULL) {
+		GDKerror("malBootstrap: Failed to load startup script %s", msg);
+		goto cleanup;
 	}
 	pushEndInstruction(c->curprg->def);
 	chkProgram(c->fdout, c->nspace, c->curprg->def);
 	if (c->curprg->def->errors) {
 		GDKerror("malBootstrap: Failed to check startup script %s", GDKerrbuf);
+		goto cleanup;
+	}
+	msg = MALengine(c);
+	if (msg != MAL_SUCCEED) {
+		goto cleanup;
+	}
+	ret = 1;
+cleanup:
+	freeException(msg);
+	if (c) {
 		MALexitClient(c);
-		return 0;
 	}
-	s = MALengine(c);
-	if (s != MAL_SUCCEED) {
-		GDKfree(s);
-		return 0;
-	}
-	MALexitClient(c);
-	return 1;
+	return ret;
 }
 
 /*

@@ -121,6 +121,19 @@ void mserver_reset(int exit)
 	MCstopClients(0);
 	mal_dataflow_reset();
 
+	// this is created in bootstrap and not cleaned up by MalClientExit so we do it here so we don't leak
+	if (mal_clients) {
+		THRdel(mal_clients->mythread);
+		GDKfree(mal_clients->errbuf);
+		mal_clients->fdin->s = NULL;
+		bstream_destroy(mal_clients->fdin);
+		GDKfree(mal_clients->prompt);
+		GDKfree(mal_clients->username);
+		freeStack(mal_clients->glb);
+		if (mal_clients->nspace)
+			freeModule(mal_clients->nspace);
+	}
+
 	SQLepilogue(NULL);
 
 	mal_linker_reset();
