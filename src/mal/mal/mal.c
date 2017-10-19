@@ -117,8 +117,6 @@ int mal_init(void){
  */
 void mserver_reset(int exit)
 {
-	char* a = malloc(100);
-	(void) a;
 	GDKprepareExit();
 	MCstopClients(0);
 	mal_dataflow_reset();
