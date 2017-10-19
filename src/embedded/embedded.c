@@ -200,6 +200,7 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 	char* nq;
 	buffer query_buf;
 	stream *query_stream;
+	monetdb_result_internal *res_internal = NULL;
 
 	// TODO what about execute flag?! remove when result set is there for prepared stmts
 	(void) execute;
@@ -243,7 +244,14 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 	m->user_id = m->role_id = USER_MONETDB;
 	m->errstr[0] = '\0';
 
+
 	if (result) {
+		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
+		if (!res_internal) {
+			res = GDKstrdup("Malloc fail");
+			goto cleanup;
+		}
+		*result  = (monetdb_result*) res_internal;
 		m->reply_size = -2; /* do not clean up result tables */
 	}
 
@@ -268,11 +276,6 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 
 
 	if (result && m->results) {
-		monetdb_result_internal *res_internal = GDKzalloc(sizeof(monetdb_result_internal));
-		if (!res_internal) {
-			res = GDKstrdup("Malloc fail");
-			goto cleanup;
-		}
 		res_internal->res.ncols = m->results->nr_cols;
 		if (m->results->nr_cols > 0) {
 			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
@@ -285,7 +288,6 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 			GDKfree(res_internal);
 			goto cleanup;
 		}
-		*result  = (monetdb_result*) res_internal;
 		res_internal->res.type = (char) m->results->query_type;
 		res_internal->res.id = (size_t) m->results->query_id;
 		// tODO: check alloc
