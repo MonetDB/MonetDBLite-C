@@ -34,6 +34,7 @@ int have_hge;
 #include "mal_runtime.h"
 #include "mal_dataflow.h"
 #include "mal_runtime.h"
+#include "sql_scenario.h"
 
 MT_Lock     mal_contextLock MT_LOCK_INITIALIZER("mal_contextLock");
 MT_Lock     mal_namespaceLock MT_LOCK_INITIALIZER("mal_namespaceLock");
@@ -86,7 +87,9 @@ int mal_init(void){
 	MT_lock_init( &mal_copyLock, "mal_copyLock");
 	MT_lock_init( &mal_delayLock, "mal_delayLock");
 	MT_lock_init( &mal_beatLock, "mal_beatLock");
-	MT_lock_init( &mal_oltpLock, "mal_beatLock");
+	MT_lock_init( &mal_oltpLock, "mal_oltpLock");
+	MT_lock_init( &mal_mgmtLock, "mal_mgmtLock");
+
 #endif
 
 	tstAligned();
@@ -97,8 +100,9 @@ int mal_init(void){
 #ifndef HAVE_EMBEDDED
 	initHeartbeat();
 #endif
-	if( malBootstrap() == 0)
+	if( malBootstrap() == 0) {
 		return -1;
+	}
 	return 0;
 }
 
@@ -117,6 +121,8 @@ void mserver_reset(int exit)
 	GDKprepareExit();
 	MCstopClients(0);
 	mal_dataflow_reset();
+
+	// this is created in bootstrap and not cleaned up by MalClientExit so we do it here so we don't leak
 	if (mal_clients) {
 		THRdel(mal_clients->mythread);
 		GDKfree(mal_clients->errbuf);
@@ -128,12 +134,15 @@ void mserver_reset(int exit)
 		if (mal_clients->nspace)
 			freeModule(mal_clients->nspace);
 	}
-	mal_client_reset();
+
+	SQLepilogue(NULL);
+
 	mal_linker_reset();
 	mal_runtime_reset();
 	mal_module_reset();
 	mal_namespace_reset();
 	cleanOptimizerPipe();
+	mal_client_reset();
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;

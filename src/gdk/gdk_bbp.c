@@ -1375,6 +1375,7 @@ BBPresetfarms(void)
 	}
 	BBPfarms[0].dirname = NULL;
 	BBPfarms[0].roles = 0;
+	BBPunlock();
 }
 
 

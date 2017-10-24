@@ -110,6 +110,7 @@ embedded_export void  monetdb_disconnect(monetdb_connection conn);
 embedded_export char* monetdb_startup(char* dbdir, char silent, char sequential);
 embedded_export int   monetdb_is_initialized(void);
 
+embedded_export char* monetdb_set_autocommit(monetdb_connection conn, char val);
 embedded_export char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long *affected_rows, long* prepare_id);
 embedded_export monetdb_column* monetdb_result_fetch(monetdb_result* result, size_t column_index);
 embedded_export void* monetdb_result_fetch_rawcol(monetdb_result* result, size_t column_index); // actually a res_col

@@ -48,6 +48,8 @@ static int monetdb_embedded_initialized = 0;
 FILE* embedded_stdout = NULL;
 FILE* embedded_stderr = NULL;
 
+MT_Lock embedded_lock MT_LOCK_INITIALIZER("embedded_lock");
+
 static void monetdb_destroy_column(monetdb_column* column);
 
 typedef struct {
@@ -98,6 +100,7 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	void* c;
 	int failed = 0;
 
+	MT_lock_set(&embedded_lock);
 	GDKfataljumpenable = 1;
 	if(setjmp(GDKfataljump) != 0) {
 		retval = GDKfatalmsg;
@@ -195,6 +198,7 @@ cleanup:
 		monetdb_shutdown();
 		monetdb_embedded_initialized = false;
 	}
+	MT_lock_unset(&embedded_lock);
 	return retval;
 }
 
@@ -203,7 +207,7 @@ int monetdb_is_initialized(void) {
 }
 
 
-char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id) {
+static char* monetdb_query_internal(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id, char language) {
 	str res = MAL_SUCCEED;
 	int sres;
 	Client c = (Client) conn;
@@ -251,7 +255,7 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 	}
 	bstream_next(c->fdin);
 
-	b->language = 'S';
+	b->language = language;
 	m->scanner.mode = LINE_N;
 	m->scanner.rs = c->fdin;
 	b->output_format = OFMT_NONE;
@@ -259,6 +263,18 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 	m->errstr[0] = '\0';
 
 	if (result) {
+		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
+		if (!res_internal) {
+			res = GDKstrdup("Malloc fail");
+			goto cleanup;
+		}
+		if (m->emode == m_execute) {
+			res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
+		} else if (m->emode & m_prepare) {
+			res_internal->res.type = (char) Q_PREPARE;
+		} else {
+			res_internal->res.type = (char) m->type;
+		*result  = (monetdb_result*) res_internal;
 		m->reply_size = -2; /* do not clean up result tables */
 	}
 
@@ -277,43 +293,28 @@ char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_
 		goto cleanup;
 	}
 
-	if (affected_rows) {
+	if (!m->results && m->rowcnt >= 0 && affected_rows) {
 		*affected_rows = m->rowcnt;
 	}
 
-	if (result) {
-		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
-		if (!res_internal) {
+	if (result && m->results) {
+		res_internal->res.ncols = m->results->nr_cols;
+		if (m->results->nr_cols > 0) {
+			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
+			BBPunfix(m->results->cols[0].b);
+		}
+		res_internal->monetdb_resultset = m->results;
+		res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column*) * res_internal->res.ncols);
+		if (!res_internal->converted_columns) {
 			res = GDKstrdup("Malloc fail");
+			GDKfree(res_internal);
 			goto cleanup;
 		}
-		if (m->emode == m_execute) {
-			res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
-		} else if (m->emode & m_prepare) {
-			res_internal->res.type = (char) Q_PREPARE;
-		} else {
-			res_internal->res.type = (char) m->type;
-		}
-		res_internal->res.id = (size_t) m->last_id;
-
-		if (m->results) {
-			res_internal->res.ncols = m->results->nr_cols;
-			if (m->results->nr_cols > 0) {
-				res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
-				BBPunfix(m->results->cols[0].b);
-			}
-			res_internal->monetdb_resultset = m->results;
-			res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column *) * res_internal->res.ncols);
-			if (!res_internal->converted_columns) {
-				res = GDKstrdup("Malloc fail");
-				GDKfree(res_internal);
-				goto cleanup;
-			}
-		}
-		*result = (monetdb_result*) res_internal;
+		res_internal->res.type = (char) m->results->query_type;
+		res_internal->res.id = (size_t) m->results->query_id;
+		// tODO: check alloc
+		m->results = NULL;
 	}
-	// tODO: check alloc
-	m->results = NULL;
 
 cleanup:
 
@@ -327,6 +328,19 @@ cleanup:
 		return GDKstrdup("Cannot COMMIT/ROLLBACK without a valid transaction.");
 	}
 	return res;
+}
+
+char* monetdb_set_autocommit(monetdb_connection conn, char val) {
+	char query[100];
+	if (val != 1 && val != 0) {
+		return GDKstrdup("Invalid value, need 0 or 1.");
+	}
+	sprintf(query, "auto_commit %i", val);
+	return(monetdb_query_internal(conn, query, 1, NULL, NULL, NULL, 'X'));
+}
+
+char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id) {
+	return(monetdb_query_internal(conn, query, execute, result, affected_rows, prepare_id, 'S'));
 }
 
 char* monetdb_append(monetdb_connection conn, const char* schema, const char* table, append_data *data, int ncols) {
@@ -494,8 +508,8 @@ void monetdb_unregister_progress(monetdb_connection conn) {
 }
 
 void monetdb_shutdown(void) {
+	MT_lock_set(&embedded_lock);
 	if (monetdb_embedded_initialized) {
-		SQLepilogue(NULL); // just do it here, i don't trust mserver_reset to call this
 		mserver_reset(0);
 		if(embedded_stdout) {
 			fclose(embedded_stdout);
@@ -512,6 +526,7 @@ void monetdb_shutdown(void) {
 		}
 		monetdb_embedded_initialized = 0;
 	}
+	MT_lock_unset(&embedded_lock);
 }
 
 
