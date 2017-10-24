@@ -52,6 +52,8 @@ MT_Lock embedded_lock MT_LOCK_INITIALIZER("embedded_lock");
 
 static void monetdb_destroy_column(monetdb_column* column);
 
+static void monetdb_shutdown_internal(void);
+
 typedef struct {
 	monetdb_result res;
 	res_table *monetdb_resultset;
@@ -195,7 +197,7 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 
 cleanup:
 	if(failed) {
-		monetdb_shutdown();
+		monetdb_shutdown_internal();
 		monetdb_embedded_initialized = false;
 	}
 	MT_lock_unset(&embedded_lock);
@@ -262,22 +264,6 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 	m->user_id = m->role_id = USER_MONETDB;
 	m->errstr[0] = '\0';
 
-	if (result) {
-		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
-		if (!res_internal) {
-			res = GDKstrdup("Malloc fail");
-			goto cleanup;
-		}
-		if (m->emode == m_execute) {
-			res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
-		} else if (m->emode & m_prepare) {
-			res_internal->res.type = (char) Q_PREPARE;
-		} else {
-			res_internal->res.type = (char) m->type;
-		*result  = (monetdb_result*) res_internal;
-		m->reply_size = -2; /* do not clean up result tables */
-	}
-
 	MSinitClientPrg(c, "user", qname);
 	res = SQLparser(c);
 	if (res != MAL_SUCCEED) {
@@ -297,23 +283,39 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 		*affected_rows = m->rowcnt;
 	}
 
-	if (result && m->results) {
-		res_internal->res.ncols = m->results->nr_cols;
-		if (m->results->nr_cols > 0) {
-			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
-			BBPunfix(m->results->cols[0].b);
-		}
-		res_internal->monetdb_resultset = m->results;
-		res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column*) * res_internal->res.ncols);
-		if (!res_internal->converted_columns) {
+	if (result) {
+		res_internal = GDKzalloc(sizeof(monetdb_result_internal));
+		if (!res_internal) {
 			res = GDKstrdup("Malloc fail");
-			GDKfree(res_internal);
 			goto cleanup;
 		}
-		res_internal->res.type = (char) m->results->query_type;
-		res_internal->res.id = (size_t) m->results->query_id;
-		// tODO: check alloc
-		m->results = NULL;
+		if (m->emode == m_execute) {
+			res_internal->res.type = (m->results) ? (char) Q_TABLE : (char) Q_UPDATE;
+		} else if (m->emode & m_prepare) {
+			res_internal->res.type = (char) Q_PREPARE;
+		} else {
+			res_internal->res.type = (char) m->type;
+		}
+		res_internal->res.id = (size_t) m->last_id;
+		*result  = (monetdb_result*) res_internal;
+		m->reply_size = -2; /* do not clean up result tables */
+
+		if (m->results) {
+			res_internal->res.ncols = m->results->nr_cols;
+			if (m->results->nr_cols > 0) {
+				res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
+				BBPunfix(m->results->cols[0].b);
+			}
+			res_internal->monetdb_resultset = m->results;
+			res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column*) * res_internal->res.ncols);
+			if (!res_internal->converted_columns) {
+				res = GDKstrdup("Malloc fail");
+				GDKfree(res_internal);
+				goto cleanup;
+			}
+			// tODO: check alloc
+			m->results = NULL;
+		}
 	}
 
 cleanup:
@@ -507,8 +509,7 @@ void monetdb_unregister_progress(monetdb_connection conn) {
 	MT_lock_unset(&c->progress_lock);
 }
 
-void monetdb_shutdown(void) {
-	MT_lock_set(&embedded_lock);
+void monetdb_shutdown_internal(void) {
 	if (monetdb_embedded_initialized) {
 		mserver_reset(0);
 		if(embedded_stdout) {
@@ -526,6 +527,11 @@ void monetdb_shutdown(void) {
 		}
 		monetdb_embedded_initialized = 0;
 	}
+}
+
+void monetdb_shutdown(void) {
+	MT_lock_set(&embedded_lock);
+	monetdb_shutdown_internal();
 	MT_lock_unset(&embedded_lock);
 }
 

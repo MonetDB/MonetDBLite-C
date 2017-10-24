@@ -28,7 +28,6 @@
  */
 #define MODULE_HASH_SIZE 1024
 Module moduleIndex[MODULE_HASH_SIZE] = { NULL };
-MT_Lock mal_modules_lock MT_LOCK_INITIALIZER("MT_modules_lock");
 
 static void newModuleSpace(Module scope){
 	scope->space = (Symbol *) GDKzalloc(MAXSCOPE * sizeof(Symbol));
@@ -40,19 +39,14 @@ void
 mal_module_reset(void)
 {
 	int i;
-	Module m;
 	for(i = 0; i < MODULE_HASH_SIZE; i++) {
-		MT_lock_set(&mal_modules_lock);
-		m = moduleIndex[i];
-		MT_lock_unset(&mal_modules_lock);
+		Module m = moduleIndex[i];
 		while(m) {
 			Module next = m->link;
 			freeModule(m);
 			m = next;
 		}
-		MT_lock_set(&mal_modules_lock);
 		moduleIndex[i] = NULL;
-		MT_lock_unset(&mal_modules_lock);
 	}
 }
 
@@ -62,9 +56,8 @@ static int getModuleIndex(str name) {
 
 static void clrModuleIndex(Module cur){
 	int index = getModuleIndex(cur->name);
-	Module prev = NULL, m = NULL;
-	MT_lock_set(&mal_modules_lock);
-	m = moduleIndex[index];
+	Module prev = NULL;
+	Module m = moduleIndex[index];
 	while(m) {
 		if (m == cur) {
 			if (!prev) {
@@ -72,39 +65,31 @@ static void clrModuleIndex(Module cur){
 			} else {
 				prev->link = m->link;
 			}
-			MT_lock_unset(&mal_modules_lock);
 			return;
 		}
 		prev = m;
 		m = m->link;
 	}
-	MT_lock_unset(&mal_modules_lock);
 	assert(0);
 }
 
 static void setModuleIndex(Module cur){
 	int index = getModuleIndex(cur->name);
-	MT_lock_set(&mal_modules_lock);
 	cur->link = moduleIndex[index];
 	moduleIndex[index] = cur;
-	MT_lock_unset(&mal_modules_lock);
 }
 
 
 static Module getModule(str name) {
 	int index = getModuleIndex(name);
-	Module m;
-	MT_lock_set(&mal_modules_lock);
-	m = moduleIndex[index];
+	Module m = moduleIndex[index];
 	while(m) {
 		//if (strcmp(name, m->name) == 0) {
 		if (name == m->name) {
-			MT_lock_unset(&mal_modules_lock);
 			return m;
 		}
 		m = m->link;
 	}
-	MT_lock_unset(&mal_modules_lock);
 	return NULL;
 }
 
@@ -112,7 +97,6 @@ void getModuleList(Module** out, int* length) {
 	int i;
 	int moduleCount = 0;
 	int currentIndex = 0;
-	MT_lock_set(&mal_modules_lock);
 	for(i = 0; i < MODULE_HASH_SIZE; i++) {
 		Module m = moduleIndex[i];
 		while(m) {
@@ -122,7 +106,7 @@ void getModuleList(Module** out, int* length) {
 	}
 	*out = GDKzalloc(moduleCount * sizeof(Module));
 	if (*out == NULL) {
-		goto done;
+		return;
 	}
 	*length = moduleCount;
 
@@ -133,8 +117,6 @@ void getModuleList(Module** out, int* length) {
 			m = m->link;
 		}
 	}
-	done:
-	MT_lock_unset(&mal_modules_lock);
 }
 
 void freeModuleList(Module* list) {
@@ -335,7 +317,7 @@ int isModuleDefined(Module scope, str name){
 
 /*
  * The routine findSymbolInModule starts at a MAL scope level and searches
- * an element amongst the peers. 
+ * an element amongst the peers.
  *
  * In principal, external variables are subject to synchronization actions
  * to avoid concurrency conflicts. This also implies, that any parallel
@@ -359,4 +341,3 @@ Symbol findSymbol(Module nspace, str mod, str fcn) {
 	Module m = findModule(nspace, mod);
 	return findSymbolInModule(m, fcn);
 }
-
