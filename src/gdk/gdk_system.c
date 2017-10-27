@@ -429,7 +429,8 @@ pthread_sema_down(pthread_sema_t *s)
 void
 MT_global_exit(int s)
 {
-	exit(s);
+	(void) s;
+	// nothing
 }
 
 MT_Id

@@ -226,40 +226,6 @@ BATSIGignore(int nr)
 }
 #endif
 
-#ifndef NATIVE_WIN32
-static void
-BATSIGinterrupt(int nr)
-{
-	GDKexit(nr);
-}
-
-static int
-BATSIGinit(void)
-{
-/* HACK to pacify compiler */
-#if (defined(__INTEL_COMPILER) && (SIZEOF_VOID_P > SIZEOF_INT))
-#undef  SIG_IGN			/*((__sighandler_t)1 ) */
-#define SIG_IGN   ((__sighandler_t)1L)
-#endif
-
-#ifdef SIGPIPE
-	(void) signal(SIGPIPE, SIG_IGN);
-#endif
-#ifdef __SIGRTMIN
-	(void) signal(__SIGRTMIN + 1, SIG_IGN);
-#endif
-#ifdef SIGHUP
-	(void) signal(SIGHUP, MT_global_exit);
-#endif
-#ifdef SIGINT
-	(void) signal(SIGINT, BATSIGinterrupt);
-#endif
-#ifdef SIGTERM
-	(void) signal(SIGTERM, BATSIGinterrupt);
-#endif
-	return 0;
-}
-#endif /* NATIVE_WIN32 */
 
 /* memory thresholds; these values some "sane" constants only, really
  * set in GDKinit() */
@@ -697,17 +663,11 @@ void
 GDKexit(int status)
 {
 	if (GET_GDKLOCK(0) == NULL) {
-#ifdef HAVE_EMBEDDED
+		assert(0);
 		return;
-#endif
-		/* no database lock, so no threads, so exit now */
-		exit(status);
 	}
 	GDKprepareExit();
 	GDKreset(status, 1);
-#ifndef HAVE_EMBEDDED
-	MT_exit_thread(-1);
-#endif
 }
 
 /*
@@ -1017,9 +977,6 @@ GDKfatal(const char *format, ...)
 	va_list ap;
 
 	GDKdebug |= IOMASK;
-#ifndef NATIVE_WIN32
-	BATSIGinit();
-#endif
 	if (!strncmp(format, GDKFATAL, len)) {
 		len = 0;
 	} else {
@@ -1041,7 +998,6 @@ GDKfatal(const char *format, ...)
 		if (GDKexiting()) {
 			fflush(stdout);
 			MT_exit_thread(1);
-			/* exit(1); */
 		} else {
 			GDKlog(GET_GDKLOCK(0), "%s", message);
 	#ifdef COREDUMP

@@ -1260,10 +1260,7 @@ BBPheader(FILE *fp)
 		GDKfatal("BBPinit: BBP.dir is empty");
 	}
 	if (sscanf(buf, "BBP.dir, GDKversion %d\n", &bbpversion) != 1) {
-		GDKerror("BBPinit: old BBP without version number");
-		GDKerror("dump the database using a compatible version,");
-		GDKerror("then restore into new database using this version.\n");
-		exit(1);
+		GDKfatal("BBPinit: old BBP without version number. Dump the database using a compatible version, then restore into new database using this version.\n");
 	}
 	if (bbpversion != GDKLIBRARY &&
 	    bbpversion != GDKLIBRARY_BADEMPTY &&
