@@ -1,5 +1,3 @@
-#include <assert.h>
-
 extern FILE* embedded_stdout;
 extern FILE* embedded_stderr;
 

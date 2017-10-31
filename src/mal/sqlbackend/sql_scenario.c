@@ -149,17 +149,8 @@ SQLprelude(void *ret)
 
 	tmp = SQLinit();
 	if (tmp != MAL_SUCCEED) {
-		fprintf(stderr, "Fatal error during initialization:\n%s\n", tmp);
-		freeException(tmp);
-		if ((tmp = GDKerrbuf) && *tmp)
-			fprintf(stderr, "GDK reported: %s\n", tmp);
-		fflush(stderr);
-		exit(1);
+		GDKfatal("Fatal error during initialization:\n%s\n", tmp);
 	}
-#ifndef HAVE_EMBEDDED
-	fprintf(stdout, "# MonetDB/SQL module loaded\n");
-	fflush(stdout);		/* make merovingian see this *now* */
-#endif
 	/* only register availability of scenarios AFTER we are inited! */
 	s->name = "sql";
 	return MAL_SUCCEED;
