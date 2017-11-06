@@ -1062,6 +1062,7 @@ mvc_export_prepare(mvc *c, stream *out, cq *q, str w)
 	sql_arg *a;
 	sql_subtype *t;
 	sql_rel *r = q->rel;
+	BAT *b_order  = NULL;
 	BAT *b_inout  = COLnew(0, TYPE_str, nrows, TRANSIENT);
 	BAT *b_offset = COLnew(0, TYPE_int, nrows, TRANSIENT);
 	BAT *b_type   = COLnew(0, TYPE_str, nrows, TRANSIENT);
@@ -1136,8 +1137,11 @@ mvc_export_prepare(mvc *c, stream *out, cq *q, str w)
 			}
 		}
 	}
-
-	c->results = res_table_create(c->session->tr, c->result_id++, q->id, 8, Q_PREPARE, NULL, NULL);
+	b_order = BATdense(0, 0, BATcount(b_inout));
+	if (!b_order) {
+		return -1; // this leaks
+	}
+	c->results = res_table_create(c->session->tr, c->result_id++, q->id, 8, Q_PREPARE, NULL, b_order);
 	if (!c->results ||
 			!res_col_create(c->session->tr, c->results, "prepare", "result_or_param",   "varchar", 0, 0, TYPE_bat, b_inout) ||
 			!res_col_create(c->session->tr, c->results, "prepare", "col_index",         "int",     0, 0, TYPE_bat, b_offset) ||

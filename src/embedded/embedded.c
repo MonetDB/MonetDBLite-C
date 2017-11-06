@@ -302,9 +302,9 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 
 		if (m->results) {
 			res_internal->res.ncols = m->results->nr_cols;
-			if (m->results->nr_cols > 0) {
-				res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
-				BBPunfix(m->results->cols[0].b);
+			if (m->results->nr_cols > 0 && m->results->order) {
+				res_internal->res.nrows = BATcount(BATdescriptor(m->results->order));
+				BBPunfix(m->results->order);
 			}
 			res_internal->monetdb_resultset = m->results;
 			res_internal->converted_columns = GDKzalloc(sizeof(monetdb_column*) * res_internal->res.ncols);
