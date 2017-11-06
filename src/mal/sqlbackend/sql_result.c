@@ -1062,7 +1062,7 @@ mvc_export_prepare(mvc *c, stream *out, cq *q, str w)
 	sql_arg *a;
 	sql_subtype *t;
 	sql_rel *r = q->rel;
-	BAT *b_order  = BATdense(0, 0, nrows);
+	BAT *b_order  = NULL;
 	BAT *b_inout  = COLnew(0, TYPE_str, nrows, TRANSIENT);
 	BAT *b_offset = COLnew(0, TYPE_int, nrows, TRANSIENT);
 	BAT *b_type   = COLnew(0, TYPE_str, nrows, TRANSIENT);
@@ -1073,7 +1073,7 @@ mvc_export_prepare(mvc *c, stream *out, cq *q, str w)
 	BAT *b_column = COLnew(0, TYPE_str, nrows, TRANSIENT);
 	int result_offset = 0, param_offset = 0;
 	(void) out;
-	if (!b_order || !b_inout || !b_type || !b_digits || !b_scale || !b_schema || !b_table || !b_column) {
+	if (!b_inout || !b_type || !b_digits || !b_scale || !b_schema || !b_table || !b_column) {
 		return -1;
 	}
 	(void) w;
@@ -1137,7 +1137,10 @@ mvc_export_prepare(mvc *c, stream *out, cq *q, str w)
 			}
 		}
 	}
-
+	b_order = BATdense(0, 0, BATcount(b_inout));
+	if (!b_order) {
+		return -1; // this leaks
+	}
 	c->results = res_table_create(c->session->tr, c->result_id++, q->id, 8, Q_PREPARE, NULL, b_order);
 	if (!c->results ||
 			!res_col_create(c->session->tr, c->results, "prepare", "result_or_param",   "varchar", 0, 0, TYPE_bat, b_inout) ||
