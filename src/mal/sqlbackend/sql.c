@@ -1983,13 +1983,18 @@ mvc_row_result_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	mvc *m = NULL;
 	ptr v;
 	int mtype;
-	BAT  *tbl, *atr, *tpe,*len,*scale;
+	BAT  *tbl = NULL, *atr = NULL, *tpe = NULL, *len = NULL, *scale = NULL, *order=NULL;
 
 	if ((msg = getSQLContext(cntxt, mb, &m, NULL)) != NULL)
 		return msg;
 	if ((msg = checkSQLContext(cntxt)) != NULL)
 		return msg;
-	res = *res_id = mvc_result_table(m, mb->tag, pci->argc - (pci->retc + 5), 1, NULL);
+	order = BATdense(0, 0, 1);
+	if (!order) {
+		msg = createException(SQL, "sql.resultSet", MAL_MALLOC_FAIL);
+		goto wrapup_result_set;
+	}
+	res = *res_id = mvc_result_table(m, mb->tag, pci->argc - (pci->retc + 5), 1, order);
 
 	tbl = BATdescriptor(tblId);
 	atr = BATdescriptor(atrId);
@@ -2057,14 +2062,19 @@ mvc_export_row_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	res_table *t = NULL;
 	ptr v;
 	int mtype;
-	BAT  *tbl = NULL, *atr = NULL, *tpe = NULL,*len = NULL,*scale = NULL;
+	BAT  *tbl = NULL, *atr = NULL, *tpe = NULL,*len = NULL,*scale = NULL, *order=NULL;
 
 	(void) format;
 	if ((msg = getSQLContext(cntxt, mb, &m, NULL)) != NULL)
 		return msg;
 	if ((msg = checkSQLContext(cntxt)) != NULL)
 		return msg;
-	res = *res_id = mvc_result_table(m, mb->tag, pci->argc - (pci->retc + 11), 1, NULL);
+	order = BATdense(0, 0, 1);
+	if (!order) {
+		msg = createException(SQL, "sql.resultSet", MAL_MALLOC_FAIL);
+		goto wrapup_result_set;
+	}
+	res = *res_id = mvc_result_table(m, mb->tag, pci->argc - (pci->retc + 11), 1, order);
 
 	t = m->results;
 	if (res < 0){
@@ -2420,6 +2430,7 @@ mvc_scalar_value_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	int mtype = getArgType(mb, pci, 7);
 	str msg;
 	backend *b = NULL;
+	BAT* order = NULL;
 	int res_id;
 	(void) mb;		/* NOT USED */
 	if ((msg = checkSQLContext(cntxt)) != NULL)
@@ -2427,9 +2438,12 @@ mvc_scalar_value_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	b = cntxt->sqlcontext;
 	if (ATOMextern(mtype))
 		p = *(ptr *) p;
-
+	order = BATdense(0, 0, 1);
+	if (!order) {
+		return createException(SQL, "sql.resultSet", MAL_MALLOC_FAIL);
+	}
 	// scalar values are single-column result sets
-	res_id = mvc_result_table(b->mvc, mb->tag, 1, 1, NULL);
+	res_id = mvc_result_table(b->mvc, mb->tag, 1, 1, order);
 	if (mvc_result_value(b->mvc, tn, cn, type, digits, scale, p, mtype))
 		throw(SQL, "sql.exportValue", "failed");
 	if (b->output_format == OFMT_NONE) {
