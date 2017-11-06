@@ -278,7 +278,7 @@ static char* monetdb_query_internal(monetdb_connection conn, char* query, char e
 	if (result && m->results) {
 		res_internal->res.ncols = m->results->nr_cols;
 		if (m->results->nr_cols > 0) {
-			res_internal->res.nrows = BATcount(BATdescriptor(m->results->cols[0].b));
+			res_internal->res.nrows = BATcount(BATdescriptor(m->results->order));
 			BBPunfix(m->results->cols[0].b);
 		}
 		res_internal->monetdb_resultset = m->results;
