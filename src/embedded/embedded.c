@@ -305,6 +305,10 @@ cleanup:
 	if (!sres && !res) {
 		return GDKstrdup("Cannot COMMIT/ROLLBACK without a valid transaction.");
 	}
+	if (res != MAL_SUCCEED && res_internal != NULL) {
+		GDKfree(res_internal);
+		*result = NULL;
+	}
 	return res;
 }
 
