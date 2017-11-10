@@ -46,8 +46,12 @@ static int monetdbliteQuery(
 	monetdb_connection p = (monetdb_connection) pConn;
 	monetdb_result *rptr;
 	size_t r, c;
+	char* res = NULL;
 	(void) zType;
-	monetdb_query(p, (char*) zSql, 1, &rptr, NULL, NULL);
+	res = monetdb_query(p, (char*) zSql, 1, &rptr, NULL, NULL);
+	if (res != NULL) {
+		return 0;
+	}
 	*pazResult = malloc(sizeof(char*) * rptr->nrows * rptr->ncols);
 	if (!*pazResult ) {
 		return 1;
