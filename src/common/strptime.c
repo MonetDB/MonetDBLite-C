@@ -248,8 +248,8 @@ strptime (const char *buf, const char *fmt, struct tm *timeptr)
 		timeptr->tm_year = (ret * 100) - tm_year_base;
 		buf = s;
 		break;
-	    case 'c' :
-		abort ();
+//	    case 'c' :
+//		abort ();
 	    case 'D' :		/* %m/%d/%y */
 		s = strptime (buf, "%m/%d/%y", timeptr);
 		if (s == NULL)
@@ -410,8 +410,8 @@ strptime (const char *buf, const char *fmt, struct tm *timeptr)
 		timeptr->tm_year = ret - tm_year_base;
 		buf = s;
 		break;
-	    case 'Z' :
-		abort ();
+//	    case 'Z' :
+//		abort ();
 	    case '\0' :
 		--fmt;
 		/* FALLTHROUGH */
