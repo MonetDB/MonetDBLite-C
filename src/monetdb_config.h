@@ -56,13 +56,8 @@
 /* Directory separator */
 #define DIR_SEP_STR "\\"
 
-#if _WIN64
 #define LLFMT "%I64d"
 #define ULLFMT "%I64u"
-#else
-#define LLFMT "%d"
-#define ULLFMT "%u"
-#endif
 
 #endif
 
