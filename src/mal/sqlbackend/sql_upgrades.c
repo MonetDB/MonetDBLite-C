@@ -23,6 +23,167 @@
 #endif
 
 
+/* this function can be used to recreate the system tables (types,
+ * functions, args) when internal types and/or functions have changed
+ * (i.e. the ones in sql_types.c) */
+static str
+sql_fix_system_tables(Client c, mvc *sql)
+{
+	size_t bufsize = 1000000, pos = 0;
+	char *buf = GDKmalloc(bufsize), *err = NULL;
+	char *schema = stack_get_string(sql, "current_schema");
+	node *n;
+	sql_schema *s;
+
+	if (buf == NULL)
+		throw(SQL, "sql_fix_system_tables", MAL_MALLOC_FAIL);
+	s = mvc_bind_schema(sql, "sys");
+	pos += snprintf(buf + pos, bufsize - pos, "set schema \"sys\";\n");
+
+	pos += snprintf(buf + pos, bufsize - pos,
+			"delete from sys.dependencies where id < 2000;\n");
+
+	/* recreate internal types */
+	pos += snprintf(buf + pos, bufsize - pos,
+			"delete from sys.types where id < 2000;\n");
+	for (n = types->h; n; n = n->next) {
+		sql_type *t = n->data;
+
+		if (t->base.id >= 2000)
+			continue;
+
+		pos += snprintf(buf + pos, bufsize - pos,
+				"insert into sys.types values"
+				" (%d, '%s', '%s', %u, %u, %d, %d, %d);\n",
+				t->base.id, t->base.name, t->sqlname, t->digits,
+				t->scale, t->radix, t->eclass,
+				t->s ? t->s->base.id : s->base.id);
+	}
+
+	/* recreate internal functions */
+	pos += snprintf(buf + pos, bufsize - pos,
+			"delete from sys.functions where id < 2000;\n"
+			"delete from sys.args where func_id not in"
+			" (select id from sys.functions);\n");
+	for (n = funcs->h; n; n = n->next) {
+		sql_func *func = n->data;
+		int number = 0;
+		sql_arg *arg;
+		node *m;
+
+		if (func->base.id >= 2000)
+			continue;
+
+		pos += snprintf(buf + pos, bufsize - pos,
+				"insert into sys.functions values"
+				" (%d, '%s', '%s', '%s',"
+				" %d, %d, %s, %s, %s, %d);\n",
+				func->base.id, func->base.name,
+				func->imp, func->mod, FUNC_LANG_INT,
+				func->type,
+				func->side_effect ? "true" : "false",
+				func->varres ? "true" : "false",
+				func->vararg ? "true" : "false",
+				func->s ? func->s->base.id : s->base.id);
+		if (func->res) {
+			for (m = func->res->h; m; m = m->next, number++) {
+				arg = m->data;
+				pos += snprintf(buf + pos, bufsize - pos,
+						"insert into sys.args"
+						" values"
+						" (%d, %d, 'res_%d',"
+						" '%s', %u, %u, %d,"
+						" %d);\n",
+						store_next_oid(),
+						func->base.id,
+						number,
+						arg->type.type->sqlname,
+						arg->type.digits,
+						arg->type.scale,
+						arg->inout, number);
+			}
+		}
+		for (m = func->ops->h; m; m = m->next, number++) {
+			arg = m->data;
+			if (arg->name)
+				pos += snprintf(buf + pos, bufsize - pos,
+						"insert into sys.args"
+						" values"
+						" (%d, %d, '%s', '%s',"
+						" %u, %u, %d, %d);\n",
+						store_next_oid(),
+						func->base.id,
+						arg->name,
+						arg->type.type->sqlname,
+						arg->type.digits,
+						arg->type.scale,
+						arg->inout, number);
+			else
+				pos += snprintf(buf + pos, bufsize - pos,
+						"insert into sys.args"
+						" values"
+						" (%d, %d, 'arg_%d',"
+						" '%s', %u, %u, %d,"
+						" %d);\n",
+						store_next_oid(),
+						func->base.id,
+						number,
+						arg->type.type->sqlname,
+						arg->type.digits,
+						arg->type.scale,
+						arg->inout, number);
+		}
+	}
+	for (n = aggrs->h; n; n = n->next) {
+		sql_func *aggr = n->data;
+		sql_arg *arg;
+
+		if (aggr->base.id >= 2000)
+			continue;
+
+		pos += snprintf(buf + pos, bufsize - pos,
+				"insert into sys.functions values"
+				" (%d, '%s', '%s', '%s', %d, %d, false,"
+				" %s, %s, %d);\n",
+				aggr->base.id, aggr->base.name, aggr->imp,
+				aggr->mod, FUNC_LANG_INT, aggr->type,
+				aggr->varres ? "true" : "false",
+				aggr->vararg ? "true" : "false",
+				aggr->s ? aggr->s->base.id : s->base.id);
+		arg = aggr->res->h->data;
+		pos += snprintf(buf + pos, bufsize - pos,
+				"insert into sys.args values"
+				" (%d, %d, 'res', '%s', %u, %u, %d, 0);\n",
+				store_next_oid(), aggr->base.id,
+				arg->type.type->sqlname, arg->type.digits,
+				arg->type.scale, arg->inout);
+		if (aggr->ops->h) {
+			arg = aggr->ops->h->data;
+			pos += snprintf(buf + pos, bufsize - pos,
+					"insert into sys.args values"
+					" (%d, %d, 'arg', '%s', %u,"
+					" %u, %d, 1);\n",
+					store_next_oid(), aggr->base.id,
+					arg->type.type->sqlname,
+					arg->type.digits, arg->type.scale,
+					arg->inout);
+		}
+	}
+	pos += snprintf(buf + pos, bufsize - pos,
+			"delete from sys.systemfunctions where function_id < 2000;\n"
+			"insert into sys.systemfunctions"
+			" (select id from sys.functions where id < 2000);\n");
+
+	if (schema)
+		pos += snprintf(buf + pos, bufsize - pos, "set schema \"%s\";\n", schema);
+
+	assert(pos < bufsize);
+	printf("Running database upgrade commands:\n%s\n", buf);
+	err = SQLstatementIntern(c, &buf, "update", 1, 0, NULL);
+	GDKfree(buf);
+	return err;		/* usually MAL_SUCCEED */
+}
+
 #ifdef HAVE_HGE
 static str
 sql_update_hugeint(Client c, mvc *sql)
@@ -482,6 +643,105 @@ sql_update_jul2017(Client c, mvc *sql)
 	return err;		/* usually MAL_SUCCEED */
 }
 
+
+
+static str
+sql_update_jul2017_sp2(Client c)
+{
+	char *qry = "select obj_id from sys.privileges where auth_id = 1 and obj_id in (select id from sys._tables where name in ('keywords', 'table_types', 'dependency_types', 'function_types', 'function_languages', 'key_types', 'index_types', 'privilege_codes', 'environment')) and privileges = 1;\n";
+	char *err = NULL;
+	res_table *output;
+	BAT *b;
+
+	err = SQLstatementIntern(c, &qry, "update", 1, 0, &output);
+	if (err) {
+		return err;
+	}
+
+	b = BATdescriptor(output->cols[0].b);
+	if (b) {
+		if (BATcount(b) < 9) {
+			/* we are missing grants on these system tables, add them */
+			size_t bufsize = 2048, pos = 0;
+			char *buf = GDKmalloc(bufsize);
+
+			if (buf== NULL)
+				throw(SQL, "sql_update_jul2017_sp2", MAL_MALLOC_FAIL);
+
+			/* 51_sys_schema_extensions.sql and 25_debug.sql */
+			pos += snprintf(buf + pos, bufsize - pos,
+				"GRANT SELECT ON sys.keywords TO PUBLIC;\n"
+				"GRANT SELECT ON sys.table_types TO PUBLIC;\n"
+				"GRANT SELECT ON sys.dependency_types TO PUBLIC;\n"
+				"GRANT SELECT ON sys.function_types TO PUBLIC;\n"
+				"GRANT SELECT ON sys.function_languages TO PUBLIC;\n"
+				"GRANT SELECT ON sys.key_types TO PUBLIC;\n"
+				"GRANT SELECT ON sys.index_types TO PUBLIC;\n"
+				"GRANT SELECT ON sys.privilege_codes TO PUBLIC;\n"
+				"GRANT EXECUTE ON FUNCTION sys.environment() TO PUBLIC;\n"
+				"GRANT SELECT ON sys.environment TO PUBLIC;\n"
+				);
+			assert(pos < bufsize);
+			printf("Running database upgrade commands:\n%s\n", buf);
+			err = SQLstatementIntern(c, &buf, "update", 1, 0, NULL);
+			GDKfree(buf);
+		}
+		BBPunfix(b->batCacheid);
+	}
+	res_tables_destroy(output);
+
+	return err;		/* usually NULL */
+}
+
+static str
+sql_update_jul2017_sp3(Client c, mvc *sql)
+{
+	char *err = NULL;
+	sql_schema *sys;
+	sql_table *tab;
+	sql_column *col;
+	oid rid;
+
+	/* if there is no value "sys_update_schemas" in
+	 * sys.functions.name, we need to update the sys.functions
+	 * table */
+	sys = find_sql_schema(sql->session->tr, "sys");
+	tab = find_sql_table(sys, "functions");
+	col = find_sql_column(tab, "name");
+	rid = table_funcs.column_find_row(sql->session->tr, col, "sys_update_schemas", NULL);
+	if (rid == oid_nil) {
+		err = sql_fix_system_tables(c, sql);
+		if (err != NULL)
+			return err;
+	}
+	/* if there is no value "system_update_schemas" in
+	 * sys.triggers.name, we need to add the triggers */
+	tab = find_sql_table(sys, "triggers");
+	col = find_sql_column(tab, "name");
+	rid = table_funcs.column_find_row(sql->session->tr, col, "system_update_schemas", NULL);
+	if (rid == oid_nil) {
+		char *schema = stack_get_string(sql, "current_schema");
+		size_t bufsize = 1024, pos = 0;
+		char *buf = GDKmalloc(bufsize);
+		if (buf == NULL)
+			throw(SQL, "sql_update_jul2017_sp3", MAL_MALLOC_FAIL);
+		pos += snprintf(
+			buf + pos,
+			bufsize - pos,
+			"set schema \"sys\";\n"
+			"create trigger system_update_schemas after update on sys.schemas for each statement call sys_update_schemas();\n"
+			"create trigger system_update_tables after update on sys._tables for each statement call sys_update_tables();\n");
+		if (schema)
+			pos += snprintf(buf + pos, bufsize - pos, "set schema \"%s\";\n", schema);
+		assert(pos < bufsize);
+		printf("Running database upgrade commands:\n%s\n", buf);
+		err = SQLstatementIntern(c, &buf, "update", 1, 0, NULL);
+		GDKfree(buf);
+	}
+	return err;
+}
+
+
 void
 SQLupgrades(Client c, mvc *m)
 {
@@ -519,4 +779,15 @@ SQLupgrades(Client c, mvc *m)
 			freeException(err);
 		}
 	}
+
+	if ((err = sql_update_jul2017_sp2(c)) != NULL) {
+		fprintf(stderr, "!%s\n", err);
+		freeException(err);
+	}
+
+	if ((err = sql_update_jul2017_sp3(c, m)) != NULL) {
+		fprintf(stderr, "!%s\n", err);
+		freeException(err);
+	}
+
 }

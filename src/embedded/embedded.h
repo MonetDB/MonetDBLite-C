@@ -13,6 +13,11 @@
 #ifndef _EMBEDDED_LIB_
 #define _EMBEDDED_LIB_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <stddef.h> /* only for size_t */
 #include <stdint.h>
 
@@ -125,5 +130,9 @@ embedded_export void monetdb_register_progress(monetdb_connection conn, monetdb_
 embedded_export void monetdb_unregister_progress(monetdb_connection conn);
 
 embedded_export void  monetdb_shutdown(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
