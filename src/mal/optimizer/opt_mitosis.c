@@ -151,6 +151,13 @@ OPTmitosisImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	/* to enable experimentation we introduce the option to set
 	 * the number of parts required and/or the size of each chunk (in K)
 	 */
+
+	// MONETDBLITE SANITY
+	if (pieces > threads) {
+		pieces = threads;
+	}
+	// END OF SANITY
+
 	mito_parts = GDKgetenv_int("mito_parts", 0);
 	if (mito_parts > 0) 
 		pieces = mito_parts;
