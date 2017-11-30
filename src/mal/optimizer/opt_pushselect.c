@@ -135,10 +135,9 @@ OPTpushselectImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
 	char *rslices = NULL, *oclean = NULL;
 	InstrPtr p, *old;
 	subselect_t subselects;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec = GDKusec();
-#endif
+
 	memset(&subselects, 0, sizeof(subselects));
 	if( mb->errors) 
 		return MAL_SUCCEED;
@@ -191,7 +190,7 @@ OPTpushselectImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
 
 				if (no_updates(old, vars, getArg(q,1), getArg(p,1)) &&
 				    ((sname == Qsname && tname == Qtname) ||
-				    (0 && strcmp(getVarConstant(mb, sname).val.sval, getVarConstant(mb, Qsname).val.sval) == 0 &&
+				    (/* DISABLES CODE */ (0) && strcmp(getVarConstant(mb, sname).val.sval, getVarConstant(mb, Qsname).val.sval) == 0 &&
 				     strcmp(getVarConstant(mb, tname).val.sval, getVarConstant(mb, Qtname).val.sval) == 0))) {
 					clrFunction(p);
 					p->retc = 1;
@@ -650,13 +649,12 @@ OPTpushselectImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
         chkDeclarations(cntxt->fdout, mb);
     }
 wrapup:
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","pushselect",actions, usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
+
 	return MAL_SUCCEED;
 }

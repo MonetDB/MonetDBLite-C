@@ -231,10 +231,10 @@ OPTpostponeAppends(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	}
 	for( i=0; i<limit; i++){
 		if ( getModuleId(old[i]) == sqlRef && getFunctionId(old[i]) == appendRef){
-//			 only postpone under strict conditions
-//			assert( isVarConstant(mb,getArg(old[i],2)));
-//			assert( isVarConstant(mb,getArg(old[i],3)));
-//			assert( isVarConstant(mb,getArg(old[i],4)));
+			// only postpone under strict conditions
+			assert( isVarConstant(mb,getArg(old[i],2)));
+			assert( isVarConstant(mb,getArg(old[i],3)));
+			assert( isVarConstant(mb,getArg(old[i],4)));
 			if( actions )
 				pushInstruction(mb, old[i]);
 			else {
@@ -271,10 +271,8 @@ OPTreorderImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	InstrPtr *old;
 	int limit, slimit, *uselist = NULL;
 	Node *dep;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec= GDKusec();
-#endif
 
 	(void) cntxt;
 	(void) stk;
@@ -347,12 +345,11 @@ OPTreorderImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
         chkFlow(cntxt->fdout, mb);
         chkDeclarations(cntxt->fdout, mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","reorder",1,usec);
     newComment(mb,buf);
 	addtoMalBlkHistory(mb);
-#endif
+
 	return MAL_SUCCEED;
 }

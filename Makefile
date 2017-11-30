@@ -207,6 +207,13 @@ $(OBJDIR)/mal/optimizer/opt_remap.o \
 $(OBJDIR)/mal/optimizer/opt_reorder.o \
 $(OBJDIR)/mal/optimizer/opt_support.o \
 $(OBJDIR)/mal/optimizer/opt_wrapper.o \
+$(OBJDIR)/mal/optimizer/opt_jit.o \
+$(OBJDIR)/mal/optimizer/opt_json.o \
+$(OBJDIR)/mal/optimizer/opt_oltp.o \
+$(OBJDIR)/mal/optimizer/opt_querylog.o \
+$(OBJDIR)/mal/optimizer/opt_reduce.o \
+$(OBJDIR)/mal/optimizer/opt_remoteQueries.o \
+$(OBJDIR)/mal/optimizer/opt_volcano.o \
 $(OBJDIR)/mal/optimizer/optimizer.o \
 $(OBJDIR)/mal/sqlbackend/mal_backend.o \
 $(OBJDIR)/mal/sqlbackend/rel_bin.o \

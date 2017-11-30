@@ -10,7 +10,7 @@
 #include "opt_commonTerms.h"
 #include "mal_exception.h"
  /*
- * Caveat. A lot of time was lost due to constants that are indistinguishable
+ * Caveat. A lot of time was lost due to constants that are indistinguisable
  * at the surface level. It may miss common expressions if their constants
  * are introduced too far apart in the MAL program.
  * It requires the constant optimizer to be ran first.
@@ -28,10 +28,8 @@ OPTcommonTermsImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr
 	/* link all final constant expressions in a list */
 	/* it will help to find duplicate sql.bind calls */
 	int *vars;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec = GDKusec();
-#endif
 	str msg = MAL_SUCCEED;
 
 	(void) cntxt;
@@ -184,14 +182,13 @@ OPTcommonTermsImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr
         chkFlow(cntxt->fdout, mb);
         chkDeclarations(cntxt->fdout, mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","commonTerms",actions,usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
+
 wrapup:
 	if(alias) GDKfree(alias);
 	if(list) GDKfree(list);

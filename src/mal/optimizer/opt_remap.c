@@ -23,6 +23,7 @@ OPTremapDirect(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, Module s
 	char buf[1024];
 	int i, retc = pci->retc;
 	InstrPtr p;
+	str bufName, fcnName;
 
 	(void) stk;
 	mod = VALget(&getVar(mb, getArg(pci, retc+0))->value);
@@ -35,7 +36,12 @@ OPTremapDirect(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, Module s
 #endif
 
 	snprintf(buf,1024,"bat%s",mod);
-	p= newInstruction(mb, putName(buf), putName(fcn));
+	bufName = putName(buf);
+	fcnName = putName(fcn);
+	if(bufName == NULL || fcnName == NULL)
+		return 0;
+
+	p= newInstruction(mb, bufName, fcnName);
 
 	for(i=0; i<pci->retc; i++)
 		if (i<1)
@@ -128,7 +134,9 @@ OPTmultiplexInline(Client cntxt, MalBlkPtr mb, InstrPtr p, int pc )
 	/*
 	 * Determine the variables to be upgraded and adjust their type
 	 */
-	mq= copyMalBlk(s->def);
+	if((mq = copyMalBlk(s->def)) == NULL) {
+		return 0;
+	}
 	sig= getInstrPtr(mq,0);
 #ifdef DEBUG_OPT_REMAP
 	fprintf(stderr,"#Modify the code\n");
@@ -358,10 +366,9 @@ OPTremapImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	InstrPtr *old, p;
 	int i, limit, slimit, doit= 0;
 	Module scope = cntxt->nspace;
-#ifndef HAVE_EMBEDDED
 	lng usec = GDKusec();
 	char buf[256];
-#endif
+
 	(void) pci;
 	old = mb->stmt;
 	limit = mb->stop;
@@ -469,13 +476,12 @@ OPTremapImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
         chkFlow(cntxt->fdout, mb);
         chkDeclarations(cntxt->fdout, mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","remap",doit, usec);
     newComment(mb,buf);
 	if( doit >= 0)
 		addtoMalBlkHistory(mb);
-#endif
+
 	return MAL_SUCCEED;
 }

@@ -11,10 +11,9 @@
  */
 #include "monetdb_config.h"
 #include "opt_dataflow.h"
-
-#include "manifold.h"
 #include "mal_instruction.h"
 #include "mal_interpreter.h"
+#include "manifold.h"
 
 /*
  * Dataflow processing incurs overhead and is only
@@ -172,10 +171,8 @@ OPTdataflowImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	InstrPtr *sink = NULL, *old = NULL, q;
 	int limit, vlimit, top = 0;
 	States states;
-#ifndef HAVE_EMBEDDED
 	char  buf[256];
 	lng usec = GDKusec();
-#endif
 	str msg = MAL_SUCCEED;
 
 	/* don't use dataflow on single processor systems */
@@ -323,14 +320,13 @@ OPTdataflowImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 		fprintf(stderr,"#dataflow output %s\n", mb->errors?"ERROR":"");
 		fprintFunction(stderr, mb, 0, LIST_MAL_ALL);
 #endif
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","dataflow",actions,usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
+
 wrapup:
 	if(states) GDKfree(states);
 	if(sink)   GDKfree(sink);

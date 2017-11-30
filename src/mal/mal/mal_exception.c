@@ -141,7 +141,7 @@ dumpExceptionsToStream(stream *out, str whatever) {
 	size_t i;
 	size_t last = 0;
 	size_t len ;
-
+	(void) out;
 	if (whatever == NULL)
 		return;
 	len = strlen(whatever);
@@ -152,14 +152,14 @@ dumpExceptionsToStream(stream *out, str whatever) {
 			if (i - last > 0) { /* skip empty lines */
 				if (whatever[last] == '!') /* no need for double ! */
 					last++;
-				mnstr_printf(out, "!%s\n", whatever + last);
+				fprintf(stderr, "!%s\n", whatever + last);
 			}
 			last = i + 1;
 		}
 	}
 	/* flush last part */
 	if (i - last > 0) /* skip if empty */
-		mnstr_printf(out, "!%s\n", whatever + last);
+		fprintf(stderr, "!%s\n", whatever + last);
 }
 
 /**

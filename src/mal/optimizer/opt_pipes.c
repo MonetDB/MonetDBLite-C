@@ -42,7 +42,6 @@ static struct PIPELINES {
  * If you change the minimal pipe, please also update the man page
  * (see tools/mserver/mserver5.1) accordingly!
  */
-/*
 	{"minimal_pipe",
 	 "optimizer.inline();"
 	 "optimizer.remap();"
@@ -53,7 +52,6 @@ static struct PIPELINES {
 	 "optimizer.candidates();"
 	 "optimizer.garbageCollector();",
 	 "stable", NULL, NULL, 1},
-*/
 /* The default pipe line contains as of Feb2010
  * mitosis-mergetable-reorder, aimed at large tables and improved
  * access locality.
@@ -84,6 +82,7 @@ static struct PIPELINES {
 //	 "optimizer.reduce();" deprecated
 	 "optimizer.matpack();"
 	 "optimizer.dataflow();"
+	 "optimizer.querylog();"
 	 "optimizer.multiplex();"
 	 "optimizer.generator();"
 	 "optimizer.profiler();"
@@ -95,7 +94,6 @@ static struct PIPELINES {
 /*
  * Volcano style execution produces a sequence of blocks from the source relation
  */
-/*
 	{"volcano_pipe",
 	 "optimizer.inline();"
 	 "optimizer.remap();"
@@ -127,7 +125,6 @@ static struct PIPELINES {
 //	 "optimizer.oltp();"awaiting the autocommit front-end changes
 	 "optimizer.garbageCollector();",
 	 "stable", NULL, NULL, 1},
-*/
 /* The no_mitosis pipe line is (and should be kept!) identical to the
  * default pipeline, except that optimizer mitosis is omitted.  It is
  * used mainly to make some tests work deterministically, and to check
@@ -138,7 +135,6 @@ static struct PIPELINES {
  * If you change the no_mitosis pipe, please also update the man page
  * (see tools/mserver/mserver5.1) accordingly!
  */
-/*
 	{"no_mitosis_pipe",
 	 "optimizer.inline();"
 	 "optimizer.remap();"
@@ -168,7 +164,6 @@ static struct PIPELINES {
 //	 "optimizer.oltp();"awaiting the autocommit front-end changes
 	 "optimizer.garbageCollector();",
 	 "stable", NULL, NULL, 1},
-*/
 /* The sequential pipe line is (and should be kept!) identical to the
  * default pipeline, except that optimizers mitosis & dataflow are
  * omitted.  It is use mainly to make some tests work
@@ -198,6 +193,7 @@ static struct PIPELINES {
 	 "optimizer.deadcode();"
 //	 "optimizer.reduce();" deprecated
 	 "optimizer.matpack();"
+	 "optimizer.querylog();"
 	 "optimizer.multiplex();"
 	 "optimizer.generator();"
 	 "optimizer.profiler();"
@@ -440,8 +436,15 @@ compileOptimizer(Client cntxt, str name)
 	for (i = 0; i < MAXOPTPIPES && pipes[i].name; i++) {
 		if (strcmp(pipes[i].name, name) == 0 && pipes[i].mb == 0) {
 			/* precompile the pipeline as MAL string */
-			MCinitClientRecord(&c, cntxt->user, 0, 0);
+			if(MCinitClientRecord(&c, cntxt->user, 0, 0) == NULL) {
+				MT_lock_unset(&pipeLock);
+				throw(MAL, "optimizer.addOptimizerPipe", MAL_MALLOC_FAIL);
+			}
 			c.nspace = newModule(NULL, putName("user"));
+			if(c.nspace == NULL) {
+				MT_lock_unset(&pipeLock);
+				throw(MAL, "optimizer.addOptimizerPipe", MAL_MALLOC_FAIL);
+			}
 			c.father = cntxt;	/* to avoid conflicts on GDKin */
 			c.fdout = cntxt->fdout;
 			if (setScenario(&c, "mal")) {
@@ -458,9 +461,12 @@ compileOptimizer(Client cntxt, str name)
 						continue;
 					MSinitClientPrg(&c, "user", pipes[j].name);
 					msg = compileString(&sym, &c, pipes[j].def);
-					if (msg != MAL_SUCCEED) 
+					if (msg != MAL_SUCCEED)
 						break;
-					pipes[j].mb = copyMalBlk(sym->def);
+					if((pipes[j].mb = copyMalBlk(sym->def)) == NULL) {
+						msg = GDKstrdup(MAL_MALLOC_FAIL);
+						break;
+					}
 				}
 			}
 			/* don't cleanup thread info since the thread continues to
@@ -517,4 +523,17 @@ addOptimizerPipe(Client cntxt, MalBlkPtr mb, str name)
 		}
 	}
 	return msg;
+}
+
+void cleanOptimizerPipe(void);
+
+void
+cleanOptimizerPipe(void) {
+	int j;
+	for (j = 0; j < MAXOPTPIPES && pipes[j].def; j++) {
+		if (pipes[j].mb) {
+			freeMalBlk(pipes[j].mb);
+			pipes[j].mb = NULL;
+		}
+	}
 }

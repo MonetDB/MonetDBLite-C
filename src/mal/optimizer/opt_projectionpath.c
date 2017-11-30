@@ -163,10 +163,8 @@ OPTprojectionpathImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, Instr
 	InstrPtr *old=0;
 	int *varcnt= 0;		/* use count */
 	int limit,slimit;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec = GDKusec();
-#endif
 	str msg = MAL_SUCCEED;
 
 	(void) cntxt;
@@ -183,7 +181,7 @@ OPTprojectionpathImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, Instr
 	old= mb->stmt;
 	limit= mb->stop;
 	slimit= mb->ssize;
-	if ( newMalBlkStmt(mb,mb->ssize + mb->stop) < 0)
+	if ( newMalBlkStmt(mb, 2 * mb->stop) < 0)
 		throw(MAL,"optimizer.projectionpath", MAL_MALLOC_FAIL);
 
 	/* beware, new variables and instructions are introduced */
@@ -325,13 +323,11 @@ OPTprojectionpathImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, Instr
     }
     /* keep all actions taken as a post block comment */
 wrapupall:
-#ifndef HAVE_EMBEDDED
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","projectionpath",actions, usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
 	if (pc ) GDKfree(pc);
 	if (varcnt ) GDKfree(varcnt);
 	if(old) GDKfree(old);

@@ -33,15 +33,22 @@
 #include "opt_garbageCollector.h"
 #include "opt_generator.h"
 #include "opt_inline.h"
+#include "opt_jit.h"
 #include "opt_projectionpath.h"
 #include "opt_matpack.h"
+#include "opt_json.h"
+#include "opt_oltp.h"
 #include "opt_mergetable.h"
 #include "opt_mitosis.h"
 #include "opt_multiplex.h"
 #include "opt_profiler.h"
 #include "opt_pushselect.h"
+#include "opt_querylog.h"
+#include "opt_reduce.h"
 #include "opt_remap.h"
+#include "opt_remoteQueries.h"
 #include "opt_reorder.h"
+#include "opt_volcano.h"
 
 struct{
 	str nme;
@@ -62,15 +69,22 @@ struct{
 	{"garbageCollector", &OPTgarbageCollectorImplementation,0,0},
 	{"generator", &OPTgeneratorImplementation,0,0},
 	{"inline", &OPTinlineImplementation,0,0},
+	{"jit", &OPTjitImplementation,0,0},
+	{"json", &OPTjsonImplementation,0,0},
 	{"matpack", &OPTmatpackImplementation,0,0},
 	{"mergetable", &OPTmergetableImplementation,0,0},
 	{"mitosis", &OPTmitosisImplementation,0,0},
 	{"multiplex", &OPTmultiplexImplementation,0,0},
+	{"oltp", &OPToltpImplementation,0,0},
 	{"profiler", &OPTprofilerImplementation,0,0},
 	{"projectionpath", &OPTprojectionpathImplementation,0,0},
 	{"pushselect", &OPTpushselectImplementation,0,0},
+	{"querylog", &OPTquerylogImplementation,0,0},
+	{"reduce", &OPTreduceImplementation,0,0},
 	{"remap", &OPTremapImplementation,0,0},
+	{"remoteQueries", &OPTremoteQueriesImplementation,0,0},
 	{"reorder", &OPTreorderImplementation,0,0},
+	{"volcano", &OPTvolcanoImplementation,0,0},
 	{0,0,0,0}
 };
 mal_export str OPTwrapper(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p);

@@ -243,6 +243,9 @@ pattern optimizer.reorder(mod:str, fcn:str):str
 address OPTwrapper
 comment "Reorder by dataflow dependencies";
 
+#opt_statistics.mal
+
+
 
 #opt_pushselect.mal
 

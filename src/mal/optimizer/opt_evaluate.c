@@ -122,6 +122,8 @@ OPTevaluateImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 	MalStkPtr env = NULL;
 	int debugstate = cntxt->itrace, actions = 0, constantblock = 0;
 	int *alias = 0, *assigned = 0, atop, use; 
+	char buf[256];
+	lng usec = GDKusec();
 	str msg = MAL_SUCCEED;
 
 	(void)stk;
@@ -238,6 +240,20 @@ OPTevaluateImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 	if ( constantblock)
 		actions += OPTremoveUnusedBlocks(cntxt, mb);
 	cntxt->itrace = debugstate;
+
+    /* Defense line against incorrect plans */
+    if( actions){
+	chkTypes(cntxt->fdout, cntxt->nspace, mb, FALSE);
+	chkFlow(cntxt->fdout, mb);
+	chkDeclarations(cntxt->fdout, mb);
+    }
+    
+    /* keep all actions taken as a post block comment */
+	usec = GDKusec()- usec;
+    snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","evaluate",actions,usec);
+    newComment(mb,buf);
+	if( actions >= 0)
+		addtoMalBlkHistory(mb);
 
 wrapup:
 	if ( env) freeStack(env);

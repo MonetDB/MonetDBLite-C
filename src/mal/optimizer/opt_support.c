@@ -11,12 +11,11 @@
 #include "monetdb_config.h"
 #include "opt_prelude.h"
 #include "opt_support.h"
-
-#include "manifold.h"
 #include "mal_interpreter.h"
 #include "mal_listing.h"
 #include "opt_multiplex.h"
 #include "optimizer_private.h"
+#include "manifold.h"
 
 /*
  * Optimizer catalog with runtime statistics;
@@ -110,7 +109,7 @@ optimizeMALBlock(Client cntxt, MalBlkPtr mb)
 		throw(MAL, "optimizer.MALoptimizer", "Start with inconsistent MAL plan");
 
 	/* Optimizers may massage the plan in such a way that a new pass is needed.
-     * When no optimizer call is found, then terminate. */
+     * When no optimzer call is found, then terminate. */
 	do {
 		qot = 0;
 		for (pc = 0; pc < mb->stop; pc++) {

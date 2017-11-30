@@ -8,7 +8,6 @@
 
 #include "monetdb_config.h"
 #include "opt_multiplex.h"
-
 #include "manifold.h"
 #include "mal_interpreter.h"
 
@@ -58,6 +57,8 @@ OPTexpandMultiplex(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	mod = putName(mod);
 	fcn = VALget(&getVar(mb, getArg(pci, pci->retc+1))->value);
 	fcn = putName(fcn);
+	if(mod == NULL || fcn == NULL)
+		throw(MAL, "optimizer.multiplex", MAL_MALLOC_FAIL);
 #ifndef NDEBUG
 	fprintf(stderr,"#WARNING To speedup %s.%s a bulk operator implementation is needed\n#", mod,fcn);
 	fprintInstruction(stderr, mb, stk, pci, LIST_MAL_DEBUG);
@@ -219,10 +220,9 @@ OPTmultiplexImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p
 	InstrPtr *old = 0, p;
 	int i, limit, slimit, actions= 0;
 	str msg= MAL_SUCCEED;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec = GDKusec();
-#endif
+
 	(void) stk;
 	(void) pci;
 
@@ -266,13 +266,12 @@ OPTmultiplexImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p
         chkFlow(cntxt->fdout, mb);
         chkDeclarations(cntxt->fdout, mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","multiplex",actions, usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
+
 	return msg;
 }

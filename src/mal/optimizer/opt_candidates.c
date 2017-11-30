@@ -19,10 +19,9 @@ OPTcandidatesImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
 {
 	int i;
 	InstrPtr p;
-#ifndef HAVE_EMBEDDED
 	char  buf[256];
 	lng usec = GDKusec();
-#endif
+
 	(void) pci;
 	(void) cntxt;
 	(void) stk;		/* to fool compilers */
@@ -59,6 +58,8 @@ OPTcandidatesImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
 				setVarCList(mb,getArg(p,0));
 			else if(getFunctionId(p) == intersectcandRef )
 				setVarCList(mb,getArg(p,0));
+			else if(getFunctionId(p) == subsliceRef )
+				setVarCList(mb,getArg(p,0));
 		}
 		else if( getModuleId(p) == generatorRef){
 			if(getFunctionId(p) == selectRef || getFunctionId(p) == thetaselectRef)
@@ -81,12 +82,10 @@ OPTcandidatesImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
 	//chkFlow(cntxt->fdout, mb);
 	//chkDeclarations(cntxt->fdout, mb);
     /* keep all actions taken as a post block comment */
-#ifndef HAVE_EMBEDDED
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=1 time=" LLFMT " usec","candidates",usec);
     newComment(mb,buf);
 	addtoMalBlkHistory(mb);
-#endif
 
 	return MAL_SUCCEED;
 }

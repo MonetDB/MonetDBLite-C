@@ -53,10 +53,8 @@ OPTprofilerImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 {
 	int i;
 	InstrPtr p;
-#ifndef HAVE_EMBEDDED
 	char buf[BUFSIZ];
 	lng usec = GDKusec();
-#endif
 	char *packIncrementRef = putName("packIncrement");
 
 	(void) pci;
@@ -114,12 +112,10 @@ OPTprofilerImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pc
 	//chkFlow(cntxt->fdout, mb);
 	//chkDeclarations(cntxt->fdout, mb);
 	//
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=1 time=" LLFMT " usec","profiler", usec);
     newComment(mb,buf);
 	addtoMalBlkHistory(mb);
-#endif
 	return MAL_SUCCEED;
 }
