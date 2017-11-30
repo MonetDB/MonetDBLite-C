@@ -12,18 +12,6 @@
 #include "mal_exception.h"
 #include <math.h>
 
-#ifdef NATIVE_WIN32
-# include <float.h>
-# define finite(x)	_finite(x)
-/* NOTE: HAVE_FPCLASS assumed... */
-# define fpclass(x)	_fpclass(x)
-# define FP_NINF		_FPCLASS_NINF
-# define FP_PINF		_FPCLASS_PINF
-#else /* !_MSC_VER */
-# ifdef HAVE_IEEEFP_H
-#  include <ieeefp.h>
-# endif
-#endif
 
 #if defined(HAVE_FPCLASSIFY) || defined(fpclassify)
 /* C99 interface: fpclassify */

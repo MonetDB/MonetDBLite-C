@@ -643,14 +643,25 @@ sql_dup_subfunc(sql_allocator *sa, sql_func *f, list *ops, sql_subtype *member)
 	} else if (IS_FUNC(f) || IS_UNION(f) || IS_ANALYTIC(f)) { /* not needed for PROC */
 		unsigned int mscale = 0, mdigits = 0;
 
-		if (ops) for (tn = ops->h; tn; tn = tn->next) {
-			sql_subtype *a = tn->data;
-
-			/* same scale as the input */
-			if (a && a->scale > mscale)
+		if (ops) {
+			if (ops->h && ops->h->data && f->imp &&
+			    strcmp(f->imp, "round") == 0) {
+				/* special case for round(): result is
+				 * same type as first argument */
+				sql_subtype *a = ops->h->data;
 				mscale = a->scale;
-			if (a && f->fix_scale == INOUT)
 				mdigits = a->digits;
+			} else {
+				for (tn = ops->h; tn; tn = tn->next) {
+					sql_subtype *a = tn->data;
+
+					/* same scale as the input */
+					if (a && a->scale > mscale)
+						mscale = a->scale;
+					if (a && f->fix_scale == INOUT)
+						mdigits = a->digits;
+				}
+			}
 		}
 
 		if (!member) {
@@ -1194,7 +1205,8 @@ sql_create_func_(sql_allocator *sa, const char *name, const char *mod, const cha
 {
 	sql_func *t = SA_ZNEW(sa, sql_func);
 
-	assert(res && ops);
+	if (!ops)
+		ops = sa_list(sa);
 	base_init(sa, &t->base, store_next_oid(), TR_OLD, name);
 	t->imp = sa_strdup(sa, imp);
 	t->mod = sa_strdup(sa, mod);
@@ -1834,6 +1846,10 @@ sqltypeinit( sql_allocator *sa)
 			create_arg(sa, NULL, sql_create_subtype(sa, STR, 0, 0), ARG_IN)), 
 			create_arg(sa, NULL, sql_create_subtype(sa, STR, 0, 0), ARG_IN)), sres, FALSE, F_UNION, SCALE_FIX);
 	f->varres = 1;
+
+	/* sys_update_schemas, sys_update_tables */
+	f = sql_create_func_(sa, "sys_update_schemas", "sql", "update_schemas", NULL, NULL, FALSE, F_PROC, SCALE_NONE);
+	f = sql_create_func_(sa, "sys_update_tables", "sql", "update_tables", NULL, NULL, FALSE, F_PROC, SCALE_NONE);
 }
 
 void

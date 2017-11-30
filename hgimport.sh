@@ -1,4 +1,5 @@
 #!/bin/bash
+git config merge.renameLimit 999999
 
 # this assumes a git remote like this
 # hg	hg::https://dev.monetdb.org/hg/MonetDB/

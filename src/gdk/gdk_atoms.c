@@ -24,12 +24,6 @@
 #include "gdk.h"
 #include "gdk_private.h"
 #include <math.h>		/* for isfinite macro */
-#ifdef HAVE_IEEEFP_H
-#include <ieeefp.h>		/* for Solaris */
-#ifndef isfinite
-#define isfinite(f)	finite(f)
-#endif
-#endif
 
 static int
 bteCmp(const bte *l, const bte *r)
