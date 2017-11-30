@@ -157,7 +157,9 @@ OPTmitosisImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	mito_size = GDKgetenv_int("mito_size", 0);
 	if (mito_size > 0) 
 		pieces = (int) ((rowcnt * row_size) / (mito_size * 1024));
-
+	if (pieces > threads) {
+		pieces = threads;
+	}
 #ifdef DEBUG_OPT_MITOSIS
 	fprintf(stderr, "#opt_mitosis: target is %s.%s "
 							   " with " BUNFMT " rows of size %d into " SZFMT
