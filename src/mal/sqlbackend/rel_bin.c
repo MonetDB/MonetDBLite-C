@@ -4578,15 +4578,11 @@ rel2bin_output(backend *be, sql_rel *rel, list *refs)
 
 	if (n->next->next->next->next) {
 		fn = E_ATOM_STRING(n->next->next->next->next->data);
-<<<<<<< HEAD
 #ifdef HAVE_EMBEDDED
 		fns = stmt_atom_string(be, sa_strdup(sql->sa, fn), 0);
 #else
 		fns = stmt_atom_string(be, sa_strdup(sql->sa, fn));
 #endif
-=======
-		fns = stmt_atom_string(be, sa_strdup(sql->sa, fn));
->>>>>>> b3a684a1cbe964037f3f51ce923ccd74ec7cde47
 	}
 	list_append(slist, stmt_export(be, s, tsep, rsep, ssep, ns, fns));
 	if (s->type == st_list && ((stmt*)s->op4.lval->h->data)->nrcols != 0) {
@@ -4880,8 +4876,6 @@ subrel_bin(backend *be, sql_rel *rel, list *refs)
 	return s;
 }
 
-<<<<<<< HEAD
-=======
 static stmt *
 _subrel_bin(backend *be, sql_rel *rel, list *refs) 
 {
@@ -4897,18 +4891,13 @@ _subrel_bin(backend *be, sql_rel *rel, list *refs)
 	return subrel_bin(be, rel, refs);
 }
 
->>>>>>> b3a684a1cbe964037f3f51ce923ccd74ec7cde47
 stmt *
 rel_bin(backend *be, sql_rel *rel) 
 {
 	mvc *sql = be->mvc;
 	list *refs = sa_list(sql->sa);
 	int sqltype = sql->type;
-<<<<<<< HEAD
-	stmt *s = subrel_bin(be, rel, refs);
-=======
 	stmt *s = _subrel_bin(be, rel, refs);
->>>>>>> b3a684a1cbe964037f3f51ce923ccd74ec7cde47
 
 	if (sqltype == Q_SCHEMA)
 		sql->type = sqltype;  /* reset */
@@ -4922,11 +4911,7 @@ output_rel_bin(backend *be, sql_rel *rel )
 	mvc *sql = be->mvc;
 	list *refs = sa_list(sql->sa);
 	int sqltype = sql->type;
-<<<<<<< HEAD
-	stmt *s = subrel_bin(be, rel, refs);
-=======
 	stmt *s = _subrel_bin(be, rel, refs);
->>>>>>> b3a684a1cbe964037f3f51ce923ccd74ec7cde47
 
 	// do not use mitosis on SELECT * FROM TABLE
 	if (sql->type == Q_TABLE && rel && rel->l && rel->op == op_project && is_basetable(((sql_rel*) rel->l)->op)) {
