@@ -29,7 +29,7 @@ malBootstrap(void)
 {
 	Client c = NULL;
 	str msg = NULL, bootfile = "mal_init";
-	char ret = 0;
+	int ret = 0;
 
 	c = MCinitClient((oid) 0, 0, 0);
 	if (!c) {
@@ -38,7 +38,7 @@ malBootstrap(void)
 	}
 	c->nspace = newModule(NULL, putName("user"));
 	if ( (msg = defaultScenario(c)) ) {
-		GDKerror("malBootstrap: Failed to initialize default scenario");
+		GDKerror("malBootstrap: Failed to initialize default scenario: %s", msg);
 		goto cleanup;
 	}
 	MSinitClientPrg(c, "user", "main");
@@ -48,7 +48,7 @@ malBootstrap(void)
 	}
 	msg = malInclude(c, bootfile, 0);
 	if (msg != NULL) {
-		GDKerror("malBootstrap: Failed to load startup script %s", msg);
+		GDKerror("malBootstrap: Failed to load startup script: %s", msg);
 		goto cleanup;
 	}
 	pushEndInstruction(c->curprg->def);
@@ -59,6 +59,7 @@ malBootstrap(void)
 	}
 	msg = MALengine(c);
 	if (msg != MAL_SUCCEED) {
+		GDKerror("malBootstrap: Failed to start MAL engine: %s", msg);
 		goto cleanup;
 	}
 	ret = 1;
