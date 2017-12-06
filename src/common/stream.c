@@ -134,6 +134,28 @@
 #define UTF8BOM		"\xEF\xBB\xBF"	/* UTF-8 encoding of Unicode BOM */
 #define UTF8BOMLENGTH	3		/* length of above */
 
+#ifdef _MSC_VER
+/* use intrinsic functions on Windows */
+#define short_int_SWAP(s)	((short) _byteswap_ushort((unsigned short) (s)))
+/* on Windows, long is the same size as int */
+#define normal_int_SWAP(s)	((int) _byteswap_ulong((unsigned long) (s)))
+#define long_long_SWAP(l)	((lng) _byteswap_uint64((unsigned __int64) (s)))
+#else
+#define short_int_SWAP(s) ((short)(((0x00ff&(s))<<8) | ((0xff00&(s))>>8)))
+
+#define normal_int_SWAP(i) (((0x000000ff&(i))<<24) | ((0x0000ff00&(i))<<8) | \
+			    ((0x00ff0000&(i))>>8)  | ((0xff000000&(i))>>24))
+#define long_long_SWAP(l) \
+		((((lng)normal_int_SWAP(l))<<32) |\
+		 (0xffffffff&normal_int_SWAP(l>>32)))
+#endif
+
+#ifdef HAVE_HGE
+#define huge_int_SWAP(h) \
+		((((hge)long_long_SWAP(h))<<64) |\
+		 (0xffffffffffffffff&long_long_SWAP(h>>64)))
+#endif
+
 struct stream {
 	short byteorder;
 	char access;		/* read/write */
@@ -1240,6 +1262,7 @@ open_bzstream(const char *filename, const char *flags)
 	stream *s;
 	int err;
 	struct bz *bzp;
+	char fl[3];
 
 	if ((bzp = malloc(sizeof(struct bz))) == NULL)
 		return NULL;
@@ -1247,10 +1270,13 @@ open_bzstream(const char *filename, const char *flags)
 		free(bzp);
 		return NULL;
 	}
+	fl[0] = flags[0];	/* 'r' or 'w' */
+	fl[1] = 'b';		/* always binary */
+	fl[2] = '\0';
 #ifdef HAVE__WFOPEN
 	{
 		wchar_t *wfname = utf8towchar(filename);
-		wchar_t *wflags = utf8towchar(flags);
+		wchar_t *wflags = utf8towchar(fl);
 		if (wfname != NULL && wflags != NULL)
 			bzp->f = _wfopen(wfname, wflags);
 		else
@@ -1264,7 +1290,7 @@ open_bzstream(const char *filename, const char *flags)
 	{
 		char *fname = cvfilename(filename);
 		if (fname) {
-			bzp->f = fopen(fname, flags);
+			bzp->f = fopen(fname, fl);
 			free(fname);
 		} else
 			bzp->f = NULL;
@@ -1542,11 +1568,10 @@ open_xzstream(const char *filename, const char *flags)
 	stream *s;
 	xz_stream *xz;
 	uint32_t preset = 0;
+	char fl[3];
 
-	if ((xz = malloc(sizeof(struct xz_stream))) == NULL)
+	if ((xz = calloc(1, sizeof(struct xz_stream))) == NULL)
 		return NULL;
-	if (xz)
-		memset(xz, 0, sizeof(xz_stream));
 	if (((flags[0] == 'r' &&
 	      lzma_stream_decoder(&xz->strm, UINT64_MAX, LZMA_CONCATENATED) != LZMA_OK)) ||
 	    (flags[0] == 'w' &&
@@ -1558,10 +1583,13 @@ open_xzstream(const char *filename, const char *flags)
 		free(xz);
 		return NULL;
 	}
+	fl[0] = flags[0];	/* 'r' or 'w' */
+	fl[1] = 'b';		/* always binary */
+	fl[2] = '\0';
 #ifdef HAVE__WFOPEN
 	{
 		wchar_t *wfname = utf8towchar(filename);
-		wchar_t *wflags = utf8towchar(flags);
+		wchar_t *wflags = utf8towchar(fl);
 		if (wfname != NULL)
 			xz->fp = _wfopen(wfname, wflags);
 		else
@@ -1575,7 +1603,7 @@ open_xzstream(const char *filename, const char *flags)
 	{
 		char *fname = cvfilename(filename);
 		if (fname) {
-			xz->fp = fopen(fname, flags);
+			xz->fp = fopen(fname, fl);
 			free(fname);
 		} else
 			xz->fp = NULL;

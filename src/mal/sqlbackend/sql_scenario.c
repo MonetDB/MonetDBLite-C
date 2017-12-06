@@ -521,6 +521,7 @@ SQLinitClient(Client c)
 			if (m->sa)
 				sa_destroy(m->sa);
 			m->sa = NULL;
+			m->sqs = NULL;
 		}
 
 #else
@@ -565,6 +566,7 @@ SQLinitClient(Client c)
 					if (m->sa)
 						sa_destroy(m->sa);
 					m->sa = NULL;
+					m->sqs = NULL;
 					if (msg)
 						p = NULL;
 				}
@@ -574,6 +576,7 @@ SQLinitClient(Client c)
 			fprintf(stderr, "!could not read createdb.sql\n");
 #endif
 	} else {		/* handle upgrades */
+		m->sqs = NULL;
 		if (!m->sa)
 			m->sa = sa_create();
 		if (!m->sa) {
@@ -731,6 +734,7 @@ SQLinclude(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	if (m->sa)
 		sa_destroy(m->sa);
 	m->sa = NULL;
+	m->sqs = NULL;
 	(void) mb;
 	return msg;
 }
@@ -960,6 +964,7 @@ SQLparser(Client c)
 
 	/* sqlparse needs sql allocator to be available.  It can be NULL at
 	 * this point if this is a recursive call. */
+	m->sqs = NULL;
 	if (!m->sa)
 		m->sa = sa_create();
 	if (!m->sa) {
@@ -1234,7 +1239,6 @@ SQLCacheRemove(Client c, str nme)
 	deleteSymbol(c->nspace, s);
 	return MAL_SUCCEED;
 }
-
 
 str
 SYSupdate_tables(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)

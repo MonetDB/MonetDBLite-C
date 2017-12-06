@@ -36,8 +36,6 @@ __hidden int ATOMunknown_find(const char *nme)
 	__attribute__((__visibility__("hidden")));
 __hidden str ATOMunknown_name(int a)
 	__attribute__((__visibility__("hidden")));
-__hidden void ATOMunknown_clean(void)
-	__attribute__((__visibility__("hidden")));
 __hidden int BATcheckhash(BAT *b)
 	__attribute__((__visibility__("hidden")));
 __hidden int BATcheckimprints(BAT *b)
@@ -177,6 +175,8 @@ __hidden void HEAPfree(Heap *h, int remove)
 	__attribute__((__visibility__("hidden")));
 __hidden gdk_return HEAPload(Heap *h, const char *nme, const char *ext, int trunc)
 	__attribute__ ((__warn_unused_result__))
+	__attribute__((__visibility__("hidden")));
+__hidden void HEAP_recover(Heap *, const var_t *, BUN)
 	__attribute__((__visibility__("hidden")));
 __hidden gdk_return HEAPsave(Heap *h, const char *nme, const char *ext)
 	__attribute__ ((__warn_unused_result__))

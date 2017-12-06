@@ -639,7 +639,6 @@ GDKreset(int status, int exit)
 		MT_lock_unset(&GDKthreadLock);
 		//gdk_system_reset(); CHECK OUT
 	}
-	ATOMunknown_clean();
 #ifdef NEED_MT_LOCK_INIT
 	MT_lock_destroy(&MT_system_lock);
 #if defined(USE_PTHREAD_LOCKS) && defined(ATOMIC_LOCK)

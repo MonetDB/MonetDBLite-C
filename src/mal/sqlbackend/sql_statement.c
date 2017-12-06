@@ -124,24 +124,8 @@ stmt_key(stmt *s)
 }
 
 /* #TODO make proper traversal operations */
-#ifdef HAVE_EMBEDDED
 stmt *
-stmt_atom_string(backend *be, const char *S, int escape)
-{
-	const char *s = NULL;
-	if(escape) {
-		s = sql2str(sa_strdup(be->mvc->sa, S));
-	} else {
-		s = sa_strdup(be->mvc->sa, S);
-	}
-	sql_subtype t;
-
-	sql_find_subtype(&t, "varchar", _strlen(s), 0);
-	return stmt_atom(be, atom_string(be->mvc->sa, &t, s));
-}
-#else
-stmt *
-stmt_atom_string(backend *be, const char *S, int escape)
+stmt_atom_string(backend *be, const char *S)
 {
 	const char *s = sql2str(sa_strdup(be->mvc->sa, S));
 	sql_subtype t;
@@ -149,7 +133,6 @@ stmt_atom_string(backend *be, const char *S, int escape)
 	sql_find_subtype(&t, "varchar", _strlen(s), 0);
 	return stmt_atom(be, atom_string(be->mvc->sa, &t, s));
 }
-#endif
 
 stmt *
 stmt_atom_string_nil(backend *be)
@@ -2889,11 +2872,7 @@ stmt_func(backend *be, stmt *ops, const char *name, sql_rel *rel, int f_union)
 			return NULL;
 		}
 		s->op1 = ops;
-#ifdef HAVE_EMBEDDED
-		s->op2 = stmt_atom_string(be, name, 1);
-#else
 		s->op2 = stmt_atom_string(be, name);
-#endif
 		s->op4.rel = rel;
 		s->flag = f_union;
 		if (ops && list_length(ops->op4.lval)) {

@@ -5,6 +5,5 @@ build
 *.so
 MonetDBLite_*.t*
 .settings
-
 .idea
 cmake-build-debug

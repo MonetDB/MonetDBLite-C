@@ -42,8 +42,6 @@
 #include "monetdb_config.h"
 #include "gdk.h"
 #include "gdk_private.h"
-#include "gdk_system.h"
-#include "stream.h"
 
 #ifdef ALIGN
 #undef ALIGN
@@ -442,7 +440,7 @@ BATattach(int tt, const char *heapfile, int role)
 	}
 	return bn;
 
-notutf8:
+  notutf8:
 	fclose(f);
 	BBPreclaim(bn);
 	GDKfree(p);
@@ -1210,6 +1208,8 @@ BUNinplace(BAT *b, BUN p, const void *t, bit force)
 	HASHdestroy(b);
 	PROPdestroy(b->tprops);
 	b->tprops = NULL;
+	OIDXdestroy(b);
+	IMPSdestroy(b);
 	Treplacevalue(b, BUNtloc(bi, p), t);
 
 	tt = b->ttype;
