@@ -31,6 +31,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /* #include "platform/platform.h" */
+#include <stddef.h>
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
 
 
 static const char *abb_weekdays[] = {
