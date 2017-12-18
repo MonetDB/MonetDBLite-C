@@ -27,10 +27,10 @@
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 
 /* FlushFileBuffers */
-# define WIN32_LEAN_AND_MEAN
-# include <windows.h>
-# include <errno.h>
-# include <io.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <errno.h>
+#include <io.h>
 
 extern int fsync (int fd);
 
