@@ -19,10 +19,11 @@
 
 /* #define _DEBUG_TABLET_ */
 
-#include <gdk.h>
-#include <mal_exception.h>
-#include <mal_client.h>
-#include <mal_interpreter.h>
+
+#include "gdk.h"
+#include "mal_exception.h"
+#include "mal_client.h"
+#include "mal_interpreter.h"
 
 typedef struct Column_t {
 	const char *name;			/* column title */

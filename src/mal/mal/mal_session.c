@@ -16,7 +16,7 @@
 #include "mal_namespace.h"
 #include "mal_builder.h"
 #include "mal_private.h"
-#include <gdk.h>	/* for opendir and friends */
+#include "gdk.h"	/* for opendir and friends */
 
 /*
  * The MonetDB server uses a startup script to boot the system.

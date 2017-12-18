@@ -12,13 +12,13 @@
 #ifndef _SQL_CATALOG_H
 #define _SQL_CATALOG_H
 
-#include <sql.h>
-#include <mal_backend.h>
-#include <sql_atom.h>
-#include <sql_statement.h>
-#include <sql_env.h>
-#include <sql_mvc.h>
-#include <mal_function.h>
+#include "sql.h"
+#include "mal_backend.h"
+#include "sql_atom.h"
+#include "sql_statement.h"
+#include "sql_env.h"
+#include "sql_mvc.h"
+#include "mal_function.h"
 
 sql5_export str SQLcreate_seq(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci) ;
 sql5_export str SQLalter_seq(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci) ;

@@ -165,7 +165,7 @@ find_posthread_locked(pthread_t tid)
 	struct posthread *p;
 
 	for (p = posthreads; p; p = p->next)
-		if (p->tid == tid)
+		if (pthread_equal(p->tid, tid))
 			return p;
 	return NULL;
 }
@@ -282,15 +282,23 @@ MT_create_thread(MT_Id *t, void (*f) (void *), void *arg, enum MT_thr_detach d)
 	(void) sigfillset(&new_mask);
 	MT_thread_sigmask(&new_mask, &orig_mask);
 #endif
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, THREAD_STACK_SIZE);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	if(pthread_attr_init(&attr))
+		return -1;
+	if(pthread_attr_setstacksize(&attr, THREAD_STACK_SIZE)) {
+		pthread_attr_destroy(&attr);
+		return -1;
+	}
+	if(pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE)) {
+		pthread_attr_destroy(&attr);
+		return -1;
+	}
 	if (d == MT_THR_DETACHED) {
 		p = malloc(sizeof(struct posthread));
 		if (p == NULL) {
 #ifdef HAVE_PTHREAD_SIGMASK
 			MT_thread_sigmask(&orig_mask, NULL);
 #endif
+			pthread_attr_destroy(&attr);
 			return -1;
 		}
 		p->func = f;
@@ -462,9 +470,10 @@ smp_thread(void *data)
 static int
 MT_check_nr_cores_(void)
 {
-	int i, curr = 1, cores = 1;
+	int i, curr = 1, cores = 1, failed = 0;
 	double lasttime = 0, thistime;
-	while (1) {
+
+	while (!failed) {
 		lng t0, t1;
 		MT_Id *threads = malloc(sizeof(MT_Id) * curr);
 
@@ -473,7 +482,11 @@ MT_check_nr_cores_(void)
 
 		t0 = GDKusec();
 		for (i = 0; i < curr; i++)
-			MT_create_thread(threads + i, smp_thread, NULL, MT_THR_JOINABLE);
+			if (MT_create_thread(threads + i, smp_thread, NULL, MT_THR_JOINABLE) < 0) {
+				curr = i;
+				failed = 1;
+				break;
+			}
 		for (i = 0; i < curr; i++)
 			MT_join_thread(threads[i]);
 		t1 = GDKusec();
@@ -485,7 +498,7 @@ MT_check_nr_cores_(void)
 		cores = curr;
 		curr *= 2;	/* only check for powers of 2 */
 	}
-	return cores;
+	return cores ? cores : 1;
 }
 
 int

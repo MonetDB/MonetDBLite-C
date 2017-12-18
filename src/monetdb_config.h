@@ -19,6 +19,8 @@
 #define NATIVE_WIN32 1
 #define _Printf_format_string_
 #pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wformat"
+
 #endif
 
 #ifdef NATIVE_WIN32
