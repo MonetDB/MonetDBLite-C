@@ -369,5 +369,5 @@ add_executable(readme
         tests/readme/readme.c
 )
 
-target_link_libraries(readme monetdb5)
+target_link_libraries(readme monetdb5 pthread dl m)
 
