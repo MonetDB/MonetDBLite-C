@@ -22,7 +22,7 @@ SOEXT=so
 ifeq ($(OS),Windows_NT)
 	SOEXT=dll
 	LDFLAGS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
-
+	CFLAGS += -Wno-attributes -Wno-format
 	CC=gcc
 else
     UNAME_S := $(shell uname -s)
