@@ -1381,7 +1381,7 @@ BBPinit(void)
 {
 	FILE *fp = NULL;
 	struct stat st;
-	int bbpversion;
+	int bbpversion = 0;
 	int i;
 
 #ifdef NEED_MT_LOCK_INIT

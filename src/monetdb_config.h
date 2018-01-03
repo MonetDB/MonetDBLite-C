@@ -18,6 +18,7 @@
 #ifdef __MINGW32__
 #define NATIVE_WIN32 1
 #define _Printf_format_string_
+#define __visibility__(X)
 #endif
 
 #ifdef NATIVE_WIN32
