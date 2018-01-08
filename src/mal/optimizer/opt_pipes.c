@@ -518,3 +518,20 @@ addOptimizerPipe(Client cntxt, MalBlkPtr mb, str name)
 	}
 	return msg;
 }
+
+str
+mal_optimizer_reset(void) {
+	int i;
+	MT_lock_set(&pipeLock);
+	for (i = 0; i < MAXOPTPIPES; i++) {
+		if (pipes[i].mb) {
+			freeMalBlk(pipes[i].mb);
+			pipes[i].mb = NULL;
+			pipes[i].status = NULL;
+			pipes[i].prerequisite = NULL;
+		}
+	}
+	MT_lock_unset(&pipeLock);
+	return MAL_SUCCEED;
+}
+

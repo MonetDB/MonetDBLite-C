@@ -33,6 +33,7 @@ int have_hge;
 #include "mal_runtime.h"
 #include "mal_dataflow.h"
 #include "mal_runtime.h"
+#include "opt_pipes.h"
 #include "sql_scenario.h"
 
 MT_Lock     mal_contextLock MT_LOCK_INITIALIZER("mal_contextLock");
@@ -135,7 +136,7 @@ void mserver_reset(int exit)
 	}
 
 	SQLepilogue(NULL);
-
+	mal_optimizer_reset();
 	mal_linker_reset();
 	mal_runtime_reset();
 	mal_module_reset();
@@ -145,8 +146,7 @@ void mserver_reset(int exit)
 	monet_memory = 0;
 	memset((char*) monet_characteristics, 0, sizeof(monet_characteristics));
 	mal_trace = 0;
-	/* No need to clean up the namespace, it will simply be extended
-	 * upon restart mal_namespace_reset(); */
+	mal_namespace_reset();
 	GDKreset(0, exit);	// terminate all other threads
 }
 
