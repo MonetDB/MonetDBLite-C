@@ -114,7 +114,7 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 	if (monetdb_embedded_initialized) goto cleanup;
 
 	// decompress scripts
-	if (!mal_init_inline) {
+	{
 		mz_ulong decompress_len_mal = EMBEDDED_SCRIPT_SIZE_MAX;
 		mz_ulong decompress_len_sql = EMBEDDED_SCRIPT_SIZE_MAX;
 		mal_init_inline = GDKzalloc(decompress_len_mal);
@@ -180,6 +180,8 @@ char* monetdb_startup(char* dbdir, char silent, char sequential) {
 
 
 cleanup:
+	GDKfree(mal_init_inline);
+	GDKfree(createdb_inline);
 	MT_lock_unset(&embedded_lock);
 	return retval;
 }
