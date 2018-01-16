@@ -19,6 +19,7 @@
 #define NATIVE_WIN32 1
 #define _Printf_format_string_
 #pragma GCC diagnostic ignored "-Wattributes"
+#define __visibility__(X)
 #endif
 
 #ifdef NATIVE_WIN32

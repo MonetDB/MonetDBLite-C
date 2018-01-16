@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 #ifndef _SQL_STATEMENT_H_
@@ -156,11 +156,7 @@ extern stmt *stmt_catalog(backend *be, int type, stmt *args);
 
 extern stmt *stmt_temp(backend *be, sql_subtype *t);
 extern stmt *stmt_atom(backend *be, atom *a);
-#ifdef HAVE_EMBEDDED
-extern stmt *stmt_atom_string(backend *be, const char *s, int escape);
-#else
 extern stmt *stmt_atom_string(backend *be, const char *s);
-#endif
 extern stmt *stmt_atom_string_nil(backend *be);
 extern stmt *stmt_atom_int(backend *be, int i);
 extern stmt *stmt_atom_lng(backend *be, lng i);

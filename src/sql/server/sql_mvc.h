@@ -3,26 +3,26 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /* multi version catalog */
 #ifndef _SQL_MVC_H
 #define _SQL_MVC_H
 
-#include <sql_mem.h>
-#include <gdk.h>
+#include "sql_mem.h"
+#include "gdk.h"
 #include <stdarg.h>
-#include <sql_scan.h>
-#include <sql_list.h>
-#include <sql_types.h>
-#include <sql_backend.h>
-#include <sql_catalog.h>
-#include <sql_relation.h>
-#include <sql_storage.h>
-#include <sql_keyword.h>
-#include <sql_atom.h>
-#include <sql_query.h>
+#include "sql_scan.h"
+#include "sql_list.h"
+#include "sql_types.h"
+#include "sql_backend.h"
+#include "sql_catalog.h"
+#include "sql_relation.h"
+#include "sql_storage.h"
+#include "sql_keyword.h"
+#include "sql_atom.h"
+#include "sql_query.h"
 
 #define ERRSIZE 8192
 

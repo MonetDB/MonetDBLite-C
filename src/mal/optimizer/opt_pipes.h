@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 #ifndef _OPT_PIPES_
@@ -17,6 +17,6 @@ mal_export str addPipeDefinition(Client cntxt, str name, str pipe);
 mal_export int isOptimizerPipe(str name);
 mal_export str addOptimizerPipe(Client cntxt, MalBlkPtr mb, str name);
 mal_export str compileOptimizer(Client cntxt, str name);
-mal_export void cleanOptimizerPipe(void);
+mal_export str mal_optimizer_reset(void);
 
 #endif

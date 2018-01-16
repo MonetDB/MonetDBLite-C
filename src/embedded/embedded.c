@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2008-2015 MonetDB B.V.
+ * Copyright 2008-2018 MonetDB B.V.
  */
 
 /*
@@ -199,6 +199,14 @@ cleanup:
 	if(failed) {
 		monetdb_shutdown_internal();
 		monetdb_embedded_initialized = false;
+	}
+	if(mal_init_inline) {
+		GDKfree(mal_init_inline);
+		mal_init_inline = NULL;
+	}
+	if(createdb_inline) {
+		GDKfree(createdb_inline);
+		createdb_inline = NULL;
 	}
 	MT_lock_unset(&embedded_lock);
 	return retval;
@@ -520,14 +528,6 @@ void monetdb_shutdown_internal(void) {
 			fclose(embedded_stdout);
 			embedded_stdout = NULL;
 			embedded_stderr = NULL;
-		}
-		if(mal_init_inline) {
-			GDKfree(mal_init_inline);
-			mal_init_inline = NULL;
-		}
-		if(createdb_inline) {
-			GDKfree(createdb_inline);
-			createdb_inline = NULL;
 		}
 		monetdb_embedded_initialized = 0;
 	}

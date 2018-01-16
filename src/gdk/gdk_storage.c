@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /*
@@ -428,7 +428,7 @@ GDKsave(int farmid, const char *nme, const char *ext, void *buf, size_t size, st
 	IODEBUG fprintf(stderr, "#GDKsave: name=%s, ext=%s, mode %d, dosync=%d\n", nme, ext ? ext : "", (int) mode, dosync);
 
 	if (mode == STORE_MMAP) {
-		if (dosync && size && MT_msync(buf, size) < 0)
+		if (dosync && size && !(GDKdebug & NOSYNCMASK) && MT_msync(buf, size) < 0)
 			err = -1;
 		if (err)
 			GDKsyserror("GDKsave: error on: name=%s, ext=%s, "
@@ -479,6 +479,15 @@ GDKsave(int farmid, const char *nme, const char *ext, void *buf, size_t size, st
 			    fsync(fd) < 0
 #else
 			    0
+=======
+			if (dosync && !(GDKdebug & NOSYNCMASK)
+#if defined(NATIVE_WIN32)
+			    && _commit(fd) < 0
+#elif defined(HAVE_FDATASYNC)
+			    && fdatasync(fd) < 0
+#elif defined(HAVE_FSYNC)
+			    && fsync(fd) < 0
+>>>>>>> ea3a4cb53000ab8e61ccbc9870e189296a42c6a0
 #endif
 				) {
 				GDKsyserror("GDKsave: error on: name=%s, "
@@ -629,7 +638,6 @@ DESCload(int i)
 		return NULL;
 	}
 	b->ttype = tt;
-	b->thash = NULL;
 
 	/* reconstruct mode from BBP status (BATmode doesn't flush
 	 * descriptor, so loaded mode may be stale) */
@@ -683,8 +691,7 @@ BATmsync(BAT *b)
 {
 	assert(!GDKinmemory());
 
-	/* we don't sync views */
-	if (isVIEW(b))
+	if (isVIEW(b) || (GDKdebug & NOSYNCMASK))
 		return;
 	/* we don't sync transients */
 	if (b->theap.farmid != 0 ||

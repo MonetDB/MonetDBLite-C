@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /*
@@ -379,7 +379,7 @@
 
 #include "gdk_system.h"
 #include "gdk_posix.h"
-#include <stream.h>
+#include "stream.h"
 
 #undef MIN
 #undef MAX
@@ -469,10 +469,8 @@
 #define XPROPDEBUG	if (GDKdebug & XPROPMASK)
 */
 
-/* JOINPROPMASK not used anymore
-#define JOINPROPMASK	(1<<24)
-#define JOINPROPCHK	if (!(GDKdebug & JOINPROPMASK))
-*/
+#define NOSYNCMASK	(1<<24)
+
 #define DEADBEEFMASK	(1<<25)
 #define DEADBEEFCHK	if (!(GDKdebug & DEADBEEFMASK))
 

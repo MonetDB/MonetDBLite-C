@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /*
@@ -32,7 +32,8 @@
 #include "mal_builder.h"
 #include "mal_namespace.h"
 #include "mal_linker.h"
-#include <mtime.h>
+#include "bat5.h"
+#include "mtime.h"
 #include "optimizer.h"
 #include "opt_prelude.h"
 #include "opt_pipes.h"
@@ -965,7 +966,7 @@ SQLparser(Client c)
 	/* sqlparse needs sql allocator to be available.  It can be NULL at
 	 * this point if this is a recursive call. */
 	m->sqs = NULL;
-	if (!m->sa)
+	if (!m->sa) 
 		m->sa = sa_create();
 	if (!m->sa) {
 		mnstr_printf(out, "!Could not create SQL allocator\n");
@@ -1099,6 +1100,7 @@ SQLparser(Client c)
 	} else if (caching(m) && cachable(m, NULL) && m->emode != m_prepare && (be->q = qc_match(m->qc, m->sym, m->args, m->argc, m->scanner.key ^ m->session->schema->base.id)) != NULL) {
 		/* query template was found in the query cache */
 		scanner_query_processed(&(m->scanner));
+		m->no_mitosis = be->q->no_mitosis;
 	} else {
 		sql_rel *r;
 
@@ -1147,7 +1149,8 @@ SQLparser(Client c)
 						  m->args,	/* the argument list */
 						  m->argc, m->scanner.key ^ m->session->schema->base.id,	/* the statement hash key */
 						  m->emode == m_prepare ? Q_PREPARE : m->type,	/* the type of the statement */
-						  escaped_q);
+						  escaped_q,
+						  m->no_mitosis);
 			}
 			if(!be->q) {
 				err = 1;

@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /*
@@ -519,13 +519,19 @@ addOptimizerPipe(Client cntxt, MalBlkPtr mb, str name)
 	return msg;
 }
 
-void
-cleanOptimizerPipe(void) {
-	int j;
-	for (j = 0; j < MAXOPTPIPES && pipes[j].def; j++) {
-		if (pipes[j].mb) {
-			freeMalBlk(pipes[j].mb);
-			pipes[j].mb = NULL;
+str
+mal_optimizer_reset(void) {
+	int i;
+	MT_lock_set(&pipeLock);
+	for (i = 0; i < MAXOPTPIPES; i++) {
+		if (pipes[i].mb) {
+			freeMalBlk(pipes[i].mb);
+			pipes[i].mb = NULL;
+			pipes[i].status = NULL;
+			pipes[i].prerequisite = NULL;
 		}
 	}
+	MT_lock_unset(&pipeLock);
+	return MAL_SUCCEED;
 }
+

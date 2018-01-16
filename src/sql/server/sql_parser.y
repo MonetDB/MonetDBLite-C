@@ -3,12 +3,12 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 %{
 #include "monetdb_config.h"
-#include <sql_mem.h>
+#include "sql_mem.h"
 #include "sql_parser.h"
 #include "sql_symbol.h"
 #include "sql_datetime.h"
@@ -701,16 +701,17 @@ create:
 create_or_replace:
 	create
 |	CREATE OR REPLACE { $$ = TRUE; }
-
+;
 
 if_exists:
 	/* empty */   { $$ = FALSE; }
 |	IF EXISTS     { $$ = TRUE; }
+;
 
 if_not_exists:
 	/* empty */   { $$ = FALSE; }
 |	IF NOT EXISTS { $$ = TRUE; }
-
+;
 
 drop:
     DROP 		
@@ -4129,6 +4130,7 @@ column_exp:
 opt_alias_name:
     /* empty */	{ $$ = NULL; }
  |  AS ident	{ $$ = $2; }
+ |  ident	{ $$ = $1; }
  ;
 
 atom:

@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 #include "monetdb_config.h"
@@ -100,6 +100,7 @@ rel_parse(mvc *m, sql_schema *s, char *query, char emode)
 	} else {
 		int label = m->label;
 		list *sqs = m->sqs;
+
 		while (m->topvars > o.topvars) {
 			if (m->vars[--m->topvars].name)
 				c_delete(m->vars[m->topvars].name);

@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /* (author) M. Kersten */
@@ -34,6 +34,7 @@ int have_hge;
 #include "mal_runtime.h"
 #include "mal_dataflow.h"
 #include "mal_runtime.h"
+#include "opt_pipes.h"
 #include "sql_scenario.h"
 
 MT_Lock     mal_contextLock MT_LOCK_INITIALIZER("mal_contextLock");
@@ -137,19 +138,17 @@ void mserver_reset(int exit)
 
 	SQLepilogue(NULL);
 
+	mal_optimizer_reset();
 	mal_linker_reset();
 	mal_runtime_reset();
 	mal_module_reset();
-	mal_namespace_reset();
-	cleanOptimizerPipe();
 	mal_client_reset();
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;
 	memset((char*) monet_characteristics, 0, sizeof(monet_characteristics));
 	mal_trace = 0;
-	/* No need to clean up the namespace, it will simply be extended
-	 * upon restart mal_namespace_reset(); */
+	mal_namespace_reset();
 	GDKreset(0, exit);	// terminate all other threads
 }
 

@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /*
@@ -17,20 +17,20 @@
 #include "sql.h"
 #include "sql_result.h"
 #include "sql_gencode.h"
-#include <sql_storage.h>
-#include <sql_scenario.h>
-#include <store_sequence.h>
-#include <sql_optimizer.h>
-#include <sql_datetime.h>
-#include <rel_optimizer.h>
-#include <rel_partition.h>
-#include <rel_distribute.h>
-#include <rel_select.h>
-#include <rel_rel.h>
-#include <rel_exp.h>
-#include <rel_dump.h>
-#include <rel_bin.h>
-#include <opt_pipes.h>
+#include "sql_storage.h"
+#include "sql_scenario.h"
+#include "store_sequence.h"
+#include "sql_optimizer.h"
+#include "sql_datetime.h"
+#include "rel_optimizer.h"
+#include "rel_partition.h"
+#include "rel_distribute.h"
+#include "rel_select.h"
+#include "rel_rel.h"
+#include "rel_exp.h"
+#include "rel_dump.h"
+#include "rel_bin.h"
+#include "opt_pipes.h"
 #include "orderidx.h"
 #include "mal_instruction.h"
 #include "bat5.h"
@@ -66,7 +66,8 @@ rel_no_mitosis(sql_rel *rel)
 
 	if (!rel || is_basetable(rel->op))
 		return 1;
-	if (is_topn(rel->op) || is_project(rel->op))
+	//if (is_topn(rel->op) || is_project(rel->op))
+	if (is_topn(rel->op) || rel->op == op_project)
 		return rel_no_mitosis(rel->l);
 	if (is_modify(rel->op) && rel->card <= CARD_AGGR)
 		return rel_no_mitosis(rel->r);

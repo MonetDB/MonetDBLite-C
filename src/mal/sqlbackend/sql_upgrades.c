@@ -22,6 +22,7 @@
 #define printf(fmt,...) ((void) 0)
 #endif
 
+
 #ifdef HAVE_HGE
 static str
 sql_update_hugeint(Client c, mvc *sql)

@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 /*
@@ -175,7 +175,11 @@ static void freeSubScope(Module scope)
 {
 	int i;
 
+<<<<<<< HEAD
 	if (scope->space == NULL)
+=======
+	if (scope->space == NULL) 
+>>>>>>> ea3a4cb53000ab8e61ccbc9870e189296a42c6a0
 		return;
 	for(i = 0; i < MAXSCOPE; i++) {
 		if( scope->space[i]){
@@ -341,3 +345,4 @@ Symbol findSymbol(Module nspace, str mod, str fcn) {
 	Module m = findModule(nspace, mod);
 	return findSymbolInModule(m, fcn);
 }
+

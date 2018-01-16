@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 #include "monetdb_config.h"
@@ -12,12 +12,12 @@
 #include "store_dependency.h"
 #include "store_sequence.h"
 
-#include <bat/bat_utils.h>
-#include <bat/bat_storage.h>
-#include <bat/bat_table.h>
-#include <bat/bat_logger.h>
-#include <bat/nop_logger.h>
 
+#include "bat/bat_utils.h"
+#include "bat/bat_storage.h"
+#include "bat/bat_table.h"
+#include "bat/bat_logger.h"
+#include "bat/nop_logger.h"
 
 /* version 05.21.00 of catalog */
 #define CATALOG_VERSION 52201
@@ -882,7 +882,7 @@ set_members(changeset *ts)
 	}
 }
 
-static void
+static void 
 sql_trans_update_schema(sql_trans *tr, oid rid)
 {
 	void *v;
@@ -894,7 +894,7 @@ sql_trans_update_schema(sql_trans *tr, oid rid)
 	sid = *(sqlid *)v; 	_DELETE(v);
 	s = find_sql_schema_id(tr, sid);
 
-	if (s==NULL)
+	if (s==NULL) 
 		return ;
 
 	if (bs_debug)
@@ -1056,7 +1056,7 @@ sql_trans_update_schemas(sql_trans* tr)
 	sql_column *sysschema_ids = find_sql_column(sysschema, "id");
 	rids *schemas = table_funcs.rids_select(tr, sysschema_ids, NULL, NULL);
 	oid rid;
-
+	
 	if (bs_debug)
 		fprintf(stderr, "#update schemas\n");
 
@@ -3844,7 +3844,7 @@ static void
 sys_drop_statistics(sql_trans *tr, sql_column *col)
 {
 	if (isGlobal(col->t)) {
-		sql_schema *syss = find_sql_schema(tr, "sys");
+		sql_schema *syss = find_sql_schema(tr, "sys"); 
 		sql_table *sysstats = find_sql_table(syss, "statistics");
 
 		oid rid = table_funcs.column_find_row(tr, find_sql_column(sysstats, "column_id"), &col->base.id, NULL);
