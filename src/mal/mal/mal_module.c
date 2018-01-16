@@ -175,11 +175,7 @@ static void freeSubScope(Module scope)
 {
 	int i;
 
-<<<<<<< HEAD
 	if (scope->space == NULL)
-=======
-	if (scope->space == NULL) 
->>>>>>> ea3a4cb53000ab8e61ccbc9870e189296a42c6a0
 		return;
 	for(i = 0; i < MAXSCOPE; i++) {
 		if( scope->space[i]){

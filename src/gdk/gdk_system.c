@@ -483,7 +483,6 @@ MT_check_nr_cores_(void)
 		for (i = 0; i < curr; i++)
 			if (MT_create_thread(threads + i, smp_thread, NULL, MT_THR_JOINABLE) < 0) {
 				curr = i;
-				failed = 1;
 				break;
 			}
 		for (i = 0; i < curr; i++)

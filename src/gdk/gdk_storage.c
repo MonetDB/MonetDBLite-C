@@ -470,16 +470,6 @@ GDKsave(int farmid, const char *nme, const char *ext, void *buf, size_t size, st
 						(unsigned) MIN(1 << 30, size),
 						ret);
 			}
-			if (dosync && !(GDKdebug & FORCEMITOMASK) &&
-#if defined(NATIVE_WIN32)
-			    _commit(fd) < 0
-#elif defined(HAVE_FDATASYNC)
-			    fdatasync(fd) < 0
-#elif defined(HAVE_FSYNC)
-			    fsync(fd) < 0
-#else
-			    0
-=======
 			if (dosync && !(GDKdebug & NOSYNCMASK)
 #if defined(NATIVE_WIN32)
 			    && _commit(fd) < 0
@@ -487,7 +477,6 @@ GDKsave(int farmid, const char *nme, const char *ext, void *buf, size_t size, st
 			    && fdatasync(fd) < 0
 #elif defined(HAVE_FSYNC)
 			    && fsync(fd) < 0
->>>>>>> ea3a4cb53000ab8e61ccbc9870e189296a42c6a0
 #endif
 				) {
 				GDKsyserror("GDKsave: error on: name=%s, "
