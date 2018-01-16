@@ -38,7 +38,7 @@ malBootstrap(void)
 	}
 	c->nspace = newModule(NULL, putName("user"));
 	if ( (msg = defaultScenario(c)) ) {
-		GDKerror("malBootstrap: Failed to initialize default scenario");
+		GDKerror("malBootstrap: Failed to initialize default scenario: %s", msg);
 		goto cleanup;
 	}
 	MSinitClientPrg(c, "user", "main");
@@ -48,13 +48,13 @@ malBootstrap(void)
 	}
 	msg = malInclude(c, bootfile, 0);
 	if (msg != NULL) {
-		GDKerror("malBootstrap: Failed to load startup script %s", msg);
+		GDKerror("malBootstrap: Failed to load startup script: %s", msg);
 		goto cleanup;
 	}
 	pushEndInstruction(c->curprg->def);
 	chkProgram(c->fdout, c->nspace, c->curprg->def);
 	if (c->curprg->def->errors) {
-		GDKerror("malBootstrap: Failed to check startup script %s", GDKerrbuf);
+		GDKerror("malBootstrap: Failed to check startup script: %s", GDKerrbuf);
 		goto cleanup;
 	}
 	msg = MALengine(c);

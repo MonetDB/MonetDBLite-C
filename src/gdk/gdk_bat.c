@@ -264,6 +264,10 @@ BATattach(int tt, const char *heapfile, int role)
 	char *p;
 	size_t m;
 	FILE *f;
+#if defined(HAVE_EMBEDDED) && defined(HAVE_EMBEDDED_JAVA)
+		//The JVM is always Big-Endian, so the integer values must be swapped if so
+		int swapendianess = MT_check_endianness() != HOST_BIG_ENDIAN;
+#endif
 
 	ERRORcheck(tt <= 0 , "BATattach: bad tail type (<=0)\n", NULL);
 	ERRORcheck(ATOMvarsized(tt) && ATOMstorage(tt) != TYPE_str, "BATattach: bad tail type (varsized and not str)\n", NULL);
@@ -374,6 +378,43 @@ BATattach(int tt, const char *heapfile, int role)
 		p = Tloc(bn, 0);
 		n = (lng) st.st_size;
 		while (n > 0 && (m = fread(p, 1, (size_t) MIN(1024*1024, n), f)) > 0) {
+#if defined(HAVE_EMBEDDED) && defined(HAVE_EMBEDDED_JAVA)
+			if (swapendianess) {
+				size_t j = 0, end = 0;
+				switch(ATOMstorage(tt)) {
+					case TYPE_sht: {
+						short *bufptr = (short*) p;
+						for(j = 0, end = m / atomsize; j < end; j++) {
+							bufptr[j] = short_int_SWAP(bufptr[j]);
+						}
+						break;
+					}
+					case TYPE_int: {
+						int *bufptr = (int*) p;
+						for(j = 0, end = m / atomsize; j < end; j++) {
+							bufptr[j] = normal_int_SWAP(bufptr[j]);
+						}
+						break;
+					}
+					case TYPE_lng: {
+						lng *bufptr = (lng*) p;
+						for(j = 0, end = m / atomsize; j < end; j++) {
+							bufptr[j] = long_long_SWAP(bufptr[j]);
+						}
+						break;
+					}
+#ifdef HAVE_HGE
+					case TYPE_hge: {
+						hge *bufptr = (hge*) p;
+						for(j = 0 end = m / atomsize; j < end; j++) {
+							bufptr[j] = huge_int_SWAP(bufptr[j]);
+						}
+						break;
+					}
+#endif
+				}
+			}
+#endif
 			p += m;
 			n -= m;
 		}
