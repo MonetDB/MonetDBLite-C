@@ -405,7 +405,6 @@ PCREnotilike2(bit *ret, const str *s, const str *pat)
 static str
 BATPCRElike3(bat *ret, const bat *bid, const str *pat, const str *esc, const bit *isens, const bit *not)
 {
-	char *ppat = NULL;
 	str res = MAL_SUCCEED;
 
 	BAT *strs = BATdescriptor(*bid);
@@ -415,47 +414,30 @@ BATPCRElike3(bat *ret, const bat *bid, const str *pat, const str *esc, const bit
 	BUN p, q, i = 0;
 
 	if (strs == NULL) {
-		GDKfree(ppat);
 		throw(MAL, "batstr.like", OPERATION_FAILED);
 	}
 
 	r = COLnew(strs->hseqbase, TYPE_bit, BATcount(strs), TRANSIENT);
 	if( r==NULL) {
-		GDKfree(ppat);
 		throw(MAL,"pcre.like3",MAL_MALLOC_FAIL);
 	}
 	br = (bit*)Tloc(r, 0);
 	strsi = bat_iterator(strs);
 
-	if (strcmp(ppat, str_nil) == 0) {
-		BATloop(strs, p, q) {
-			const char *s = (str)BUNtail(strsi, p);
+	BATloop(strs, p, q) {
+		const char *s = (str)BUNtail(strsi, p);
 
-			if (strcmp(s, *pat) == 0)
-				br[i] = TRUE;
-			else
-				br[i] = FALSE;
-			if (*not)
-				br[i] = !br[i];
-			i++;
+		if (*s == *str_nil) {
+			br[i] = bit_nil;
+			r->tnonil = 0;
+			r->tnil = 1;
+		} else {
+			bit retval = STRlike(*pat, s, *isens, **esc);
+			br[i] = *not ? !retval:retval;
 		}
-	} else {
-
-		BATloop(strs, p, q) {
-			const char *s = (str)BUNtail(strsi, p);
-
-			if (*s == *str_nil) {
-				br[i] = bit_nil;
-				r->tnonil = 0;
-				r->tnil = 1;
-			} else {
-				bit retval = STRlike(*pat, s, *isens, **esc);
-				br[i] = *not ? !retval:retval;
-			}
-			i++;
-		}
-
+		i++;
 	}
+
 	BATsetcount(r, i);
 	r->tsorted = 0;
 	r->trevsorted = 0;
@@ -463,7 +445,6 @@ BATPCRElike3(bat *ret, const bat *bid, const str *pat, const str *esc, const bit
 
 	BBPkeepref(*ret = r->batCacheid);
 	BBPunfix(strs->batCacheid);
-	GDKfree(ppat);
 
 	return res;
 }
