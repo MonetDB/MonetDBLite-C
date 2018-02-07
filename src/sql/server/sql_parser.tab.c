@@ -12212,7 +12212,7 @@ yyreduce:
 
 		  if (digits <= 0)
 			digits = 1;
-		  if (digits <= MAX_DEC_DIGITS) {
+		  if (0 && digits <= MAX_DEC_DIGITS) {
 		  	double val = strtod((yyvsp[(1) - (1)].sval),NULL);
 #ifdef HAVE_HGE
 		  	hge value = decimal_from_str(s, NULL);
