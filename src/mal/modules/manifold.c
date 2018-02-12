@@ -153,7 +153,7 @@ MANIFOLDjob(MULTItask *mut)
 
 	args = (char**) GDKzalloc(sizeof(char*) * mut->pci->argc);
 	if( args == NULL)
-		throw(MAL,"mal.manifold",MAL_MALLOC_FAIL);
+		throw(MAL,"mal.manifold", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 	
 	// the mod.fcn arguments are ignored from the call
 	for( i = mut->pci->retc+2; i< mut->pci->argc; i++) {
@@ -236,7 +236,7 @@ MANIFOLDtypecheck(Client cntxt, MalBlkPtr mb, InstrPtr pci, int checkprops){
 	fprintInstruction(stderr,nmb,0,q,LIST_MAL_ALL);
 #endif
 	// Localize the underlying scalar operator
-	typeChecker(cntxt->fdout, cntxt->nspace, nmb, q, TRUE);
+	typeChecker(cntxt->usermodule, nmb, q, TRUE);
 	if (nmb->errors || q->fcn == NULL || q->token != CMDcall ||
 		(checkprops && q->blk && q->blk->unsafeProp) )
 		fcn = NULL;
@@ -273,7 +273,7 @@ MANIFOLDevaluate(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci){
 
 	mat = (MULTIarg *) GDKzalloc(sizeof(MULTIarg) * pci->argc);
 	if( mat == NULL)
-		throw(MAL, "mal.manifold", MAL_MALLOC_FAIL);
+		throw(MAL, "mal.manifold", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 	
 	// mr-job structure preparation
 	mut.fvar = mut.lvar = 0;
@@ -288,7 +288,7 @@ MANIFOLDevaluate(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci){
 		if ( isaBatType(getArgType(mb,pci,i)) ){
 			mat[i].b = BATdescriptor( *getArgReference_bat(stk,pci,i));
 			if ( mat[i].b == NULL){
-				msg = createException(MAL,"mal.manifold", MAL_MALLOC_FAIL);
+				msg = createException(MAL,"mal.manifold", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 				goto wrapup;
 			}
 			mat[i].type = tpe = getBatType(getArgType(mb,pci,i));
@@ -330,7 +330,7 @@ MANIFOLDevaluate(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci){
 	// prepare result variable
 	mat[0].b =COLnew(mat[mut.fvar].b->hseqbase, getBatType(getArgType(mb,pci,0)), cnt, TRANSIENT);
 	if ( mat[0].b == NULL){
-		msg= createException(MAL,"mal.manifold",MAL_MALLOC_FAIL);
+		msg= createException(MAL,"mal.manifold", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 		goto wrapup;
 	}
 	mat[0].b->tnonil=0;

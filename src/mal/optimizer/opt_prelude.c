@@ -16,6 +16,7 @@
 #include "optimizer_private.h"
 
 str abortRef;
+str actionRef;
 str affectedRowsRef;
 str aggrRef;
 str alarmRef;
@@ -66,6 +67,7 @@ str blockRef;
 str bpmRef;
 str bstreamRef;
 str calcRef;
+str catalogRef;
 str clear_tableRef;
 str closeRef;
 str columnBindRef;
@@ -188,6 +190,7 @@ str oltpRef;
 str openRef;
 str optimizerRef;
 str pack2Ref;
+str packIncrementRef;
 str packRef;
 str parametersRef;
 str partitionRef;
@@ -211,6 +214,11 @@ str pyapimapRef;
 str pyapiRef;
 str querylogRef;
 str queryRef;
+str capiRef;
+str batcapiRef;
+str subeval_aggrRef;
+str rankRef;
+str dense_rankRef;
 str raiseRef;
 str rangejoinRef;
 str rankRef;
@@ -229,6 +237,7 @@ str reuseRef;
 str revoke_functionRef;
 str revokeRef;
 str revoke_rolesRef;
+str rollbackRef;
 str row_numberRef;
 str rpcRef;
 str rsColumnRef;
@@ -289,11 +298,14 @@ str unpinRef;
 str updateRef;
 str userRef;
 str vectorRef;
+str wlcRef;
+str wlrRef;
 str zero_or_oneRef;
 
 void optimizerInit(void)
 {
 	abortRef = putName("abort");
+	actionRef = putName("action");
 	affectedRowsRef = putName("affectedRows");
 	aggrRef = putName("aggr");
 	alarmRef = putName("alarm");
@@ -345,6 +357,7 @@ void optimizerInit(void)
 	bpmRef = putName("bpm");
 	bstreamRef = putName("bstream");
 	calcRef = putName("calc");
+	catalogRef = putName("catalog");
 	clear_tableRef = putName("clear_table");
 	closeRef = putName("close");
 	columnRef = putName("column");
@@ -476,6 +489,7 @@ void optimizerInit(void)
 	parametersRef = putName("parameters");
 	packRef = putName("pack");
 	pack2Ref = putName("pack2");
+	packIncrementRef = putName("packIncrement");
 	passRef = putName("pass");
 	partitionRef = putName("partition");
 	pcreRef = putName("pcre");
@@ -498,6 +512,8 @@ void optimizerInit(void)
 	batrapiRef = putName("batrapi");
     pyapiRef = putName("pyapi");
     batpyapiRef = putName("batpyapi");
+    capiRef = putName("capi");
+    batcapiRef = putName("batcapi");
     pyapimapRef = putName("batpyapimap");
     pyapi3Ref = putName("pyapi3");
     batpyapi3Ref = putName("batpyapi3");
@@ -519,6 +535,7 @@ void optimizerInit(void)
 	revokeRef = putName("revoke");
 	reuseRef = putName("reuse");
 	revoke_rolesRef = putName("revoke_roles");
+	rollbackRef = putName("rollback");
 	revoke_functionRef = putName("revoke_function");
 	row_numberRef = putName("row_number");
 	rpcRef = putName("rpc");
@@ -565,6 +582,8 @@ void optimizerInit(void)
 	unpinRef = putName("unpin");
 	updateRef = putName("update");
 	userRef = putName("user");
+	wlcRef = putName("wlc");
+	wlrRef = putName("wlr");
 	selectRef = putName("select");
 	thetaselectRef = putName("thetaselect");
 	vectorRef = putName("vector");

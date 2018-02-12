@@ -1189,7 +1189,11 @@ stmt_atom(backend *be, atom *a)
 	if (atom_null(a)) {
 		q = pushNil(mb, q, atom_type(a)->type->localtype);
 	} else {
-		int k = constantAtom(be, mb, a);
+		int k;
+		if((k = constantAtom(be, mb, a)) == -1) {
+			freeInstruction(q);
+			return NULL;
+		}
 
 		q = pushArgument(mb, q, k);
 	}
@@ -2243,7 +2247,6 @@ stmt_catalog(backend *be, int type, stmt *args)
 	MalBlkPtr mb = be->mb;
 	InstrPtr q = NULL;
 	node *n;
-	int if_exists =0;
 
 	if (args->nr < 0)
 		return NULL;
@@ -2254,16 +2257,10 @@ stmt_catalog(backend *be, int type, stmt *args)
 	case DDL_ALTER_SEQ:	q = newStmt(mb, sqlcatalogRef, alter_seqRef); break;
 	case DDL_DROP_SEQ:	q = newStmt(mb, sqlcatalogRef, drop_seqRef); break;
 	case DDL_CREATE_SCHEMA:	q = newStmt(mb, sqlcatalogRef, create_schemaRef); break;
-	case DDL_DROP_SCHEMA_IF_EXISTS: if_exists =1;
-		/* fall through */
 	case DDL_DROP_SCHEMA:	q = newStmt(mb, sqlcatalogRef, drop_schemaRef); break;
 	case DDL_CREATE_TABLE:	q = newStmt(mb, sqlcatalogRef, create_tableRef); break;
 	case DDL_CREATE_VIEW:	q = newStmt(mb, sqlcatalogRef, create_viewRef); break;
-	case DDL_DROP_TABLE_IF_EXISTS: if_exists =1;
-		/* fall through */
 	case DDL_DROP_TABLE:	q = newStmt(mb, sqlcatalogRef, drop_tableRef); break;
-	case DDL_DROP_VIEW_IF_EXISTS: if_exists = 1;
-		/* fall through */
 	case DDL_DROP_VIEW:	q = newStmt(mb, sqlcatalogRef, drop_viewRef); break;
 	case DDL_DROP_CONSTRAINT:	q = newStmt(mb, sqlcatalogRef, drop_constraintRef); break;
 	case DDL_ALTER_TABLE:	q = newStmt(mb, sqlcatalogRef, alter_tableRef); break;
@@ -2304,8 +2301,6 @@ stmt_catalog(backend *be, int type, stmt *args)
 			freeInstruction(q);
 			return NULL;
 		}
-		if( if_exists)
-			pushInt(mb,q,1);
 		s->op1 = args;
 		s->flag = type;
 		s->q = q;
@@ -2747,7 +2742,7 @@ stmt_Nop(backend *be, stmt *ops, sql_subfunc *f)
 		return NULL;
 	mod = sql_func_mod(f->func);
 	fimp = sql_func_imp(f->func);
-	if (o && o->nrcols > 0) {
+	if (o && o->nrcols > 0 && f->func->type != F_LOADER) {
 		sql_subtype *res = f->res->h->data;
 		fimp = convertMultiplexFcn(fimp);
 		q = NULL;
@@ -2783,8 +2778,15 @@ stmt_Nop(backend *be, stmt *ops, sql_subfunc *f)
 	}
 	if (LANG_EXT(f->func->lang))
 		q = pushPtr(mb, q, f);
-	if (f->func->lang == FUNC_LANG_R || f->func->lang >= FUNC_LANG_PY)
-		q = pushStr(mb, q, f->func->query);
+	if (f->func->lang == FUNC_LANG_C) {
+		q = pushBit(mb, q, 0);
+	} else if (f->func->lang == FUNC_LANG_CPP) {
+		q = pushBit(mb, q, 1);
+	}
+	if (f->func->lang == FUNC_LANG_R || f->func->lang >= FUNC_LANG_PY ||
+		f->func->lang == FUNC_LANG_C || f->func->lang == FUNC_LANG_CPP) {
+		q = pushStr(mb, q, f->func->query);	
+	}
 	/* first dynamic output of copy* functions */
 	if (f->func->type == F_UNION || (f->func->type == F_LOADER && f->res != NULL))
 		q = table_func_create_result(mb, q, f->func, f->res);
@@ -2947,12 +2949,19 @@ stmt_aggr(backend *be, stmt *op1, stmt *grp, stmt *ext, sql_subaggr *op, int red
 	if (LANG_EXT(op->aggr->lang))
 		q = pushPtr(mb, q, op->aggr);
 	if (op->aggr->lang == FUNC_LANG_R ||
-		op->aggr->lang >= FUNC_LANG_PY) {
+		op->aggr->lang >= FUNC_LANG_PY || 
+		op->aggr->lang == FUNC_LANG_C ||
+		op->aggr->lang == FUNC_LANG_CPP) {
 		if (!grp) {
 			setVarType(mb, getArg(q, 0), restype);
 			setVarUDFtype(mb, getArg(q, 0));
 		}
-		q = pushStr(mb, q, op->aggr->query);
+		if (op->aggr->lang == FUNC_LANG_C) {
+			q = pushBit(mb, q, 0);
+		} else if (op->aggr->lang == FUNC_LANG_CPP) {
+			q = pushBit(mb, q, 1);
+		}
+ 		q = pushStr(mb, q, op->aggr->query);
 	}
 
 	if (op1->type != st_list) {

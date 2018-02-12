@@ -99,6 +99,11 @@ delta_full_bat_( sql_column *c, sql_delta *bat, int temp)
 				r = COLcopy(b, b->ttype, 1, TRANSIENT); 
 				bat_destroy(b); 
 				b = r;
+				if(b == NULL) {
+					bat_destroy(ui);
+					bat_destroy(uv);
+					return NULL;
+				}
 			}
 			if (void_replace_bat(b, ui, uv, TRUE) == BUN_NONE) {
 				bat_destroy(ui);
@@ -211,7 +216,7 @@ column_find_value(sql_trans *tr, sql_column *c, oid rid)
 	if (q != BUN_NONE) {
 		BATiter bi = bat_iterator(b);
 		void *r;
-		int sz;
+		size_t sz;
 
 		res = BUNtail(bi, q);
 		sz = ATOMlen(b->ttype, res);
@@ -227,7 +232,7 @@ column_find_value(sql_trans *tr, sql_column *c, oid rid)
 static int
 column_update_value(sql_trans *tr, sql_column *c, oid rid, void *value)
 {
-	assert(rid != oid_nil);
+	assert(!is_oid_nil(rid));
 
 	store_funcs.update_col(tr, c, &rid, value, c->type.type->localtype);
 	return LOG_OK;
@@ -242,8 +247,11 @@ table_insert(sql_trans *tr, sql_table *t, ...)
 	int cnt = 0;
 
 	va_start(va, t);
-	for (; n && (val = va_arg(va, void *)) != NULL; n = n->next) {
+	for (; n; n = n->next)
+	{
 		sql_column *c = n->data;
+		val = va_arg(va, void *);
+		if (!val) break;
 		store_funcs.append_col(tr, c, val, c->type.type->localtype);
 		cnt++;
 	}
@@ -259,7 +267,7 @@ table_insert(sql_trans *tr, sql_table *t, ...)
 static int
 table_delete(sql_trans *tr, sql_table *t, oid rid)
 {
-	assert(rid != oid_nil);
+	assert(!is_oid_nil(rid));
 
 	store_funcs.delete_tab(tr, t, &rid, TYPE_oid);
 	return LOG_OK;

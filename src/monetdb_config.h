@@ -768,12 +768,10 @@ typedef size_t uintptr_t;
 #ifdef HAVE_LONG_LONG
 typedef long long lng;
 typedef unsigned long long ulng;
-# define SIZEOF_LNG SIZEOF_LONG_LONG
 #else
 # ifdef HAVE___INT64
 typedef __int64 lng;
 typedef unsigned __int64 ulng;
-#  define SIZEOF_LNG SIZEOF___INT64
 # endif
 #endif
 

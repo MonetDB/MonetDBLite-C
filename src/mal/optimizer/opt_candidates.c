@@ -78,9 +78,9 @@ OPTcandidatesImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr 
 
     /* Defense line against incorrect plans */
 	/* plan remains unaffected */
-	//chkTypes(cntxt->fdout, cntxt->nspace, mb, FALSE);
-	//chkFlow(cntxt->fdout, mb);
-	//chkDeclarations(cntxt->fdout, mb);
+	//chkTypes(cntxt->usermodule, mb, FALSE);
+	//chkFlow(mb);
+	//chkDeclarations(mb);
     /* keep all actions taken as a post block comment */
 #ifndef HAVE_EMBEDDED
 	usec = GDKusec()- usec;

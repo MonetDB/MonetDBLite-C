@@ -116,7 +116,6 @@ OPTdependencies(Client cntxt, MalBlkPtr mb, int **Ulist)
 			var[getArg(p,j)] = i;
 	}
 	/*
-	 * @-
 	 * 	mnstr_printf(cntxt->fdout,"DEPENDENCY TABLE\n");
 	 * 	for(i=0;i<mb->stop; i++)
 	 * 		if( list[i]->cnt){
@@ -133,11 +132,13 @@ OPTdependencies(Client cntxt, MalBlkPtr mb, int **Ulist)
 		list[i]->pos2 = sz;
 		sz += list[i]->used;
 	}
-	if (sz == 0 ||
-		(uselist = GDKzalloc(sizeof(int)*sz)) == NULL) {
-		/* there is no distinction between successfully finding
-		 * nothing and failure; in either case the caller doesn't do
-		 * anything */
+	if( sz == 0){
+		OPTremoveDep(list, mb->stop);
+		GDKfree(var);
+		return NULL;
+	}
+	uselist = GDKzalloc(sizeof(int)*sz);
+	if (!uselist) {
 		OPTremoveDep(list, mb->stop);
 		GDKfree(var);
 		return NULL;
@@ -153,7 +154,6 @@ OPTdependencies(Client cntxt, MalBlkPtr mb, int **Ulist)
 		}
 	}
 	/*
-	 * @-
 	 * 	for(i=0, sz = 0; i<mb->stop; i++) {
 	 * 		mnstr_printf(cntxt->fdout,"%d is used by", i);
 	 * 		for(j=0; j<list[i]->used; j++, sz++)
@@ -231,10 +231,10 @@ OPTpostponeAppends(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	}
 	for( i=0; i<limit; i++){
 		if ( getModuleId(old[i]) == sqlRef && getFunctionId(old[i]) == appendRef){
-//			 only postpone under strict conditions
-//			assert( isVarConstant(mb,getArg(old[i],2)));
-//			assert( isVarConstant(mb,getArg(old[i],3)));
-//			assert( isVarConstant(mb,getArg(old[i],4)));
+			// only postpone under strict conditions
+			assert( isVarConstant(mb,getArg(old[i],2)));
+			assert( isVarConstant(mb,getArg(old[i],3)));
+			assert( isVarConstant(mb,getArg(old[i],4)));
 			if( actions )
 				pushInstruction(mb, old[i]);
 			else {
@@ -271,10 +271,9 @@ OPTreorderImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	InstrPtr *old;
 	int limit, slimit, *uselist = NULL;
 	Node *dep;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec= GDKusec();
-#endif
+	str msg = MAL_SUCCEED;
 
 	(void) cntxt;
 	(void) stk;
@@ -287,7 +286,7 @@ OPTreorderImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 	if ( newMalBlkStmt(mb, mb->ssize) < 0) {
 		GDKfree(uselist);
 		OPTremoveDep(dep, limit);
-		throw(MAL,"optimizer.reorder", MAL_MALLOC_FAIL);
+		throw(MAL,"optimizer.reorder", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 	}
 	
 	pushInstruction(mb,old[0]);
@@ -343,16 +342,15 @@ OPTreorderImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p)
 
     /* Defense line against incorrect plans */
     if( 1){
-        chkTypes(cntxt->fdout, cntxt->nspace, mb, FALSE);
-        chkFlow(cntxt->fdout, mb);
-        chkDeclarations(cntxt->fdout, mb);
+        chkTypes(cntxt->usermodule, mb, FALSE);
+        chkFlow(mb);
+        chkDeclarations(mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","reorder",1,usec);
     newComment(mb,buf);
 	addtoMalBlkHistory(mb);
-#endif
-	return MAL_SUCCEED;
+
+	return msg;
 }

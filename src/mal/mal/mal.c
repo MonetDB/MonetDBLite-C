@@ -10,9 +10,9 @@
 #include "monetdb_config.h"
 #include "mal.h"
 
-char 	monet_cwd[PATHLENGTH] = { 0 };
+char 	monet_cwd[FILENAME_MAX] = { 0 };
 size_t 	monet_memory = 0;
-char 	monet_characteristics[PATHLENGTH];
+char 	monet_characteristics[4096];
 int		mal_trace;		/* enable profile events on console */
 str     mal_session_uuid;   /* unique marker for the session */
 
@@ -30,8 +30,6 @@ int have_hge;
 #include "mal_client.h"
 #include "mal_dataflow.h"
 #include "mal_private.h"
-#include "mal_runtime.h"
-#include "mal_dataflow.h"
 #include "mal_runtime.h"
 #include "opt_pipes.h"
 #include "sql_scenario.h"
@@ -92,6 +90,9 @@ int mal_init(void){
 
 #endif
 
+/* Any error encountered here terminates the process
+ * with a message sent to stderr
+ */
 	tstAligned();
 	MCinit();
 	monet_memory = MT_npages() * MT_pagesize();
@@ -100,7 +101,7 @@ int mal_init(void){
 #ifndef HAVE_EMBEDDED
 	initHeartbeat();
 #endif
-	if( malBootstrap() == 0) {
+	if( malBootstrap() != MAL_SUCCEED) {
 		return -1;
 	}
 	return 0;
@@ -118,36 +119,38 @@ int mal_init(void){
  */
 void mserver_reset(int exit)
 {
+	(void) exit;
 	GDKprepareExit();
 	MCstopClients(0);
 	mal_dataflow_reset();
+	THRdel(mal_clients->mythread);
+	GDKfree(mal_clients->errbuf);
+	mal_clients->fdin->s = NULL;
+	bstream_destroy(mal_clients->fdin);
+	GDKfree(mal_clients->prompt);
+	GDKfree(mal_clients->username);
+	freeStack(mal_clients->glb);
+	if (mal_clients->usermodule/* && strcmp(mal_clients->usermodule->name,"user")==0*/)
+		freeModule(mal_clients->usermodule);
 
-	// this is created in bootstrap and not cleaned up by MalClientExit so we do it here so we don't leak
-	if (mal_clients) {
-		THRdel(mal_clients->mythread);
-		GDKfree(mal_clients->errbuf);
-		mal_clients->fdin->s = NULL;
-		bstream_destroy(mal_clients->fdin);
-		GDKfree(mal_clients->prompt);
-		GDKfree(mal_clients->username);
-		freeStack(mal_clients->glb);
-		if (mal_clients->nspace)
-			freeModule(mal_clients->nspace);
-	}
+	mal_clients->fdin = 0;
+	mal_clients->prompt = 0;
+	mal_clients->username = 0;
+	mal_clients->curprg = 0;
+	mal_clients->usermodule = 0;
 
-	SQLepilogue(NULL);
-	mal_optimizer_reset();
-	mal_linker_reset();
+	mal_client_reset();
 	mal_runtime_reset();
 	mal_module_reset();
-	mal_client_reset();
+	opt_pipes_reset();
+	GDKfree(mal_session_uuid);
+	mal_session_uuid = NULL;
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;
 	memset((char*) monet_characteristics, 0, sizeof(monet_characteristics));
 	mal_trace = 0;
 	mal_namespace_reset();
-	GDKreset(0, exit);	// terminate all other threads
 }
 
 

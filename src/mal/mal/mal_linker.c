@@ -40,8 +40,7 @@ typedef struct{
 	void **handle;
 } FileRecord;
 
-static FileRecord filesLoaded[MAXMODULES];
-static int lastfile = 0;
+static void* lastfile = NULL;
 
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0
@@ -59,38 +58,21 @@ static int lastfile = 0;
 
 /* Search for occurrence of the function in the library identified by the filename.  */
 MALfcn
-getAddress(stream *out, str modname, str fcnname, int silent)
+getAddress(str fcnname)
 {
 	void *dl;
 	MALfcn adr;
-	int idx=0;
-	static int prev= -1;
 
 	/* First try the last module loaded */
-	if( prev >= 0){
-		adr = (MALfcn) (intptr_t) dlsym(filesLoaded[prev].handle, fcnname);
-		if( adr != NULL)
+	if( lastfile != NULL){
+		adr = (MALfcn) (intptr_t) dlsym(lastfile, fcnname);
+		if( adr != NULL) {
 			return adr; /* found it */
-	}
-	/*
-	 * Search for occurrence of the function in any library already loaded.
-	 * This deals with the case that files are linked together to reduce
-	 * the loading time, while the signatures of the functions are still
-	 * obtained from the source-file MAL script.
-	 */
-	for (idx =0; idx < lastfile; idx++)
-		if (idx != prev &&		/* skip already searched module */
-			filesLoaded[idx].handle &&
-			(idx == 0 || filesLoaded[idx].handle != filesLoaded[0].handle)) {
-			adr = (MALfcn) (intptr_t) dlsym(filesLoaded[idx].handle, fcnname);
-			if (adr != NULL)  {
-				prev = idx;
-				return adr; /* found it */
-			}
 		}
+		else
+			lastfile = NULL;
+	}
 
-	if (lastfile)
-		return NULL;
 	/*
 	 * Try the program libraries at large or run through all
 	 * loaded files and try to resolve the functionname again.
@@ -98,27 +80,12 @@ getAddress(stream *out, str modname, str fcnname, int silent)
 	 * the first argument must be the same as the base name of the
 	 * library that is created in src/tools */
 	dl = mdlopen("libmonetdb5", RTLD_NOW | RTLD_GLOBAL);
-	if (dl == NULL) {
-		/* shouldn't happen, really */
-		if (!silent)
-			showException(out, MAL, "MAL.getAddress",
-						  "address of '%s.%s' not found (dlopen)",
-						  (modname?modname:"<unknown>"), fcnname);
+	if (dl == NULL) 
 		return NULL;
-	}
 
+	lastfile = dl;
 	adr = (MALfcn) (intptr_t) dlsym(dl, fcnname);
-	filesLoaded[lastfile].modname = GDKstrdup("libmonetdb5");
-	filesLoaded[lastfile].fullname = GDKstrdup("libmonetdb5");
-	filesLoaded[lastfile].handle = dl;
-	lastfile ++;
-	if(adr != NULL)
-		return adr; /* found it */
-
-	if (!silent)
-		showException(out, MAL,"MAL.getAddress", "address of '%s.%s' not found (dlsym)",
-			(modname?modname:"<unknown>"), fcnname);
-	return NULL;
+	return adr;
 }
 /*
  * Module file loading
@@ -137,29 +104,15 @@ getAddress(stream *out, str modname, str fcnname, int silent)
  * already loaded.
  */
 
-/*
- * For analysis of memory leaks we should cleanup the libraries before
- * we exit the server. This does not involve the libraries themselves,
- * because they may still be in use.
- */
-void
-mal_linker_reset(void)
+str
+loadLibrary(str filename, int flag)
 {
-	int i;
-
-	MT_lock_set(&mal_contextLock);
-	for (i = 0; i < lastfile; i++){
-		if (filesLoaded[i].fullname) {
-			/* dlclose(filesLoaded[i].handle);*/
-			GDKfree(filesLoaded[i].modname);
-			GDKfree(filesLoaded[i].fullname);
-		}
-		filesLoaded[i].modname = NULL;
-		filesLoaded[i].fullname = NULL;
-	}
-	lastfile = 0;
-	MT_lock_unset(&mal_contextLock);
+	(void) filename;
+	(void) flag;
+	throw(LOADER, "loadLibrary", "Should never be called");
 }
+
+
 
 /*
  * Handling of Module Library Search Path
