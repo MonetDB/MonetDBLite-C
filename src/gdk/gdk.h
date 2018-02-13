@@ -493,8 +493,8 @@
 typedef int8_t bit;
 typedef int8_t bte;
 typedef int16_t sht;
-typedef int64_t lng;
-typedef uint64_t ulng;
+//typedef int64_t lng;
+//typedef uint64_t ulng;
 
 #define SIZEOF_OID	SIZEOF_SIZE_T
 typedef size_t oid;
