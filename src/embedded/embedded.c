@@ -487,7 +487,7 @@ void monetdb_unregister_progress(monetdb_connection conn) {
 void monetdb_shutdown(void) {
 	MT_lock_set(&embedded_lock);
 	if (monetdb_embedded_initialized) {
-		mserver_reset(0);
+		mal_exit();
 		fclose(embedded_stdout);
 		monetdb_embedded_initialized = 0;
 	}

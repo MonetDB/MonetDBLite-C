@@ -663,7 +663,7 @@ GDKreset(int status, int exit)
 void
 GDKexit(int status)
 {
-	if (GET_GDKLOCK(0) == NULL) {
+	if (!GDKinmemory() && GET_GDKLOCK(0) == NULL) {
 		assert(0);
 		return;
 	}
