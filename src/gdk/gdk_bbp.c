@@ -2307,7 +2307,7 @@ BBPinsert(BAT *bn)
 	BBP_logical(i) = BBP_bak(i);
 
 	/* Keep the physical location around forever */
-	if (!GDKinmemory() && BBP_physical(i) == NULL) {
+	if (!GDKinmemory() && *BBP_physical(i) == 0) {
 		BBPgetsubdir(dirname, i);
 
 		if (*dirname)	/* i.e., i >= 0100 */
