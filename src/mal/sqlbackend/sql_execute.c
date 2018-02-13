@@ -547,8 +547,9 @@ SQLstatementIntern(Client c, str *expr, str nme, bit execute, bit output, res_ta
 		if (!output)
 			sql->out = NULL;	/* no output stream */
 
-		if (execute)
+		if (execute) {
 			msg = SQLrun(c,be,m);
+		}
 		MSresetInstructions(c->curprg->def, oldstop);
 		freeVariables(c, c->curprg->def, NULL, oldvtop);
 

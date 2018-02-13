@@ -97,7 +97,6 @@ parseError(Client cntxt, str msg)
 	*s++ = '^';
 	*s = 0;
 	marker = createException( SYNTAX, "parseError", "%s%s", buf,msg);
-
 	old = mb->errors;
 	new = GDKzalloc((old? strlen(old):0) + strlen(line) + strlen(marker) + 64);
 	if (new == NULL){

@@ -79,8 +79,6 @@ module batpcre;
 
 command batpcre.replace(orig:bat[:str],pat:str,repl:str,flag:str):bat[:str]
 address PCREreplace_bat_wrap;
-command batpcre.replace_first(orig:bat[:str],pat:str,repl:str,flag:str):bat[:str]
-address PCREreplacefirst_bat_wrap;
 
 module batalgebra;
 
