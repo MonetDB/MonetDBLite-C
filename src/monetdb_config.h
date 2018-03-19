@@ -227,9 +227,6 @@
 /* Define to 1 if you have the `lockf' function. */
 #define HAVE_LOCKF 1
 
-/* Define to 1 if the system has the type `long long'. */
-#define HAVE_LONG_LONG 1
-
 /* Define to 1 if you have the <mach/mach_init.h> header file. */
 #define HAVE_MACH_MACH_INIT_H 1
 
@@ -765,15 +762,9 @@ typedef size_t uintptr_t;
 #define SLASH_2_DIR_SEP(s) {char *t; for(t=strchr(s, '/'    ); t; t=strchr(t+1, '/'    )) *t=DIR_SEP;}
 #define DIR_SEP_2_SLASH(s) {char *t; for(t=strchr(s, DIR_SEP); t; t=strchr(t+1, DIR_SEP)) *t='/'    ;}
 
-#ifdef HAVE_LONG_LONG
-typedef long long lng;
-typedef unsigned long long ulng;
-#else
-# ifdef HAVE___INT64
-typedef __int64 lng;
-typedef unsigned __int64 ulng;
-# endif
-#endif
+typedef int64_t lng;
+typedef uint64_t ulng;
+
 
 #ifdef HAVE___INT128
 typedef __int128 hge;

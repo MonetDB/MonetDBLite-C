@@ -246,7 +246,6 @@ HEAPextend(Heap *h, size_t size, int mayshare)
 		/* too big: convert it to a disk-based temporary heap */
 		if (!GDKinmemory() && h->filename[0] != '\0') {
 			int fd;
-			int existing = 0;
 
 			assert(h->storage == STORE_MEM);
 			assert(ext != NULL);
@@ -257,7 +256,6 @@ HEAPextend(Heap *h, size_t size, int mayshare)
 			 * STORE_MMAP */
 			fd = GDKfdlocate(h->farmid, nme, "rb", ext);
 			if (fd >= 0) {
-				existing = 1;
 				close(fd);
 			} else {
 				/* no pre-existing heap file, so
