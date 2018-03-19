@@ -45,8 +45,8 @@
 /* Directory separator */
 #define DIR_SEP_STR "/"
 
-#define LLFMT "%lld"
-#define ULLFMT "%llu"
+#define LLFMT "%"PRId64
+#define ULLFMT "%"PRIu64
 
 #else
 
@@ -61,6 +61,8 @@
 
 #endif
 
+
+#define HAVE_INTTYPES_H 1
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like `struct s { int n; double
@@ -183,9 +185,6 @@
 
 /* Define to 1 if the system has the type `intptr_t'. */
 #define HAVE_INTPTR_T 0
-
-/* Define to 1 if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <io.h> header file. */
 /* #undef HAVE_IO_H */
@@ -761,6 +760,8 @@ typedef size_t uintptr_t;
 
 #define SLASH_2_DIR_SEP(s) {char *t; for(t=strchr(s, '/'    ); t; t=strchr(t+1, '/'    )) *t=DIR_SEP;}
 #define DIR_SEP_2_SLASH(s) {char *t; for(t=strchr(s, DIR_SEP); t; t=strchr(t+1, DIR_SEP)) *t='/'    ;}
+
+#include <inttypes.h>
 
 typedef int64_t lng;
 typedef uint64_t ulng;
