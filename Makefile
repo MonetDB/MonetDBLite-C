@@ -57,7 +57,6 @@ src/sql/scripts/41_md5sum.sql \
 src/sql/scripts/51_sys_schema_extension.sql \
 src/sql/scripts/75_storagemodel.sql \
 src/sql/scripts/80_statistics.sql \
-src/sql/scripts/97_comments.sql \
 src/sql/scripts/99_system.sql
 
 MALSCRIPTS=\

@@ -155,7 +155,7 @@ resizeMalBlk(MalBlkPtr mb, int elements)
 			mb->ssize = elements;
 		} else {
 			mb->stmt = ostmt;	/* reinstate old pointer */
-			mb->errors = createMalException(mb,0, TYPE, MAL_MALLOC_FAIL);
+			mb->errors = createMalException(mb,0, 0, MAL_MALLOC_FAIL);
 			return -1;
 		}
 	}
@@ -169,7 +169,7 @@ resizeMalBlk(MalBlkPtr mb, int elements)
 			mb->vsize = elements;
 		} else{
 			mb->var = ovar;
-			mb->errors = createMalException(mb,0, TYPE, MAL_MALLOC_FAIL);
+			mb->errors = createMalException(mb,0, 0, MAL_MALLOC_FAIL);
 			return -1;
 		}
 	}
@@ -425,7 +425,7 @@ newInstruction(MalBlkPtr mb, str modnme, str fcnnme)
 		 * The marking of the block as containing errors should protect further actions.
 		 */
 		if( mb){
-			mb->errors = createMalException(mb,0, TYPE, SQLSTATE(HY001) MAL_MALLOC_FAIL);
+			mb->errors = createMalException(mb,0, 0, SQLSTATE(HY001) MAL_MALLOC_FAIL);
 		}
 		return NULL;
 	}
@@ -715,7 +715,7 @@ makeVarSpace(MalBlkPtr mb)
 		if (new == NULL) {
 			// the only place to return an error signal at this stage.
 			// The Client context should be passed around more deeply
-			mb->errors = createMalException(mb,0,TYPE, SQLSTATE(HY001) MAL_MALLOC_FAIL);
+			mb->errors = createMalException(mb,0,0, SQLSTATE(HY001) MAL_MALLOC_FAIL);
 			return -1;
 		}
 		memset( ((char*) new) + mb->vsize * sizeof(VarRecord), 0, (s- mb->vsize) * sizeof(VarRecord));
@@ -1207,7 +1207,7 @@ defConstant(MalBlkPtr mb, int type, ValPtr cst)
 			/* free old value */
 			ft = getTypeName(otype);
 			tt = getTypeName(type);
-			mb->errors = createMalException(mb, 0, TYPE, "constant coercion error from %s to %s", ft, tt);
+			mb->errors = createMalException(mb, 0, 0, "constant coercion error from %s to %s", ft, tt);
 			GDKfree(ft);
 			GDKfree(tt);
 			freeException(msg);
@@ -1249,7 +1249,7 @@ pushArgument(MalBlkPtr mb, InstrPtr p, int varid)
 		return NULL;
 	if (varid < 0) {
 		/* leave everything as is in this exceptional programming error */
-		mb->errors = createMalException(mb, 0, TYPE,"improper variable id");
+		mb->errors = createMalException(mb, 0, 0,"improper variable id");
 		return p;
 	}
 
@@ -1263,7 +1263,7 @@ pushArgument(MalBlkPtr mb, InstrPtr p, int varid)
 			 * then we show an exception, mark the block as erroneous
 			 * and leave the instruction as is.
 			*/
-			mb->errors = createMalException(mb,0, TYPE, SQLSTATE(HY001) MAL_MALLOC_FAIL);
+			mb->errors = createMalException(mb,0, 0, SQLSTATE(HY001) MAL_MALLOC_FAIL);
 			return p;
 		}
 		memset( ((char*)pn) + space, 0, MAXARG * sizeof(pn->argv[0]));

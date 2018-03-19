@@ -124,6 +124,8 @@ createException(enum malexception type, const char *fcn, const char *format, ...
 	ret = createExceptionInternal(type, fcn, format, ap);
 	va_end(ap);
 	GDKclrerr();
+// FIXME this is not a good way of handling exceptions
+	fprintf(stderr, "!! %s", ret);
 
 	return ret;
 }
