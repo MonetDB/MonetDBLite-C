@@ -580,13 +580,13 @@ typedef struct {
 	char *base;		/* base pointer in memory. */
 	char filename[32];	/* file containing image of the heap */
 
-	unsigned int copied:1,	/* a copy of an existing map. */
+	bool copied:1,		/* a copy of an existing map. */
 		hashash:1,	/* the string heap contains hash values */
 		forcemap:1,	/* force STORE_MMAP even if heap exists */
-		cleanhash:1;	/* string heaps must clean hash */
+		cleanhash:1,	/* string heaps must clean hash */
+		dirty:1;	/* specific heap dirty marker */
 	storage_t storage;	/* storage mode (mmap/malloc). */
 	storage_t newstorage;	/* new desired storage mode at re-allocation. */
-	bte dirty;		/* specific heap dirty marker */
 	bte farmid;		/* id of farm where heap is located */
 	bat parentid;		/* cache id of VIEW parent bat */
 } Heap;
@@ -745,13 +745,13 @@ typedef struct {
 	MT_Id tid;		/* which thread created it */
 	unsigned int
 	 copiedtodisk:1,	/* once written */
-	 dirty:2,		/* dirty wrt disk? */
+	 dirty:1,		/* dirty wrt disk? */
 	 dirtyflushed:1,	/* was dirty before commit started? */
 	 descdirty:1,		/* bat descriptor dirty marker */
 	 restricted:2,		/* access privileges */
 	 persistence:1,		/* should the BAT persist on disk? */
 	 role:8,		/* role of the bat */
-	 unused:15;		/* value=0 for now */
+	 unused:15;		/* value=0 for now (sneakily used by mat.c) */
 	int sharecnt;		/* incoming view count */
 
 	/* delta status administration */
@@ -769,16 +769,15 @@ typedef struct {
 
 	unsigned short width;	/* byte-width of the atom array */
 	bte type;		/* type id. */
-	bte shift;		/* log2 of bunwidth */
-	unsigned int
-	 varsized:1,		/* varsized (1) or fixedsized (0) */
-	 key:1,			/* no duplicate values present */
-	 unique:1,		/* no duplicate values allowed */
-	 dense:1,		/* OID only: only consecutive values */
-	 nonil:1,		/* there are no nils in the column */
-	 nil:1,			/* there is a nil in the column */
-	 sorted:1,		/* column is sorted in ascending order */
-	 revsorted:1;		/* column is sorted in descending order */
+	bte shift;		/* log2 of bun width */
+	bool varsized:1,	/* varsized (1) or fixedsized (0) */
+		key:1,		/* no duplicate values present */
+		unique:1,	/* no duplicate values allowed */
+		dense:1,	/* OID only: only consecutive values */
+		nonil:1,	/* there are no nils in the column */
+		nil:1,		/* there is a nil in the column */
+		sorted:1,	/* column is sorted in ascending order */
+		revsorted:1;	/* column is sorted in descending order */
 	BUN nokey[2];		/* positions that prove key==FALSE */
 	BUN nosorted;		/* position that proves sorted==FALSE */
 	BUN norevsorted;	/* position that proves revsorted==FALSE */
@@ -798,15 +797,15 @@ typedef struct {
 /* assert that atom width is power of 2, i.e., width == 1<<shift */
 #define assert_shift_width(shift,width) assert(((shift) == 0 && (width) == 0) || ((unsigned)1<<(shift)) == (unsigned)(width))
 
-#define GDKLIBRARY_SORTEDPOS	061030	/* version where we can't trust no(rev)sorted */
-#define GDKLIBRARY_OLDWKB	061031	/* old geom WKB format */
-#define GDKLIBRARY_INSERTED	061032	/* inserted and deleted in BBP.dir */
-#define GDKLIBRARY_HEADED	061033	/* head properties are stored */
-#define GDKLIBRARY_NOKEY	061034	/* nokey values can't be trusted */
-#define GDKLIBRARY_BADEMPTY	061035	/* possibility of duplicate empty str */
-#define GDKLIBRARY_TALIGN	061036	/* talign field in BBP.dir */
-#define GDKLIBRARY_NIL_NAN	061037	/* flt/dbl NIL not represented by NaN */
-#define GDKLIBRARY		061040
+#define GDKLIBRARY_SORTEDPOS	061030U	/* version where we can't trust no(rev)sorted */
+#define GDKLIBRARY_OLDWKB	061031U	/* old geom WKB format */
+#define GDKLIBRARY_INSERTED	061032U	/* inserted and deleted in BBP.dir */
+#define GDKLIBRARY_HEADED	061033U	/* head properties are stored */
+#define GDKLIBRARY_NOKEY	061034U	/* nokey values can't be trusted */
+#define GDKLIBRARY_BADEMPTY	061035U	/* possibility of duplicate empty str */
+#define GDKLIBRARY_TALIGN	061036U	/* talign field in BBP.dir */
+#define GDKLIBRARY_NIL_NAN	061037U	/* flt/dbl NIL not represented by NaN */
+#define GDKLIBRARY		061040U
 
 typedef struct BAT {
 	/* static bat properties */
@@ -1347,7 +1346,7 @@ gdk_export void BATsetcount(BAT *b, BUN cnt);
 gdk_export BUN BATgrows(BAT *b);
 gdk_export gdk_return BATkey(BAT *b, int onoff);
 gdk_export gdk_return BATmode(BAT *b, int onoff);
-gdk_export void BATroles(BAT *b, const char *tnme);
+gdk_export gdk_return BATroles(BAT *b, const char *tnme);
 gdk_export void BAThseqbase(BAT *b, oid o);
 gdk_export void BATtseqbase(BAT *b, oid o);
 gdk_export gdk_return BATsetaccess(BAT *b, int mode);
@@ -1362,7 +1361,7 @@ gdk_export int BATgetaccess(BAT *b);
 #define PERSISTENT		0
 #define TRANSIENT		1
 #define LOG_DIR			2
-#define SHARED_LOG_DIR	3
+#define SHARED_LOG_DIR		3
 
 #define BAT_WRITE		0	/* all kinds of access allowed */
 #define BAT_READ		1	/* only read-access allowed */
@@ -1469,8 +1468,8 @@ gdk_export gdk_return BATsort(BAT **sorted, BAT **order, BAT **groups, BAT *b, B
 	__attribute__ ((__warn_unused_result__));
 
 
-gdk_export void GDKqsort(void *h, void *t, const void *base, size_t n, int hs, int ts, int tpe);
-gdk_export void GDKqsort_rev(void *h, void *t, const void *base, size_t n, int hs, int ts, int tpe);
+gdk_export void GDKqsort(void *restrict h, void *restrict t, const void *restrict base, size_t n, int hs, int ts, int tpe);
+gdk_export void GDKqsort_rev(void *restrict h, void *restrict t, const void *restrict base, size_t n, int hs, int ts, int tpe);
 
 #define BATtordered(b)	((b)->ttype == TYPE_void || (b)->tsorted)
 #define BATtrevordered(b) (((b)->ttype == TYPE_void && is_oid_nil((b)->tseqbase)) || (b)->trevsorted)
@@ -1514,8 +1513,8 @@ gdk_export void GDKqsort_rev(void *h, void *t, const void *base, size_t n, int h
 				}					\
 			} else if ((b)->ttype == TYPE_oid) {		\
 				/* b->batCount == 1 */			\
-				oid sqbs;				\
-				if (is_oid_nil((sqbs = ((oid *) (b)->theap.base)[0]))) { \
+				oid sqbs = ((const oid *) (b)->theap.base)[0]; \
+				if (is_oid_nil(sqbs)) {			\
 					(b)->tdense = 0;		\
 					(b)->tnonil = 0;		\
 					(b)->tnil = 1;			\
@@ -2018,7 +2017,7 @@ gdk_export void GDKclrerr(void);
 #include "gdk_utils.h"
 
 /* functions defined in gdk_bat.c */
-gdk_export BUN void_replace_bat(BAT *b, BAT *p, BAT *u, bit force)
+gdk_export gdk_return void_replace_bat(BAT *b, BAT *p, BAT *u, bit force)
 	__attribute__ ((__warn_unused_result__));
 gdk_export gdk_return void_inplace(BAT *b, oid id, const void *val, bit force)
 	__attribute__ ((__warn_unused_result__));
@@ -2270,8 +2269,6 @@ gdk_export void BATundo(BAT *b);
  * @tab VIEWtparent   (BAT *b)
  * @item BAT*
  * @tab VIEWreset    (BAT *b)
- * @item BAT*
- * @tab BATmaterialize  (BAT *b)
  * @end multitable
  *
  * Alignments of two columns of a BAT means that the system knows
@@ -2293,9 +2290,6 @@ gdk_export void BATundo(BAT *b);
  * VIEWreset creates a normal BAT with the same contents as its view
  * parameter (it converts void columns with seqbase!=nil to
  * materialized oid columns).
- *
- * The BATmaterialize materializes a VIEW (TODO) or void bat inplace.
- * This is useful as materialization is usually needed for updates.
  */
 gdk_export int ALIGNsynced(BAT *b1, BAT *b2);
 
@@ -2308,11 +2302,15 @@ gdk_export void BATassertProps(BAT *b);
 gdk_export BAT *VIEWcreate(oid seq, BAT *b);
 gdk_export void VIEWbounds(BAT *b, BAT *view, BUN l, BUN h);
 
-#define ALIGNinp(x,y,f,e)	do {if (!(f)) VIEWchk(x,y,BAT_READ|BAT_APPEND,e); } while (0)
-#define ALIGNapp(x,y,f,e)	do {if (!(f)) VIEWchk(x,y,BAT_READ,e); } while (0)
-
-#define BAThrestricted(b) ((b)->batRestricted)
-#define BATtrestricted(b) (VIEWtparent(b) ? BBP_cache(VIEWtparent(b))->batRestricted : (b)->batRestricted)
+#define ALIGNapp(x, y, f, e)						\
+	do {								\
+		if (!(f) && ((x)->batRestricted == BAT_READ ||		\
+			     (x)->batSharecnt > 0)) {			\
+			GDKerror("%s: access denied to %s, aborting.\n", \
+				 (y), BATgetId(x));			\
+			return (e);					\
+		}							\
+	} while (0)
 
 /* The batRestricted field indicates whether a BAT is readonly.
  * we have modes: BAT_WRITE  = all permitted
@@ -2320,14 +2318,9 @@ gdk_export void VIEWbounds(BAT *b, BAT *view, BUN l, BUN h);
  *                BAT_READ   = read-only
  * VIEW bats are always mapped read-only.
  */
-#define	VIEWchk(x,y,z,e)						\
-	do {								\
-		if ((((x)->batRestricted & (z)) != 0) | ((x)->batSharecnt > 0)) { \
-			GDKerror("%s: access denied to %s, aborting.\n", \
-				 (y), BATgetId(x));			\
-			return (e);					\
-		}							\
-	} while (0)
+
+#define BAThrestricted(b) ((b)->batRestricted)
+#define BATtrestricted(b) (VIEWtparent(b) ? BBP_cache(VIEWtparent(b))->batRestricted : (b)->batRestricted)
 
 /* the parentid in a VIEW is correct for the normal view. We must
  * correct for the reversed view.

@@ -2808,17 +2808,33 @@ exp_simplify_math( mvc *sql, sql_exp *e, int *changes)
 		le = l->h->data;
 		if (!exp_subtype(le) || (!EC_COMPUTE(exp_subtype(le)->type->eclass) && exp_subtype(le)->type->eclass != EC_DEC))
 			return e;
+
+		if (!f->func->s && list_length(l) == 2) {
+			sql_exp *le = l->h->data;
+			sql_exp *re = l->h->next->data;
+
+			if (exp_is_atom(le) && exp_is_null(sql, le)) {
+				(*changes)++;
+				exp_setname(sql->sa, le, exp_relname(e), exp_name(e));
+				return le;
+			}
+			if (exp_is_atom(re) && exp_is_null(sql, re)) {
+				(*changes)++;
+				exp_setname(sql->sa, re, exp_relname(e), exp_name(e));
+				return re;
+			}
+		}
 		if (!f->func->s && !strcmp(f->func->base.name, "sql_mul") && list_length(l) == 2) {
 			sql_exp *le = l->h->data;
 			sql_exp *re = l->h->next->data;
 			/* 0*a = 0 */
-			if (exp_is_atom(le) && exp_is_zero(sql, le) && exp_is_not_null(sql, re)) {
+			if (exp_is_atom(le) && exp_is_zero(sql, le) && exp_is_atom(re) && exp_is_not_null(sql, re)) {
 				(*changes)++;
 				exp_setname(sql->sa, le, exp_relname(e), exp_name(e));
 				return le;
 			}
 			/* a*0 = 0 */
-			if (exp_is_atom(re) && exp_is_zero(sql, re) && exp_is_not_null(sql, le)) {
+			if (exp_is_atom(re) && exp_is_zero(sql, re) && exp_is_atom(le) && exp_is_not_null(sql, le)) {
 				(*changes)++;
 				exp_setname(sql->sa, re, exp_relname(e), exp_name(e));
 				return re;
@@ -5811,6 +5827,18 @@ static void
 exps_mark_used(sql_allocator *sa, sql_rel *rel, sql_rel *subrel)
 {
 	int nr = 0;
+
+	if (rel->r && (rel->op == op_project || rel->op  == op_groupby)) {
+		list *l = rel->r;
+		node *n;
+
+		for (n=l->h; n; n = n->next) {
+			sql_exp *e = n->data;
+
+			exp_mark_used(rel, e);
+		}
+	}
+
 	if (rel->exps) {
 		node *n;
 		int len = list_length(rel->exps), i;
@@ -5847,7 +5875,7 @@ exps_mark_used(sql_allocator *sa, sql_rel *rel, sql_rel *subrel)
 		for (n=l->h; n; n = n->next) {
 			sql_exp *e = n->data;
 
-			exp_mark_used(rel, e);
+		//	exp_mark_used(rel, e);
 			/* possibly project/groupby uses columns from the inner */ 
 			exp_mark_used(subrel, e);
 		}

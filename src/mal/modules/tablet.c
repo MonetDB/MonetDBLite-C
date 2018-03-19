@@ -744,11 +744,11 @@ mycpstr(char *t, const char *s)
 		if ((*s & 0x80) == 0) {
 			*t++ = *s++;
 		} else if ((*s & 0xC0) == 0x80) {
-			t += sprintf(t, "<%02X>", *s++ & 0xFF);
+			t += sprintf(t, "<%02X>", (uint8_t) *s++);
 		} else if ((*s & 0xE0) == 0xC0) {
 			/* two-byte sequence */
 			if ((s[1] & 0xC0) != 0x80)
-				t += sprintf(t, "<%02X>", *s++ & 0xFF);
+				t += sprintf(t, "<%02X>", (uint8_t) *s++);
 			else {
 				*t++ = *s++;
 				*t++ = *s++;
@@ -756,7 +756,7 @@ mycpstr(char *t, const char *s)
 		} else if ((*s & 0xF0) == 0xE0) {
 			/* three-byte sequence */
 			if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80)
-				t += sprintf(t, "<%02X>", *s++ & 0xFF);
+				t += sprintf(t, "<%02X>", (uint8_t) *s++);
 			else {
 				*t++ = *s++;
 				*t++ = *s++;
@@ -765,7 +765,7 @@ mycpstr(char *t, const char *s)
 		} else if ((*s & 0xF8) == 0xF0) {
 			/* four-byte sequence */
 			if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80 || (s[3] & 0xC0) != 0x80)
-				t += sprintf(t, "<%02X>", *s++ & 0xFF);
+				t += sprintf(t, "<%02X>", (uint8_t) *s++);
 			else {
 				*t++ = *s++;
 				*t++ = *s++;
@@ -774,7 +774,7 @@ mycpstr(char *t, const char *s)
 			}
 		} else {
 			/* not a valid start byte */
-			t += sprintf(t, "<%02X>", *s++ & 0xFF);
+			t += sprintf(t, "<%02X>", (uint8_t) *s++);
 		}
 	}
 	*t = 0;

@@ -17,6 +17,7 @@
 #include "rel_updates.h"
 #include "rel_optimizer.h"
 #include "sql_env.h"
+#include "sql_optimizer.h"
 
 #define OUTER_ZERO 64
 
@@ -207,7 +208,7 @@ static stmt *column(backend *be, stmt *val )
 	return val;
 }
 
-static stmt *Column(backend *be, stmt *val )
+static stmt *create_const_column(backend *be, stmt *val )
 {
 	if (val->nrcols == 0)
 		val = const_column(be, val);
@@ -1003,7 +1004,7 @@ check_types(backend *be, sql_subtype *ct, stmt *s, check_type tpe)
 	if (!s) {
 		stmt *res = sql_error(
 			sql, 03,
-			SQLSTATE(42000) "types %s(%d,%d) (%s) and %s(%d,%d) (%s) are not equal",
+			SQLSTATE(42000) "types %s(%u,%u) (%s) and %s(%u,%u) (%s) are not equal",
 			st->type->sqlname,
 			st->digits,
 			st->scale,
@@ -1886,7 +1887,7 @@ rel2bin_join(backend *be, sql_rel *rel, list *refs)
 
 		/* as append isn't save, we append to a new copy */
 		if (rel->op == op_left || rel->op == op_full || rel->op == op_right)
-			s = Column(be, s);
+			s = create_const_column(be, s);
 		if (rel->op == op_left || rel->op == op_full)
 			s = stmt_append(be, s, stmt_project(be, ld, c));
 		if (rel->op == op_right || rel->op == op_full) 
@@ -1903,7 +1904,7 @@ rel2bin_join(backend *be, sql_rel *rel, list *refs)
 
 		/* as append isn't save, we append to a new copy */
 		if (rel->op == op_left || rel->op == op_full || rel->op == op_right)
-			s = Column(be, s);
+			s = create_const_column(be, s);
 		if (rel->op == op_left || rel->op == op_full) 
 			s = stmt_append(be, s, stmt_const(be, ld, (c->flag&OUTER_ZERO)?stmt_atom_lng(be, 0):stmt_atom(be, atom_general(sql->sa, tail_type(c), NULL))));
 		if (rel->op == op_right || rel->op == op_full) 
@@ -2154,7 +2155,7 @@ rel2bin_union(backend *be, sql_rel *rel, list *refs)
 		const char *nme = column_name(sql->sa, c1);
 		stmt *s;
 
-		s = stmt_append(be, Column(be, c1), c2);
+		s = stmt_append(be, create_const_column(be, c1), c2);
 		s = stmt_alias(be, s, rnme, nme);
 		list_append(l, s);
 	}
@@ -4599,7 +4600,15 @@ check_for_foreign_key_references(mvc *sql, struct tablelist* list, struct tablel
 						k = l->data;
 						/* make sure it is not a self referencing key */
 						if (k->t != t && !cascade) {
-							*error = sql_error(sql, 02, SQLSTATE(42000) "TRUNCATE: FOREIGN KEY %s.%s depends on %s", k->t->base.name, k->base.name, t->base.name);
+							node *n = t->columns.set->h;
+							sql_column *c = n->data;
+							size_t n_rows = store_funcs.count_col(sql->session->tr, c, 1);
+							size_t n_deletes = store_funcs.count_del(sql->session->tr, c->t);
+							assert (n_rows >= n_deletes);
+							if(n_rows - n_deletes > 0) {
+								*error = sql_error(sql, 02, SQLSTATE(42000) "TRUNCATE: FOREIGN KEY %s.%s depends on %s", k->t->base.name, k->base.name, t->base.name);
+								return;
+							}
 						} else if(k->t != t) {
 							found = 0;
 							for (node_check = list; node_check; node_check = node_check->next) {
@@ -4608,7 +4617,10 @@ check_for_foreign_key_references(mvc *sql, struct tablelist* list, struct tablel
 								}
 							}
 							if(!found) {
-								new_node = (struct tablelist*) GDKmalloc(sizeof(struct tablelist));
+								if((new_node = MNEW(struct tablelist)) == NULL) {
+									*error = sql_error(sql, 02, SQLSTATE(HY001) MAL_MALLOC_FAIL);
+									return;
+								}
 								new_node->table = k->t;
 								new_node->next = NULL;
 								next_append->next = new_node;
@@ -4638,14 +4650,17 @@ sql_truncate(backend *be, sql_table *t, int restart_sequences, int cascade)
 	sql_trans *tr = sql->session->tr;
 	node *n = NULL;
 
-	struct tablelist* new_list = (struct tablelist*) GDKmalloc(sizeof(struct tablelist)), *list_node, *aux;
+	struct tablelist* new_list = MNEW(struct tablelist), *list_node, *aux;
+	if(!new_list) {
+		error = sql_error(sql, 02, SQLSTATE(HY001) MAL_MALLOC_FAIL);
+		goto finalize;
+	}
+
 	new_list->table = t;
 	new_list->next = NULL;
 	check_for_foreign_key_references(sql, new_list, new_list, t, cascade, &error);
-
-	if(error) {
+	if(error)
 		goto finalize;
-	}
 
 	for (list_node = new_list; list_node; list_node = list_node->next) {
 		next = list_node->table;
@@ -4656,6 +4671,10 @@ sql_truncate(backend *be, sql_table *t, int restart_sequences, int cascade)
 				col = n->data;
 				if (col->def && (seq_pos = strstr(col->def, next_value_for))) {
 					seq_name = _STRDUP(seq_pos + (strlen(next_value_for) - strlen("seq_")));
+					if(!seq_name) {
+						error = sql_error(sql, 02, SQLSTATE(HY001) MAL_MALLOC_FAIL);
+						goto finalize;
+					}
 					seq_name[strlen(seq_name)-1] = '\0';
 					seq = find_sql_sequence(sche, seq_name);
 					if (seq) {
@@ -4688,15 +4707,14 @@ sql_truncate(backend *be, sql_table *t, int restart_sequences, int cascade)
 			return sql_error(sql, 02, SQLSTATE(42000) "TRUNCATE: triggers failed for table '%s'", next->base.name);
 	}
 
-	finalize:
-		for (list_node = new_list; list_node;) {
-			aux = list_node->next;
-			GDKfree(list_node);
-			list_node = aux;
-		}
-		if(error) {
-			return error;
-		}
+finalize:
+	for (list_node = new_list; list_node;) {
+		aux = list_node->next;
+		_DELETE(list_node);
+		list_node = aux;
+	}
+	if(error)
+		return error;
 
 	return ret;
 }
@@ -4958,7 +4976,7 @@ rel2bin_ddl(backend *be, sql_rel *rel, list *refs)
 	} else if (rel->flag <= DDL_ALTER_TABLE) {
 		s = rel2bin_catalog_table(be, rel, refs);
 		sql->type = Q_SCHEMA;
-	} else if (rel->flag <= DDL_ALTER_TABLE_SET_ACCESS) {
+	} else if (rel->flag <= DDL_COMMENT_ON) {
 		s = rel2bin_catalog2(be, rel, refs);
 		sql->type = Q_SCHEMA;
 	}
@@ -5305,20 +5323,10 @@ rel_deps(sql_allocator *sa, sql_rel *r, list *refs, list *l)
 			if (r->r)
 				return rel_deps(sa, r->r, refs, l);
 		} else if (r->flag == DDL_PSM) {
-			exps_deps(sa, r->exps, refs, l);
+			break;
 		} else if (r->flag <= DDL_ALTER_SEQ) {
 			if (r->l)
 				return rel_deps(sa, r->l, refs, l);
-		} else if (r->flag <= DDL_DROP_SEQ) {
-			exps_deps(sa, r->exps, refs, l);
-		} else if (r->flag <= DDL_TRANS) {
-			exps_deps(sa, r->exps, refs, l);
-		} else if (r->flag <= DDL_DROP_SCHEMA) {
-			exps_deps(sa, r->exps, refs, l);
-		} else if (r->flag <= DDL_ALTER_TABLE) {
-			exps_deps(sa, r->exps, refs, l);
-		} else if (r->flag <= DDL_ALTER_TABLE_SET_ACCESS) {
-			exps_deps(sa, r->exps, refs, l);
 		}
 		break;
 	}

@@ -1308,7 +1308,7 @@ logger_switch_bat(BAT *old, BAT *new, const char *fn, const char *name)
 		GDKerror("Logger_new: cannot convert old %s to transient", name);
 		return GDK_FAIL;
 	}
-	snprintf(bak, sizeof(bak), "tmp_%o", old->batCacheid);
+	snprintf(bak, sizeof(bak), "tmp_%o", (unsigned) old->batCacheid);
 	if (BBPrename(old->batCacheid, bak) != 0) {
 		return GDK_FAIL;
 	}
@@ -2935,7 +2935,7 @@ bm_commit(logger *lg)
 			return GDK_FAIL;
 		}
 
-		assert(lb->batRestricted > BAT_WRITE);
+		assert(lb->batRestricted != BAT_WRITE);
 		logbat_destroy(lb);
 
 		if (lg->debug & 1)

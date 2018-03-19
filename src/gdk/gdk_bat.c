@@ -716,7 +716,7 @@ COLcopy(BAT *b, int tt, int writable, int role)
 				bunstocopy = cnt;
 		}
 
-		bn = COLnew(0, tt, MAX(1, bunstocopy == BUN_NONE ? 0 : bunstocopy), role);
+		bn = COLnew(b->hseqbase, tt, MAX(1, bunstocopy == BUN_NONE ? 0 : bunstocopy), role);
 		if (bn == NULL)
 			return NULL;
 
@@ -799,7 +799,6 @@ COLcopy(BAT *b, int tt, int writable, int role)
 		BATsetcount(bn, cnt);
 	}
 	/* set properties (note that types may have changed in the copy) */
-	BAThseqbase(bn, b->hseqbase);
 	if (ATOMtype(tt) == ATOMtype(b->ttype)) {
 		if (BATtvoid(b)) {
 			/* b is either dense or has a void(nil) tail */
@@ -824,7 +823,7 @@ COLcopy(BAT *b, int tt, int writable, int role)
 			bn->tnokey[0] = b->tnokey[0];
 			bn->tnokey[1] = b->tnokey[1];
 		} else {
-			bn->tnokey[0] = bn->tnokey[1];
+			bn->tnokey[0] = bn->tnokey[1] = 0;
 		}
 		bn->tnosorted = b->tnosorted;
 	} else if (ATOMstorage(tt) == ATOMstorage(b->ttype) &&
@@ -1153,7 +1152,12 @@ BUNinplace(BAT *b, BUN p, const void *t, bit force)
 
 	/* uncommitted BUN elements */
 
-	ALIGNinp(b, "BUNinplace", force, GDK_FAIL);	/* zap alignment info */
+	/* zap alignment info */
+	if (!force && (b->batRestricted != BAT_WRITE || b->batSharecnt > 0)) {
+		GDKerror("BUNinplace: access denied to %s, aborting.\n",
+			 BATgetId(b));
+		return GDK_FAIL;
+	}
 	if (b->tnil &&
 	    ATOMcmp(b->ttype, BUNtail(bi, p), ATOMnilptr(b->ttype)) == 0 &&
 	    ATOMcmp(b->ttype, t, ATOMnilptr(b->ttype)) != 0) {
@@ -1267,10 +1271,9 @@ void_inplace(BAT *b, oid id, const void *val, bit force)
 	return BUNinplace(b, id - b->hseqbase, val, force);
 }
 
-BUN
+gdk_return
 void_replace_bat(BAT *b, BAT *p, BAT *u, bit force)
 {
-	BUN nr = 0;
 	BUN r, s;
 	BATiter uii = bat_iterator(p);
 	BATiter uvi = bat_iterator(u);
@@ -1280,10 +1283,9 @@ void_replace_bat(BAT *b, BAT *p, BAT *u, bit force)
 		const void *val = BUNtail(uvi, r);
 
 		if (void_inplace(b, updid, val, force) != GDK_SUCCEED)
-			return BUN_NONE;
-		nr++;
+			return GDK_FAIL;
 	}
-	return nr;
+	return GDK_SUCCEED;
 }
 
 /*
@@ -1528,17 +1530,18 @@ BATtseqbase(BAT *b, oid o)
 	}
 }
 
-void
+gdk_return
 BATroles(BAT *b, const char *tnme)
 {
 	if (b == NULL)
-		return;
+		return GDK_SUCCEED;
 	if (b->tident && !default_ident(b->tident))
 		GDKfree(b->tident);
 	if (tnme)
 		b->tident = GDKstrdup(tnme);
 	else
 		b->tident = BATstring_t;
+	return b->tident ? GDK_SUCCEED : GDK_FAIL;
 }
 
 /*
@@ -1978,7 +1981,7 @@ BATmode(BAT *b, int mode)
  * properties than you might suspect.  When setting properties on a
  * newly created and filled BAT, you may want to first make sure the
  * batCount is set correctly (e.g. by calling BATsetcount), then use
- * BAThseqbase and BATkey, and finally set the other properties.
+ * BATtseqbase and BATkey, and finally set the other properties.
  */
 
 void

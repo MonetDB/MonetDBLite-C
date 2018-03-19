@@ -1113,6 +1113,7 @@ mvc_export_prepare(mvc *c, stream *out, cq *q, str w)
 				BUNappend(b_schema, schema ? schema : "", FALSE) != GDK_SUCCEED ||
 				BUNappend(b_table,  rname ? rname : "",   FALSE) != GDK_SUCCEED ||
 				BUNappend(b_column, name ? name : "",     FALSE) != GDK_SUCCEED) {
+
 				return -1;
 			}
 			result_offset++;
