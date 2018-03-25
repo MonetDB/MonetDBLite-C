@@ -8,7 +8,6 @@
 
 #include "monetdb_config.h"
 #include "opt_multiplex.h"
-
 #include "manifold.h"
 #include "mal_interpreter.h"
 
@@ -49,15 +48,17 @@ OPTexpandMultiplex(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	for (i = 0; i < pci->retc; i++) {
 		tt = getBatType(getArgType(mb, pci, i));
 		if (tt== TYPE_any)
-			throw(MAL, "optimizer.multiplex", "Target tail type is missing");
+			throw(MAL, "optimizer.multiplex", SQLSTATE(HY002) "Target tail type is missing");
 		if (isAnyExpression(getArgType(mb, pci, i)))
-			throw(MAL, "optimizer.multiplex", "Target type is missing");
+			throw(MAL, "optimizer.multiplex", SQLSTATE(HY002) "Target type is missing");
 	}
 
 	mod = VALget(&getVar(mb, getArg(pci, pci->retc))->value);
 	mod = putName(mod);
 	fcn = VALget(&getVar(mb, getArg(pci, pci->retc+1))->value);
 	fcn = putName(fcn);
+	if(mod == NULL || fcn == NULL)
+		throw(MAL, "optimizer.multiplex", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 #ifndef NDEBUG
 	fprintf(stderr,"#WARNING To speedup %s.%s a bulk operator implementation is needed\n#", mod,fcn);
 	fprintInstruction(stderr, mb, stk, pci, LIST_MAL_DEBUG);
@@ -70,7 +71,7 @@ OPTexpandMultiplex(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 			break;
 		}
 	if( i == pci->argc)
-		throw(MAL, "optimizer.multiplex", "Iterator BAT type is missing");
+		throw(MAL, "optimizer.multiplex", SQLSTATE(HY002) "Iterator BAT type is missing");
 
 #ifdef DEBUG_OPT_MULTIPLEX
 	{	char *tpenme;
@@ -192,23 +193,21 @@ OPTmultiplexSimple(Client cntxt, MalBlkPtr mb)
 	//MalBlkPtr mb= cntxt->curprg->def;
 	int i, doit=0;
 	InstrPtr p;
-	str msg = MAL_SUCCEED; 
+	str msg = MAL_SUCCEED;
 
 	if(mb)
-	for( i=0; i<mb->stop; i++){
-		p= getInstrPtr(mb,i);
-		if(isMultiplex(p)) {
-			p->typechk = TYPE_UNKNOWN;
-			doit++;
+		for( i=0; i<mb->stop; i++){
+			p= getInstrPtr(mb,i);
+			if(isMultiplex(p)) {
+				p->typechk = TYPE_UNKNOWN;
+				doit++;
+			}
 		}
-	}
 	if( doit) {
 		msg = OPTmultiplexImplementation(cntxt, mb, 0, 0);
-		chkTypes(cntxt->fdout, cntxt->nspace, mb,TRUE);
-		if ( mb->errors == 0) {
-			chkFlow(cntxt->fdout, mb);
-			chkDeclarations(cntxt->fdout,mb);
-		}
+		chkTypes(cntxt->usermodule, mb,TRUE);
+		chkFlow(mb);
+		chkDeclarations(mb);
 	}
 	return msg;
 }
@@ -219,10 +218,9 @@ OPTmultiplexImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p
 	InstrPtr *old = 0, p;
 	int i, limit, slimit, actions= 0;
 	str msg= MAL_SUCCEED;
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec = GDKusec();
-#endif
+
 	(void) stk;
 	(void) pci;
 
@@ -230,7 +228,7 @@ OPTmultiplexImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p
 	limit = mb->stop;
 	slimit = mb->ssize;
 	if ( newMalBlkStmt(mb, mb->ssize) < 0 )
-		throw(MAL,"optimizer.mergetable", MAL_MALLOC_FAIL);
+		throw(MAL,"optimizer.mergetable", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 
 	for (i = 0; i < limit; i++) {
 		p = old[i];
@@ -261,18 +259,17 @@ OPTmultiplexImplementation(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr p
 	GDKfree(old);
 
     /* Defense line against incorrect plans */
-    if( mb->errors == 0 && actions > 0){
-        chkTypes(cntxt->fdout, cntxt->nspace, mb, FALSE);
-        chkFlow(cntxt->fdout, mb);
-        chkDeclarations(cntxt->fdout, mb);
+    if( msg == MAL_SUCCEED &&  actions > 0){
+        chkTypes(cntxt->usermodule, mb, FALSE);
+        chkFlow(mb);
+        chkDeclarations(mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","multiplex",actions, usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
+
 	return msg;
 }

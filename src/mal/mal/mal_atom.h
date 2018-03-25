@@ -11,8 +11,9 @@
 
 /* #define MAL_ATOM_DEBUG  */
 
-mal_export int malAtomSize(int size, int align, char *name);
-mal_export int malAtomProperty(MalBlkPtr mb, InstrPtr pci);
-mal_export int malAtomDefinition(stream *out, str name, int tpe);
+mal_export int malAtomSize(int size, const char *name);
+mal_export str malAtomProperty(MalBlkPtr mb, InstrPtr pci);
+mal_export str malAtomDefinition(str name, int tpe);
+mal_export void mal_atom_reset(void);
 
 #endif /*  _MAL_ATOM_H*/

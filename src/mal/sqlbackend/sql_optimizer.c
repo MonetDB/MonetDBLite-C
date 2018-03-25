@@ -106,7 +106,7 @@ SQLoptimizeQuery(Client c, MalBlkPtr mb)
 	assert(be && be->mvc);	/* SQL clients should always have their state set */
 
 	c->blkmode = 0;
-	chkProgram(c->fdout, c->nspace, mb);
+	chkProgram( c->curmodule, mb);
 
 	/*
 	 * An error in the compilation should be reported to the user.
@@ -114,8 +114,8 @@ SQLoptimizeQuery(Client c, MalBlkPtr mb)
 	 * to allow inspection.
 	 */
 	if (mb->errors) {
-		showErrors(c);
-
+//		showErrors(c);
+// FIXME what do we do here?
 		if (c->listing)
 			printFunction(c->fdout, mb, 0, c->listing);
 		return NULL;
@@ -134,6 +134,6 @@ SQLoptimizeQuery(Client c, MalBlkPtr mb)
 void
 SQLaddQueryToCache(Client c)
 {
-	insertSymbol(c->nspace, c->curprg);
+	insertSymbol(c->curmodule, c->curprg);
 }
 

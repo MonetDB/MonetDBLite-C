@@ -35,7 +35,7 @@ sql_find_auth_schema(mvc *m, str auth)
 
 	rid = table_funcs.column_find_row(m->session->tr, users_name, auth, NULL);
 
-	if (rid != oid_nil) {
+	if (!is_oid_nil(rid)) {
 		sql_column *users_schema = find_sql_column(users, "default_schema");
 		int *p = (int *) table_funcs.column_find_value(m->session->tr, users_schema, rid);
 
@@ -69,6 +69,7 @@ monet5_create_user(ptr _mvc, str user, str passwd, char enc, str fullname, sqlid
 	(void) schema_id;
 	(void) grantorid;
 	throw(MAL, "sql.create_user", "user administration not available in lite mode");
+
 }
 
 static int
@@ -131,6 +132,7 @@ monet5_schema_has_user(ptr _mvc, sql_schema *s)
 	(void) s;
 	(void) sql_error(m, 02, "ALTER USER: crypt backend not available in lite mode");
 	return FALSE;
+
 }
 
 static int
@@ -145,6 +147,7 @@ monet5_alter_user(ptr _mvc, str user, str passwd, char enc, sqlid schema_id, str
 	(void) sql_error(m, 02, "user administration not available in lite mode");
 	return FALSE;
 
+
 }
 
 static int
@@ -155,6 +158,7 @@ monet5_rename_user(ptr _mvc, str olduser, str newuser)
 	(void) newuser;
 	(void) sql_error(m, 02, "user administration not available in lite mode");
 	return FALSE;
+
 }
 
 static void *
@@ -217,13 +221,15 @@ monet5_user_get_def_schema(mvc *m, int user)
 	auths = find_sql_table(sys, "auths");
 	auths_id = find_sql_column(auths, "id");
 	auths_name = find_sql_column(auths, "name");
-	if ((rid = table_funcs.column_find_row(m->session->tr, auths_id, &user, NULL)) != oid_nil)
+	rid = table_funcs.column_find_row(m->session->tr, auths_id, &user, NULL);
+	if (!is_oid_nil(rid))
 		username = table_funcs.column_find_value(m->session->tr, auths_name, rid);
 
 	user_info = find_sql_table(sys, "db_user_info");
 	users_name = find_sql_column(user_info, "name");
 	users_schema = find_sql_column(user_info, "default_schema");
-	if ((rid = table_funcs.column_find_row(m->session->tr, users_name, username, NULL)) != oid_nil)
+	rid = table_funcs.column_find_row(m->session->tr, users_name, username, NULL);
+	if (!is_oid_nil(rid))
 		p = table_funcs.column_find_value(m->session->tr, users_schema, rid);
 
 	_DELETE(username);
@@ -235,9 +241,11 @@ monet5_user_get_def_schema(mvc *m, int user)
 	schemas_name = find_sql_column(schemas, "name");
 	schemas_id = find_sql_column(schemas, "id");
 
-	if ((rid = table_funcs.column_find_row(m->session->tr, schemas_id, &schema_id, NULL)) != oid_nil)
+	rid = table_funcs.column_find_row(m->session->tr, schemas_id, &schema_id, NULL);
+	if (!is_oid_nil(rid))
 		schema = table_funcs.column_find_value(m->session->tr, schemas_name, rid);
-	stack_set_string(m, "current_schema", schema);
+	if(!stack_set_string(m, "current_schema", schema))
+		return NULL;
 	return schema;
 }
 
@@ -271,7 +279,8 @@ monet5_user_set_def_schema(mvc *m, oid user)
 	users_name = find_sql_column(user_info, "name");
 	users_schema = find_sql_column(user_info, "default_schema");
 
-	if ((rid = table_funcs.column_find_row(m->session->tr, users_name, username, NULL)) != oid_nil)
+	rid = table_funcs.column_find_row(m->session->tr, users_name, username, NULL);
+	if (!is_oid_nil(rid))
 		p = table_funcs.column_find_value(m->session->tr, users_schema, rid);
 
 	assert(p);
@@ -284,12 +293,13 @@ monet5_user_set_def_schema(mvc *m, oid user)
 	auths = find_sql_table(sys, "auths");
 	auths_name = find_sql_column(auths, "name");
 
-	if ((rid = table_funcs.column_find_row(m->session->tr, schemas_id, &schema_id, NULL)) != oid_nil)
+	rid = table_funcs.column_find_row(m->session->tr, schemas_id, &schema_id, NULL);
+	if (!is_oid_nil(rid))
 		schema = table_funcs.column_find_value(m->session->tr, schemas_name, rid);
 
 	/* only set schema if user is found */
 	rid = table_funcs.column_find_row(m->session->tr, auths_name, username, NULL);
-	if (rid != oid_nil) {
+	if (!is_oid_nil(rid)) {
 		sql_column *auths_id = find_sql_column(auths, "id");
 		int id;
 		p = table_funcs.column_find_value(m->session->tr, auths_id, rid);
@@ -307,9 +317,11 @@ monet5_user_set_def_schema(mvc *m, oid user)
 		return NULL;
 	}
 	/* reset the user and schema names */
-	stack_set_string(m, "current_schema", schema);
-	stack_set_string(m, "current_user", username);
-	stack_set_string(m, "current_role", username);
+	if(!stack_set_string(m, "current_schema", schema) ||
+		!stack_set_string(m, "current_user", username) ||
+		!stack_set_string(m, "current_role", username)) {
+		schema = NULL;
+	}
 	GDKfree(username);
 	mvc_rollback(m, 0, NULL);
 	return schema;

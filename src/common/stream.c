@@ -53,12 +53,7 @@
 #include "stream.h"
 
 #include <string.h>
-#include <stdio.h>		/* NULL, printf etc. */
-#include <stdlib.h>
 #include <stddef.h>
-#include <errno.h>
-#include <stdarg.h>		/* va_alist.. */
-#include <assert.h>
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -136,18 +131,30 @@
 
 #ifdef _MSC_VER
 /* use intrinsic functions on Windows */
-#define short_int_SWAP(s)	((short) _byteswap_ushort((unsigned short) (s)))
+#define short_int_SWAP(s)	((int16_t) _byteswap_ushort((uint16_t) (s)))
 /* on Windows, long is the same size as int */
 #define normal_int_SWAP(s)	((int) _byteswap_ulong((unsigned long) (s)))
-#define long_long_SWAP(l)	((lng) _byteswap_uint64((unsigned __int64) (s)))
+#define long_long_SWAP(l)	((int64_t) _byteswap_uint64((unsigned __int64) (s)))
 #else
-#define short_int_SWAP(s) ((short)(((0x00ff&(s))<<8) | ((0xff00&(s))>>8)))
+#define short_int_SWAP(s)				\
+	((int16_t) (((0x00ff & (uint16_t) (s)) << 8) |	\
+		  ((0xff00 & (uint16_t) (s)) >> 8)))
 
-#define normal_int_SWAP(i) (((0x000000ff&(i))<<24) | ((0x0000ff00&(i))<<8) | \
-			    ((0x00ff0000&(i))>>8)  | ((0xff000000&(i))>>24))
-#define long_long_SWAP(l) \
-		((((lng)normal_int_SWAP(l))<<32) |\
-		 (0xffffffff&normal_int_SWAP(l>>32)))
+#define normal_int_SWAP(i)						\
+	((int) (((((unsigned) 0xff <<  0) & (unsigned) (i)) << 24) |	\
+		((((unsigned) 0xff <<  8) & (unsigned) (i)) <<  8) |	\
+		((((unsigned) 0xff << 16) & (unsigned) (i)) >>  8) |	\
+		((((unsigned) 0xff << 24) & (unsigned) (i)) >> 24)))
+
+#define long_long_SWAP(l)						\
+	((int64_t) (((((uint64_t) 0xff <<  0) & (uint64_t) (l)) << 56) | \
+		((((uint64_t) 0xff <<  8) & (uint64_t) (l)) << 40) |	\
+		((((uint64_t) 0xff << 16) & (uint64_t) (l)) << 24) |	\
+		((((uint64_t) 0xff << 24) & (uint64_t) (l)) <<  8) |	\
+		((((uint64_t) 0xff << 32) & (uint64_t) (l)) >>  8) |	\
+		((((uint64_t) 0xff << 40) & (uint64_t) (l)) >> 24) |	\
+		((((uint64_t) 0xff << 48) & (uint64_t) (l)) >> 40) |	\
+		((((uint64_t) 0xff << 56) & (uint64_t) (l)) >> 56)))
 #endif
 
 #ifdef HAVE_HGE
@@ -169,16 +176,16 @@ struct stream {
 		int i;
 	} stream_data;
 	int errnr;
-	ssize_t (*read)(stream *s, void *buf, size_t elmsize, size_t cnt);
-	ssize_t (*write)(stream *s, const void *buf, size_t elmsize, size_t cnt);
+	ssize_t (*read)(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt);
+	ssize_t (*write)(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt);
 	void (*close)(stream *s);
 	void (*clrerr)(stream *s);
 	char *(*error)(stream *s);
 	void (*destroy)(stream *s);
 	int (*flush)(stream *s);
 	int (*fsync)(stream *s);
-	int (*fgetpos)(stream *s, lng *p);
-	int (*fsetpos)(stream *s, lng p);
+	int (*fgetpos)(stream *restrict s, fpos_t *restrict p);
+	int (*fsetpos)(stream *restrict s, fpos_t *restrict p);
 	void (*update_timeout)(stream *s);
 	int (*isalive)(stream *s);
 };
@@ -324,12 +331,12 @@ cvfilename(const char *filename)
 /* Read at most cnt elements of size elmsize from the stream.  Returns
  * the number of elements actually read or < 0 on failure. */
 ssize_t
-mnstr_read(stream *s, void *buf, size_t elmsize, size_t cnt)
+mnstr_read(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	if (s == NULL || buf == NULL)
 		return -1;
 #ifdef STREAM_DEBUG
-	fprintf(stderr, "read %s " SZFMT " " SZFMT "\n",
+	fprintf(stderr, "read %s %zu %zu\n",
 		s->name ? s->name : "<unnamed>", elmsize, cnt);
 #endif
 	assert(s->access == ST_READ);
@@ -342,14 +349,14 @@ mnstr_read(stream *s, void *buf, size_t elmsize, size_t cnt)
  * the stream.  Returns the number of characters actually read,
  * includes the trailing \n; terminated by a NULL byte. */
 ssize_t
-mnstr_readline(stream *s, void *buf, size_t maxcnt)
+mnstr_readline(stream *restrict s, void *restrict buf, size_t maxcnt)
 {
 	char *b = buf, *start = buf;
 
 	if (s == NULL || buf == NULL)
 		return -1;
 #ifdef STREAM_DEBUG
-	fprintf(stderr, "readline %s " SZFMT "\n",
+	fprintf(stderr, "readline %s %zu\n",
 		s->name ? s->name : "<unnamed>", maxcnt);
 #endif
 	assert(s->access == ST_READ);
@@ -402,12 +409,12 @@ mnstr_readline(stream *s, void *buf, size_t maxcnt)
  * number of elements actually written.  If elmsize or cnt equals zero,
  * returns cnt. */
 ssize_t
-mnstr_write(stream *s, const void *buf, size_t elmsize, size_t cnt)
+mnstr_write(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	if (s == NULL || buf == NULL)
 		return -1;
 #ifdef STREAM_DEBUG
-	fprintf(stderr, "write %s " SZFMT " " SZFMT "\n",
+	fprintf(stderr, "write %s %zu %zu\n",
 		s->name ? s->name : "<unnamed>", elmsize, cnt);
 #endif
 	assert(s->access == ST_WRITE);
@@ -494,7 +501,7 @@ mnstr_fsync(stream *s)
 }
 
 int
-mnstr_fgetpos(stream *s, lng *p)
+mnstr_fgetpos(stream *restrict s, fpos_t *restrict p)
 {
 	if (s == NULL || p == NULL)
 		return -1;
@@ -509,7 +516,7 @@ mnstr_fgetpos(stream *s, lng *p)
 }
 
 int
-mnstr_fsetpos(stream *s, lng p)
+mnstr_fsetpos(stream *restrict s, fpos_t *restrict p)
 {
 	if (s == NULL)
 		return -1;
@@ -607,36 +614,6 @@ close_stream(stream *s)
 	}
 }
 
-stream *
-mnstr_rstream(stream *s)
-{
-	if (s == NULL)
-		return NULL;
-#ifdef STREAM_DEBUG
-	fprintf(stderr, "mnstr_rstream %s\n", s->name ? s->name : "<unnamed>");
-#endif
-	assert(s->access == ST_READ);
-	s->type = ST_BIN;
-	if (s->errnr == MNSTR_NO__ERROR)
-		s->read(s, (void *) &s->byteorder, sizeof(s->byteorder), 1);
-	return s;
-}
-
-stream *
-mnstr_wstream(stream *s)
-{
-	if (s == NULL)
-		return NULL;
-#ifdef STREAM_DEBUG
-	fprintf(stderr, "mnstr_wstream %s\n", s->name ? s->name : "<unnamed>");
-#endif
-	assert(s->access == ST_WRITE);
-	s->type = ST_BIN;
-	if (s->errnr == MNSTR_NO__ERROR)
-		s->write(s, (void *) &s->byteorder, sizeof(s->byteorder), 1);
-	return s;
-}
-
 #define EXT_LEN 4
 static const char *
 get_extention(const char *file)
@@ -693,6 +670,10 @@ create_stream(const char *name)
 	s->isutf8 = 0;		/* not known for sure */
 	s->type = ST_ASCII;
 	s->name = strdup(name);
+	if(s->name == NULL) {
+		free(s);
+		return NULL;
+	}
 	s->stream_data.p = NULL;
 	s->errnr = MNSTR_NO__ERROR;
 	s->read = NULL;
@@ -710,8 +691,8 @@ create_stream(const char *name)
 	s->update_timeout = NULL;
 	s->isalive = NULL;
 #ifdef STREAM_DEBUG
-	fprintf(stderr, "create_stream %s -> " PTRFMT "\n",
-		name ? name : "<unnamed>", PTRFMTCAST s);
+	fprintf(stderr, "create_stream %s -> %p\n",
+		name ? name : "<unnamed>", s);
 #endif
 	return s;
 }
@@ -720,7 +701,7 @@ create_stream(const char *name)
 /* streams working on a disk file */
 
 static ssize_t
-file_read(stream *s, void *buf, size_t elmsize, size_t cnt)
+file_read(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	FILE *fp = (FILE *) s->stream_data.p;
 	size_t rc = 0;
@@ -741,7 +722,7 @@ file_read(stream *s, void *buf, size_t elmsize, size_t cnt)
 }
 
 static ssize_t
-file_write(stream *s, const void *buf, size_t elmsize, size_t cnt)
+file_write(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	FILE *fp = (FILE *) s->stream_data.p;
 
@@ -835,63 +816,31 @@ file_fsync(stream *s)
 }
 
 static int
-file_fgetpos(stream *s, lng *p)
+file_fgetpos(stream *restrict s, fpos_t *restrict p)
 {
 	FILE *fp = (FILE *) s->stream_data.p;
 
 	if (fp == NULL || p == NULL)
 		return -1;
-#ifdef WIN32
-	*p = (lng) _ftelli64(fp);	/* returns __int64 */
-#else
-#ifdef HAVE_FSEEKO
-	*p = (lng) ftello(fp);	/* returns off_t */
-#else
-	*p = (lng) ftell(fp);	/* returns long */
-#endif
-#endif
-	return *p < 0 ? -1 : 0;
+	return fgetpos(fp, p) ? -1 : 0;
 }
 
 static int
-file_fsetpos(stream *s, lng p)
+file_fsetpos(stream *restrict s, fpos_t *restrict p)
 {
-	int res = 0;
 	FILE *fp = (FILE *) s->stream_data.p;
 
-	if (fp == NULL)
+	if (fp == NULL || p == NULL)
 		return -1;
-#ifdef WIN32
-	res = _fseeki64(fp, (__int64) p, SEEK_SET);
-#else
-#ifdef HAVE_FSEEKO
-	res = fseeko(fp, (off_t) p, SEEK_SET);
-#else
-	res = fseek(fp, (long) p, SEEK_SET);
-#endif
-#endif
-	return res;
-}
-
-size_t
-getFileSize(stream *s)
-{
-	if (s->read == file_read) {
-		struct stat stb;
-
-		if (fstat(fileno((FILE *) s->stream_data.p), &stb) == 0)
-			return (size_t) stb.st_size;
-		/* we shouldn't get here... */
-	}
-	return 0;		/* unknown */
+	return fsetpos(fp, p) ? -1 : 0;
 }
 
 static stream *
-open_stream(const char *filename, const char *flags)
+open_stream(const char *restrict filename, const char *restrict flags)
 {
 	stream *s;
 	FILE *fp;
-	lng pos;
+	fpos_t pos;
 	char buf[UTF8BOMLENGTH + 1];
 
 	if ((s = create_stream(filename)) == NULL)
@@ -936,11 +885,11 @@ open_stream(const char *filename, const char *flags)
 	/* if a text file is opened for reading, and it starts with
 	 * the UTF-8 encoding of the Unicode Byte Order Mark, skip the
 	 * mark, and mark the stream as being a UTF-8 stream */
-	if (flags[0] == 'r' && flags[1] != 'b' && file_fgetpos(s, &pos) == 0) {
+	if (flags[0] == 'r' && flags[1] != 'b' && fgetpos(fp, &pos) == 0) {
 		if (file_read(s, buf, 1, UTF8BOMLENGTH) == UTF8BOMLENGTH &&
 		    strncmp(buf, UTF8BOM, UTF8BOMLENGTH) == 0)
 			s->isutf8 = 1;
-		else if (file_fsetpos(s, pos) < 0) {
+		else if (fsetpos(fp, &pos) != 0) {
 			/* unlikely: we couldn't seek the file back */
 			fclose(fp);
 			destroy(s);
@@ -955,7 +904,7 @@ open_stream(const char *filename, const char *flags)
 
 #ifdef HAVE_LIBZ
 static ssize_t
-stream_gzread(stream *s, void *buf, size_t elmsize, size_t cnt)
+stream_gzread(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	gzFile fp = (gzFile) s->stream_data.p;
 	int size = (int) (elmsize * cnt);
@@ -998,7 +947,7 @@ stream_gzread(stream *s, void *buf, size_t elmsize, size_t cnt)
 }
 
 static ssize_t
-stream_gzwrite(stream *s, const void *buf, size_t elmsize, size_t cnt)
+stream_gzwrite(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	gzFile fp = (gzFile) s->stream_data.p;
 	int size = (int) (elmsize * cnt);
@@ -1040,7 +989,7 @@ stream_gzflush(stream *s)
 }
 
 static stream *
-open_gzstream(const char *filename, const char *flags)
+open_gzstream(const char *restrict filename, const char *restrict flags)
 {
 	stream *s;
 	gzFile fp;
@@ -1105,7 +1054,7 @@ open_gzrstream(const char *filename)
 }
 
 static stream *
-open_gzwstream(const char *filename, const char *mode)
+open_gzwstream(const char *restrict filename, const char *restrict mode)
 {
 	stream *s;
 
@@ -1134,7 +1083,7 @@ open_gzrastream(const char *filename)
 }
 
 static stream *
-open_gzwastream(const char *filename, const char *mode)
+open_gzwastream(const char *restrict filename, const char *restrict mode)
 {
 	stream *s;
 
@@ -1177,7 +1126,7 @@ stream_bzclose(stream *s)
 }
 
 static ssize_t
-stream_bzread(stream *s, void *buf, size_t elmsize, size_t cnt)
+stream_bzread(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	int size = (int) (elmsize * cnt);
 	int err;
@@ -1235,7 +1184,7 @@ stream_bzread(stream *s, void *buf, size_t elmsize, size_t cnt)
 }
 
 static ssize_t
-stream_bzwrite(stream *s, const void *buf, size_t elmsize, size_t cnt)
+stream_bzwrite(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	int size = (int) (elmsize * cnt);
 	int err;
@@ -1257,7 +1206,7 @@ stream_bzwrite(stream *s, const void *buf, size_t elmsize, size_t cnt)
 }
 
 static stream *
-open_bzstream(const char *filename, const char *flags)
+open_bzstream(const char *restrict filename, const char *restrict flags)
 {
 	stream *s;
 	int err;
@@ -1358,7 +1307,7 @@ open_bzrstream(const char *filename)
 }
 
 static stream *
-open_bzwstream(const char *filename, const char *mode)
+open_bzwstream(const char *restrict filename, const char *restrict mode)
 {
 	stream *s;
 
@@ -1387,7 +1336,7 @@ open_bzrastream(const char *filename)
 }
 
 static stream *
-open_bzwastream(const char *filename, const char *mode)
+open_bzwastream(const char *restrict filename, const char *restrict mode)
 {
 	stream *s;
 
@@ -1417,7 +1366,7 @@ typedef struct xz_stream {
 } xz_stream;
 
 static ssize_t
-stream_xzread(stream *s, void *buf, size_t elmsize, size_t cnt)
+stream_xzread(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	xz_stream *xz = s->stream_data.p;
 	size_t size = elmsize * cnt, origsize = size, ressize = 0;
@@ -1487,7 +1436,7 @@ stream_xzread(stream *s, void *buf, size_t elmsize, size_t cnt)
 }
 
 static ssize_t
-stream_xzwrite(stream *s, const void *buf, size_t elmsize, size_t cnt)
+stream_xzwrite(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	xz_stream *xz = s->stream_data.p;
 	size_t size = elmsize * cnt;
@@ -1563,7 +1512,7 @@ stream_xzflush(stream *s)
 }
 
 static stream *
-open_xzstream(const char *filename, const char *flags)
+open_xzstream(const char *restrict filename, const char *restrict flags)
 {
 	stream *s;
 	xz_stream *xz;
@@ -1649,7 +1598,7 @@ open_xzrstream(const char *filename)
 }
 
 static stream *
-open_xzwstream(const char *filename, const char *mode)
+open_xzwstream(const char *restrict filename, const char *restrict mode)
 {
 	stream *s;
 
@@ -1678,7 +1627,7 @@ open_xzrastream(const char *filename)
 }
 
 static stream *
-open_xzwastream(const char *filename, const char *mode)
+open_xzwastream(const char *restrict filename, const char *restrict mode)
 {
 	stream *s;
 
@@ -1733,8 +1682,8 @@ open_rstream(const char *filename)
 	return s;
 }
 
-static stream *
-open_wstream_(const char *filename, char *mode)
+stream *
+open_wstream(const char *filename)
 {
 	stream *s;
 	const char *ext;
@@ -1747,13 +1696,13 @@ open_wstream_(const char *filename, char *mode)
 	ext = get_extention(filename);
 
 	if (strcmp(ext, "gz") == 0)
-		return open_gzwstream(filename, mode);
+		return open_gzwstream(filename, "wb");
 	if (strcmp(ext, "bz2") == 0)
-		return open_bzwstream(filename, mode);
+		return open_bzwstream(filename, "wb");
 	if (strcmp(ext, "xz") == 0)
-		return open_xzwstream(filename, mode);
+		return open_xzwstream(filename, "wb");
 
-	if ((s = open_stream(filename, mode)) == NULL)
+	if ((s = open_stream(filename, "wb")) == NULL)
 		return NULL;
 	s->access = ST_WRITE;
 	s->type = ST_BIN;
@@ -1766,18 +1715,6 @@ open_wstream_(const char *filename, char *mode)
 		}
 	}
 	return s;
-}
-
-stream *
-open_wstream(const char *filename)
-{
-	return open_wstream_(filename, "wb");
-}
-
-stream *
-append_wstream(const char *filename)
-{
-	return open_wstream_(filename, "ab");
 }
 
 stream *
@@ -1811,7 +1748,7 @@ open_wastream_(const char *filename, char *mode)
 {
 	stream *s;
 	const char *ext;
-
+	(void) mode;
 	if (filename == NULL)
 		return NULL;
 #ifdef STREAM_DEBUG
@@ -1820,13 +1757,14 @@ open_wastream_(const char *filename, char *mode)
 	ext = get_extention(filename);
 
 	if (strcmp(ext, "gz") == 0)
-		return open_gzwastream(filename, mode);
-	if (strcmp(ext, "bz2") == 0)
-		return open_bzwastream(filename, mode);
-	if (strcmp(ext, "xz") == 0)
-		return open_xzwastream(filename, mode);
 
-	if ((s = open_stream(filename, mode)) == NULL)
+		return open_gzwastream(filename, "w");
+	if (strcmp(ext, "bz2") == 0)
+		return open_bzwastream(filename, "w");
+	if (strcmp(ext, "xz") == 0)
+		return open_xzwastream(filename, "w");
+
+	if ((s = open_stream(filename, "w")) == NULL)
 		return NULL;
 	s->access = ST_WRITE;
 	s->type = ST_ASCII;
@@ -1864,7 +1802,7 @@ file_stream(const char *name)
 }
 
 stream *
-file_rstream(FILE *fp, const char *name)
+file_rstream(FILE *restrict fp, const char *restrict name)
 {
 	stream *s;
 
@@ -1889,7 +1827,7 @@ file_rstream(FILE *fp, const char *name)
 }
 
 stream *
-file_wstream(FILE *fp, const char *name)
+file_wstream(FILE *restrict fp, const char *restrict name)
 {
 	stream *s;
 
@@ -1915,10 +1853,10 @@ file_wstream(FILE *fp, const char *name)
 }
 
 stream *
-file_rastream(FILE *fp, const char *name)
+file_rastream(FILE *restrict fp, const char *restrict name)
 {
 	stream *s;
-	lng pos;
+	fpos_t pos;
 	char buf[UTF8BOMLENGTH + 1];
 	struct stat stb;
 
@@ -1933,13 +1871,13 @@ file_rastream(FILE *fp, const char *name)
 	s->stream_data.p = (void *) fp;
 	if (fstat(fileno(fp), &stb) == 0 &&
 	    S_ISREG(stb.st_mode) &&
-	    file_fgetpos(s, &pos) == 0) {
+	    fgetpos(fp, &pos) == 0) {
 		if (file_read(s, buf, 1, UTF8BOMLENGTH) == UTF8BOMLENGTH &&
 		    strncmp(buf, UTF8BOM, UTF8BOMLENGTH) == 0) {
 			s->isutf8 = 1;
 			return s;
 		}
-		if (file_fsetpos(s, pos) < 0) {
+		if (fsetpos(fp, &pos) != 0) {
 			/* unlikely: we couldn't seek the file back */
 			destroy(s);
 			return NULL;
@@ -1948,6 +1886,10 @@ file_rastream(FILE *fp, const char *name)
 #ifdef _MSC_VER
 	if (fileno(fp) == 0 && isatty(0)) {
 		struct console *c = malloc(sizeof(struct console));
+		if(c == NULL) {
+			destroy(s);
+			return NULL;
+		}
 		s->stream_data.p = c;
 		c->h = GetStdHandle(STD_INPUT_HANDLE);
 		c->i = 0;
@@ -1969,7 +1911,7 @@ file_rastream(FILE *fp, const char *name)
 }
 
 stream *
-file_wastream(FILE *fp, const char *name)
+file_wastream(FILE *restrict fp, const char *restrict name)
 {
 	stream *s;
 
@@ -1985,6 +1927,10 @@ file_wastream(FILE *fp, const char *name)
 #ifdef _MSC_VER
 	if ((fileno(fp) == 1 || fileno(fp) == 2) && isatty(fileno(fp))) {
 		struct console *c = malloc(sizeof(struct console));
+		if(c == NULL) {
+			destroy(s);
+			return NULL;
+		}
 		s->stream_data.p = c;
 		c->h = GetStdHandle(STD_OUTPUT_HANDLE);
 		c->i = 0;
@@ -2006,9 +1952,46 @@ file_wastream(FILE *fp, const char *name)
 	return s;
 }
 
+/* some lower-level access functions */
+FILE *
+getFile(stream *s)
+{
+#ifdef _MSC_VER
+	if (s->read == console_read)
+		return stdin;
+	if (s->write == console_write)
+		return stdout;
+#endif
+	if (s->read != file_read)
+		return NULL;
+	return (FILE *) s->stream_data.p;
+}
+
+int
+getFileNo(stream *s)
+{
+	FILE *f;
+
+	f = getFile(s);
+	if (f == NULL)
+		return -1;
+	return fileno(f);
+}
+
+size_t
+getFileSize(stream *s)
+{
+	struct stat stb;
+	int fd = getFileNo(s);
+
+	if (fd >= 0 && fstat(fd, &stb) == 0)
+		return (size_t) stb.st_size;
+	return 0;		/* unknown */
+}
+
 
 void
-buffer_init(buffer *b, char *buf, size_t size)
+buffer_init(buffer *restrict b, char *restrict buf, size_t size)
 {
 	if (b == NULL || buf == NULL)
 		return;
@@ -2079,7 +2062,7 @@ mnstr_get_buffer(stream *s)
 }
 
 static ssize_t
-buffer_read(stream *s, void *buf, size_t elmsize, size_t cnt)
+buffer_read(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	size_t size = elmsize * cnt;
 	buffer *b;
@@ -2095,7 +2078,7 @@ buffer_read(stream *s, void *buf, size_t elmsize, size_t cnt)
 }
 
 static ssize_t
-buffer_write(stream *s, const void *buf, size_t elmsize, size_t cnt)
+buffer_write(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	size_t size = elmsize * cnt;
 	buffer *b;
@@ -2142,7 +2125,7 @@ buffer_flush(stream *s)
 }
 
 stream *
-buffer_rastream(buffer *b, const char *name)
+buffer_rastream(buffer *restrict b, const char *restrict name)
 {
 	stream *s;
 
@@ -2163,7 +2146,7 @@ buffer_rastream(buffer *b, const char *name)
 }
 
 stream *
-buffer_wastream(buffer *b, const char *name)
+buffer_wastream(buffer *restrict b, const char *restrict name)
 {
 	stream *s;
 
@@ -2229,11 +2212,11 @@ bs_create(stream *s)
  * itotal - unused.
  */
 static ssize_t
-bs_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
+bs_write(stream *restrict ss, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	bs *s;
 	size_t todo = cnt * elmsize;
-	short blksize;
+	int16_t blksize;
 
 	s = (bs *) ss->stream_data.p;
 	if (s == NULL)
@@ -2266,11 +2249,12 @@ bs_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
 #endif
 			/* since the block is at max BLOCK (8K) - 2 size we can
 			 * store it in a two byte integer */
-			blksize = (short) s->nr;
+			blksize = (int16_t) s->nr;
 			s->bytes += s->nr;
-			/* the last bit tells whether a flush is in there, it's not
-			 * at this moment, so shift it to the left */
-			blksize <<= 1;
+			/* the last bit tells whether a flush is in
+			 * there, it's not at this moment, so shift it
+			 * to the left */
+			blksize = (int16_t) (blksize << 1);
 #ifdef WORDS_BIGENDIAN
 			blksize = short_int_SWAP(blksize);
 #endif
@@ -2294,7 +2278,7 @@ bs_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
 static int
 bs_flush(stream *ss)
 {
-	short blksize;
+	int16_t blksize;
 	bs *s;
 
 	s = (bs *) ss->stream_data.p;
@@ -2319,11 +2303,11 @@ bs_flush(stream *ss)
 			fprintf(stderr, "W %s 0\n", ss->name);
 		}
 #endif
-		blksize = (short) (s->nr << 1);
+		blksize = (int16_t) (s->nr << 1);
 		s->bytes += s->nr;
 		/* indicate that this is the last buffer of a block by
 		 * setting the low-order bit */
-		blksize |= (short) 1;
+		blksize |= (int16_t) 1;
 		/* allways flush (even empty blocks) needed for the protocol) */
 #ifdef WORDS_BIGENDIAN
 		blksize = short_int_SWAP(blksize);
@@ -2351,7 +2335,7 @@ bs_flush(stream *ss)
  * nr - indicates whether the flush marker has to be returned.
  */
 static ssize_t
-bs_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
+bs_read(stream *restrict ss, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	bs *s;
 	size_t todo = cnt * elmsize;
@@ -2364,7 +2348,7 @@ bs_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
 	assert(s->nr <= 1);
 
 	if (s->itotal == 0) {
-		short blksize = 0;
+		int16_t blksize = 0;
 
 		if (s->nr) {
 			/* We read the closing block but hadn't
@@ -2420,7 +2404,7 @@ bs_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
 			{
 				ssize_t i;
 
-				fprintf(stderr, "RD %s " SSZFMT " \"", ss->name, m);
+				fprintf(stderr, "RD %s %zd \"", ss->name, m);
 				for (i = 0; i < m; i++)
 					if (' ' <= ((char *) buf)[i] &&
 					    ((char *) buf)[i] < 127)
@@ -2438,7 +2422,7 @@ bs_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
 		}
 
 		if (s->itotal == 0) {
-			short blksize = 0;
+			int16_t blksize = 0;
 
 			/* The current block has been completely read,
 			 * so read the count for the next block, only
@@ -2744,11 +2728,11 @@ bs2_create(stream *s, size_t bufsiz, compression_method comp)
  * itotal - unused.
  */
 static ssize_t
-bs2_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
+bs2_write(stream *restrict ss, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	bs2 *s;
 	size_t todo = cnt * elmsize;
-	lng blksize;
+	int64_t blksize;
 	char *writebuf;
 	size_t writelen;
 
@@ -2784,7 +2768,7 @@ bs2_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
 #endif
 
 			writelen = s->nr;
-			blksize = s->nr;
+			blksize = (int64_t) s->nr;
 			writebuf = s->buf;
 
 			if (s->comp != COMPRESSION_NONE) {
@@ -2793,8 +2777,8 @@ bs2_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
 					return -1;
 				}
 				writebuf = s->compbuf;
-				blksize = (lng) compressed_length;
-				writelen = compressed_length;
+				blksize = (int64_t) compressed_length;
+				writelen = (size_t) compressed_length;
 			}
 
 
@@ -2823,7 +2807,7 @@ bs2_write(stream *ss, const void *buf, size_t elmsize, size_t cnt)
 static int
 bs2_flush(stream *ss)
 {
-	lng blksize;
+	int64_t blksize;
 	bs2 *s;
 	char *writebuf;
 	size_t writelen;
@@ -2852,7 +2836,7 @@ bs2_flush(stream *ss)
 #endif
 
 		writelen = s->nr;
-		blksize = s->nr;
+		blksize = (int64_t) s->nr;
 		writebuf = s->buf;
 
 		if (s->nr > 0 && s->comp != COMPRESSION_NONE) {
@@ -2861,8 +2845,8 @@ bs2_flush(stream *ss)
 				return -1;
 			}
 			writebuf = s->compbuf;
-			blksize = (lng) compressed_length;
-			writelen = compressed_length;
+			blksize = (int64_t) compressed_length;
+			writelen = (size_t) compressed_length;
 		}
 
 		/* indicate that this is the last buffer of a block by
@@ -2896,7 +2880,7 @@ bs2_flush(stream *ss)
  * nr - indicates whether the flush marker has to be returned.
  */
 static ssize_t
-bs2_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
+bs2_read(stream *restrict ss, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	bs2 *s;
 	size_t todo = cnt * elmsize;
@@ -2909,7 +2893,7 @@ bs2_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
 	assert(s->nr <= 1);
 
 	if (s->itotal == 0) {
-		lng blksize = 0;
+		int64_t blksize = 0;
 
 		if (s->nr) {
 			/* We read the closing block but hadn't
@@ -2992,7 +2976,7 @@ bs2_read(stream *ss, void *buf, size_t elmsize, size_t cnt)
 		s->itotal -= n;
 
 		if (s->itotal == 0) {
-			lng blksize = 0;
+			int64_t blksize = 0;
 
 			/* The current block has been completely read,
 			 * so read the count for the next block, only
@@ -3268,7 +3252,7 @@ block_stream2(stream *s, size_t bufsiz, compression_method comp, column_compress
 
 
 ssize_t
-mnstr_read_block(stream *s, void *buf, size_t elmsize, size_t cnt)
+mnstr_read_block(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	ssize_t len = 0;
 	char x = 0;
@@ -3285,7 +3269,7 @@ mnstr_read_block(stream *s, void *buf, size_t elmsize, size_t cnt)
 
 
 int
-mnstr_readChr(stream *s, char *val)
+mnstr_readChr(stream *restrict s, char *restrict val)
 {
 	return (int) s->read(s, (void *) val, sizeof(*val), 1);
 }
@@ -3299,7 +3283,7 @@ mnstr_writeChr(stream *s, char val)
 }
 
 int
-mnstr_readBte(stream *s, signed char *val)
+mnstr_readBte(stream *restrict s, int8_t *restrict val)
 {
 	if (s == NULL || val == NULL)
 		return -1;
@@ -3307,7 +3291,7 @@ mnstr_readBte(stream *s, signed char *val)
 }
 
 int
-mnstr_writeBte(stream *s, signed char val)
+mnstr_writeBte(stream *s, int8_t val)
 {
 	if (s == NULL || s->errnr)
 		return 0;
@@ -3315,7 +3299,7 @@ mnstr_writeBte(stream *s, signed char val)
 }
 
 int
-mnstr_readSht(stream *s, short *val)
+mnstr_readSht(stream *restrict s, int16_t *restrict val)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3332,7 +3316,7 @@ mnstr_readSht(stream *s, short *val)
 }
 
 int
-mnstr_writeSht(stream *s, short val)
+mnstr_writeSht(stream *s, int16_t val)
 {
 	if (s == NULL || s->errnr)
 		return 0;
@@ -3340,7 +3324,7 @@ mnstr_writeSht(stream *s, short val)
 }
 
 int
-mnstr_readInt(stream *s, int *val)
+mnstr_readInt(stream *restrict s, int *restrict val)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3366,7 +3350,7 @@ mnstr_writeInt(stream *s, int val)
 }
 
 int
-mnstr_writeStr(stream *s, const char *val)
+mnstr_writeStr(stream *restrict s, const char *restrict val)
 {
 	if (s == NULL || s->errnr)
 		return 0;
@@ -3374,7 +3358,7 @@ mnstr_writeStr(stream *s, const char *val)
 }
 
 int
-mnstr_readStr(stream *s, char *val)
+mnstr_readStr(stream *restrict s, char *restrict val)
 {
 	if (s == NULL || s->errnr)
 		return 0;
@@ -3389,7 +3373,7 @@ mnstr_readStr(stream *s, char *val)
 
 
 int
-mnstr_readLng(stream *s, lng *val)
+mnstr_readLng(stream *restrict s, int64_t *restrict val)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3407,7 +3391,7 @@ mnstr_readLng(stream *s, lng *val)
 }
 
 int
-mnstr_writeLng(stream *s, lng val)
+mnstr_writeLng(stream *s, int64_t val)
 {
 	if (s == NULL || s->errnr)
 		return 0;
@@ -3433,7 +3417,7 @@ mnstr_writeDbl(stream *s, double val)
 
 #ifdef HAVE_HGE
 int
-mnstr_readHge(stream *s, hge * val)
+mnstr_readHge(stream *restrict s, hge *restrict val)
 {
 	switch (s->read(s, (void *) val, sizeof(*val), 1)) {
 	case 1:
@@ -3460,7 +3444,7 @@ mnstr_writeHge(stream *s, hge val)
 #endif
 
 int
-mnstr_readBteArray(stream *s, signed char *val, size_t cnt)
+mnstr_readBteArray(stream *restrict s, int8_t *restrict val, size_t cnt)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3475,7 +3459,7 @@ mnstr_readBteArray(stream *s, signed char *val, size_t cnt)
 }
 
 int
-mnstr_writeBteArray(stream *s, const signed char *val, size_t cnt)
+mnstr_writeBteArray(stream *restrict s, const int8_t *restrict val, size_t cnt)
 {
 	if (s == NULL || s->errnr || val == NULL)
 		return 0;
@@ -3483,7 +3467,7 @@ mnstr_writeBteArray(stream *s, const signed char *val, size_t cnt)
 }
 
 int
-mnstr_readShtArray(stream *s, short *val, size_t cnt)
+mnstr_readShtArray(stream *restrict s, int16_t *restrict val, size_t cnt)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3503,7 +3487,7 @@ mnstr_readShtArray(stream *s, short *val, size_t cnt)
 }
 
 int
-mnstr_writeShtArray(stream *s, const short *val, size_t cnt)
+mnstr_writeShtArray(stream *restrict s, const int16_t *restrict val, size_t cnt)
 {
 	if (s == NULL || s->errnr || val == NULL)
 		return 0;
@@ -3511,7 +3495,7 @@ mnstr_writeShtArray(stream *s, const short *val, size_t cnt)
 }
 
 int
-mnstr_readIntArray(stream *s, int *val, size_t cnt)
+mnstr_readIntArray(stream *restrict s, int *restrict val, size_t cnt)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3531,7 +3515,7 @@ mnstr_readIntArray(stream *s, int *val, size_t cnt)
 }
 
 int
-mnstr_writeIntArray(stream *s, const int *val, size_t cnt)
+mnstr_writeIntArray(stream *restrict s, const int *restrict val, size_t cnt)
 {
 	if (s == NULL || s->errnr || val == NULL)
 		return 0;
@@ -3539,7 +3523,7 @@ mnstr_writeIntArray(stream *s, const int *val, size_t cnt)
 }
 
 int
-mnstr_readLngArray(stream *s, lng *val, size_t cnt)
+mnstr_readLngArray(stream *restrict s, int64_t *restrict val, size_t cnt)
 {
 	if (s == NULL || val == NULL)
 		return 0;
@@ -3559,7 +3543,7 @@ mnstr_readLngArray(stream *s, lng *val, size_t cnt)
 }
 
 int
-mnstr_writeLngArray(stream *s, const lng *val, size_t cnt)
+mnstr_writeLngArray(stream *restrict s, const int64_t *restrict val, size_t cnt)
 {
 	if (s == NULL || s->errnr || val == NULL)
 		return 0;
@@ -3568,7 +3552,7 @@ mnstr_writeLngArray(stream *s, const lng *val, size_t cnt)
 
 #ifdef HAVE_HGE
 int
-mnstr_readHgeArray(stream *s, hge * val, size_t cnt)
+mnstr_readHgeArray(stream *restrict s, hge *restrict val, size_t cnt)
 {
 	if (s->read(s, (void *) val, sizeof(*val), cnt) < (ssize_t) cnt) {
 		s->errnr = MNSTR_READ_ERROR;
@@ -3584,7 +3568,7 @@ mnstr_readHgeArray(stream *s, hge * val, size_t cnt)
 }
 
 int
-mnstr_writeHgeArray(stream *s, const hge * val, size_t cnt)
+mnstr_writeHgeArray(stream *restrict s, const hge *restrict val, size_t cnt)
 {
 	if (!s || s->errnr)
 		return 0;
@@ -3593,7 +3577,7 @@ mnstr_writeHgeArray(stream *s, const hge * val, size_t cnt)
 #endif
 
 int
-mnstr_printf(stream *s, const char *format, ...)
+mnstr_printf(stream *restrict s, const char *restrict format, ...)
 {
 	char buf[512], *bf = buf;
 	int i = 0;
@@ -3797,151 +3781,6 @@ bstream_destroy(bstream *s)
 
 /* ------------------------------------------------------------------ */
 
-/*
- * Buffered write stream batches subsequent write requests in order to
- * optimize write bandwidth
- */
-typedef struct {
-	stream *s;
-	size_t len, pos;
-	char buf[FLEXIBLE_ARRAY_MEMBER];	/* NOTE: buf extends beyond array for wbs->len bytes */
-} wbs_stream;
-
-static int
-wbs_flush(stream *s)
-{
-	wbs_stream *wbs;
-	size_t len;
-
-	wbs = (wbs_stream *) s->stream_data.p;
-	if (wbs == NULL)
-		return -1;
-	len = wbs->pos;
-	wbs->pos = 0;
-	if (wbs->s == NULL ||
-	    wbs->s->write(wbs->s, wbs->buf, 1, len) != (ssize_t) len)
-		return -1;
-	if (wbs->s->flush)
-		return wbs->s->flush(wbs->s);
-	return 0;
-}
-
-static ssize_t
-wbs_write(stream *s, const void *buf, size_t elmsize, size_t cnt)
-{
-	wbs_stream *wbs;
-	size_t nbytes, reqsize = cnt * elmsize, todo = reqsize;
-
-	wbs = (wbs_stream *) s->stream_data.p;
-	if (wbs == NULL)
-		return -1;
-	while (todo > 0) {
-		int flush = 1;
-		nbytes = wbs->len - wbs->pos;
-		if (nbytes > todo) {
-			nbytes = todo;
-			flush = 0;
-		}
-		memcpy(wbs->buf + wbs->pos, buf, nbytes);
-		todo -= nbytes;
-		buf = (((const char *) buf) + nbytes);
-		wbs->pos += nbytes;
-		if (flush && wbs_flush(s) < 0)
-			return -1;
-	}
-	return (ssize_t) cnt;
-}
-
-static void
-wbs_close(stream *s)
-{
-	wbs_stream *wbs = (wbs_stream *) s->stream_data.p;
-
-	wbs_flush(s);
-	if (wbs && wbs->s)
-		wbs->s->close(wbs->s);
-}
-
-static void
-wbs_destroy(stream *s)
-{
-	wbs_stream *wbs = (wbs_stream *) s->stream_data.p;
-
-	if (wbs) {
-		if (wbs->s)
-			wbs->s->destroy(wbs->s);
-		free(wbs);
-	}
-	destroy(s);
-}
-
-static void
-wbs_update_timeout(stream *s)
-{
-	wbs_stream *wbs = (wbs_stream *) s->stream_data.p;
-
-	if (wbs && wbs->s) {
-		wbs->s->timeout = s->timeout;
-		wbs->s->timeout_func = s->timeout_func;
-		if (wbs->s->update_timeout)
-			wbs->s->update_timeout(wbs->s);
-	}
-}
-
-static int
-wbs_isalive(stream *s)
-{
-	wbs_stream *wbs = (wbs_stream *) s->stream_data.p;
-
-	if (wbs && wbs->s) {
-		if (wbs->s->isalive)
-			return wbs->s->isalive(wbs->s);
-		return 1;
-	}
-	return 0;
-}
-
-static void
-wbs_clrerr(stream *s)
-{
-	if (s && s->stream_data.p)
-		mnstr_clearerr(((wbs_stream *) s->stream_data.p)->s);
-}
-
-stream *
-wbstream(stream *s, size_t buflen)
-{
-	stream *ns;
-	wbs_stream *wbs;
-
-	if (s == NULL)
-		return NULL;
-	ns = create_stream(s->name);
-	if (ns == NULL)
-		return NULL;
-	wbs = (wbs_stream *) malloc(offsetof(wbs_stream, buf) + buflen);
-	if (wbs == NULL) {
-		destroy(ns);
-		return NULL;
-	}
-	ns->type = s->type;
-	ns->access = s->access;
-	ns->close = wbs_close;
-	ns->clrerr = wbs_clrerr;
-	ns->destroy = wbs_destroy;
-	ns->flush = wbs_flush;
-	ns->update_timeout = wbs_update_timeout;
-	ns->isalive = wbs_isalive;
-	ns->write = wbs_write;
-	ns->stream_data.p = (void *) wbs;
-	wbs->s = s;
-	wbs->pos = 0;
-	wbs->len = buflen;
-	return ns;
-}
-
-/* ------------------------------------------------------------------ */
-
 struct cbstream {
 	void *private;
 	void (*destroy)(void *);
@@ -3971,7 +3810,7 @@ cb_close(stream *s)
 }
 
 static ssize_t
-cb_read(stream *s, void *buf, size_t elmsize, size_t cnt)
+cb_read(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	struct cbstream *cb = s->stream_data.p;
 
@@ -3979,11 +3818,11 @@ cb_read(stream *s, void *buf, size_t elmsize, size_t cnt)
 }
 
 stream *
-callback_stream(void *private,
-		ssize_t (*read)(void *private, void *buf, size_t elmsize, size_t cnt),
+callback_stream(void *restrict private,
+		ssize_t (*read)(void *restrict private, void *restrict buf, size_t elmsize, size_t cnt),
 		void (*close)(void *private),
 		void (*destroy)(void *private),
-		const char *name)
+		const char *restrict name)
 {
 	stream *s;
 	struct cbstream *cb;
@@ -4007,36 +3846,8 @@ callback_stream(void *private,
 	return s;
 }
 
-/* Front-ends may wish to have more control over the designated file
- * activity. For this they need access to the file descriptor or even
- * duplicate it. (e.g. tablet loader) */
-FILE *
-getFile(stream *s)
-{
-#ifdef _MSC_VER
-	if (s->read == console_read)
-		return stdin;
-	if (s->write == console_write)
-		return stdout;
-#endif
-	if (s->read != file_read)
-		return NULL;
-	return (FILE *) s->stream_data.p;
-}
-
-int
-getFileNo(stream *s)
-{
-	FILE *f;
-
-	f = getFile(s);
-	if (f == NULL)
-		return -1;
-	return fileno(f);
-}
-
 static ssize_t
-stream_blackhole_write(stream *s, const void *buf, size_t elmsize, size_t cnt)
+stream_blackhole_write(stream *restrict s, const void *restrict buf, size_t elmsize, size_t cnt)
 {
 	(void) s;
 	(void) buf;
@@ -4088,7 +3899,7 @@ typedef struct {
 
 
 static ssize_t
-stream_fwf_read(stream *s, void *buf, size_t elmsize, size_t cnt)
+stream_fwf_read(stream *restrict s, void *restrict buf, size_t elmsize, size_t cnt)
 {
 	stream_fwf_data *fsd;
 	size_t to_write = cnt;
@@ -4179,7 +3990,7 @@ stream_fwf_destroy(stream *s)
 }
 
 stream *
-stream_fwf_create(stream *s, size_t num_fields, size_t *widths, char filler)
+stream_fwf_create(stream *restrict s, size_t num_fields, size_t *restrict widths, char filler)
 {
 	stream *ns;
 	stream_fwf_data *fsd = malloc(sizeof(stream_fwf_data));
@@ -4198,18 +4009,24 @@ stream_fwf_create(stream *s, size_t num_fields, size_t *widths, char filler)
 	}
 	fsd->in_buf = malloc(fsd->line_len);
 	if (fsd->in_buf == NULL) {
+		mnstr_close(fsd->s);
+		mnstr_destroy(fsd->s);
 		free(fsd);
 		return NULL;
 	}
 	out_buf_len = fsd->line_len * 3;
 	fsd->out_buf = malloc(out_buf_len);
 	if (fsd->out_buf == NULL) {
+		mnstr_close(fsd->s);
+		mnstr_destroy(fsd->s);
 		free(fsd->in_buf);
 		free(fsd);
 		return NULL;
 	}
 	fsd->out_buf_remaining = 0;
 	if ((ns = create_stream(STREAM_FWF_NAME)) == NULL) {
+		mnstr_close(fsd->s);
+		mnstr_destroy(fsd->s);
 		free(fsd->in_buf);
 		free(fsd->out_buf);
 		free(fsd);

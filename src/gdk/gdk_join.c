@@ -19,13 +19,11 @@
  * first two arguments.  The join operations differ in the way in
  * which tuples from the two inputs are matched.
  *
- * All inputs BATs must be dense headed, the output BATs will also be
- * dense headed.  The outputs consist of two aligned BATs (i.e. same
- * length and same seqbase in the head column (0@0)) that contain in
- * their tails the OIDs of the input BATs that match.  The candidate
- * lists, if given, contain in their tail the OIDs of the associated
+ * The outputs consist of two aligned BATs (i.e. same length and same
+ * hseqbase (0@0)) that contain the OIDs of the input BATs that match.
+ * The candidate lists, if given, contain the OIDs of the associated
  * input BAT which must be considered for matching.  The input BATs
- * must have the same tail type.
+ * must have the same type.
  *
  * All functions also have a parameter nil_matches which indicates
  * whether NIL must be considered an ordinary value that can match, or
@@ -86,7 +84,7 @@ joinparamcheck(BAT *l, BAT *r1, BAT *r2, BAT *sl, BAT *sr, const char *func)
 	}
 	if ((sl && ATOMtype(sl->ttype) != TYPE_oid) ||
 	    (sr && ATOMtype(sr->ttype) != TYPE_oid)) {
-		GDKerror("%s: candidate lists must have OID tail.\n", func);
+		GDKerror("%s: candidate lists must have type OID.\n", func);
 		return GDK_FAIL;
 	}
 	if ((sl && !BATtordered(sl)) ||
@@ -201,7 +199,7 @@ joininitresults(BAT **r1p, BAT **r2p, BUN lcnt, BUN rcnt, int lkey, int rkey,
 	return maxsize;
 }
 
-#define VALUE(s, x)	(s##vars ? \
+#define VALUE(s, x)	(s##vars ?					\
 			 s##vars + VarHeapVal(s##vals, (x), s##width) : \
 			 (const char *) s##vals + ((x) * s##width))
 #define FVALUE(s, x)	((const char *) s##vals + ((x) * s##width))
@@ -220,7 +218,6 @@ nomatch(BAT *r1, BAT *r2, BAT *l, BAT *r, BUN lstart, BUN lend,
 	r1->tsorted = 1;
 	r1->tnosorted = 0;
 	r1->tdense = 0;
-	r1->tnodense = 0;
 	r1->tnil = 0;
 	r1->tnonil = 1;
 	if (r2) {
@@ -229,7 +226,6 @@ nomatch(BAT *r1, BAT *r2, BAT *l, BAT *r, BUN lstart, BUN lend,
 		r2->tsorted = 1;
 		r2->tnosorted = 0;
 		r2->tdense = 0;
-		r2->tnodense = 0;
 		r2->tnil = 0;
 		r2->tnonil = 1;
 	}
@@ -315,10 +311,10 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	const oid *lvals;
 	oid o, seq;
 
-	/* r has a dense tail, and if there is a candidate list, it
-	 * too is dense.  This means we don't have to do any searches,
-	 * we only need to compare ranges to know whether a value from
-	 * l has a match in r */
+	/* r is dense, and if there is a candidate list, it too is
+	 * dense.  This means we don't have to do any searches, we
+	 * only need to compare ranges to know whether a value from l
+	 * has a match in r */
 	assert(ATOMtype(l->ttype) == ATOMtype(r->ttype));
 	assert(r->tsorted || r->trevsorted);
 	assert(sl == NULL || sl->tsorted);
@@ -341,9 +337,8 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	}
 	/* at this point, the matchable values in r are [lo..hi) */
 	if (BATtdense(l)) {
-		/* if l has a dense tail, we can further restrict the
-		 * [lo..hi) range to values in l that match with
-		 * values in r */
+		/* if l is dense, we can further restrict the [lo..hi)
+		 * range to values in l that match with values in r */
 		i = hi - lo;	/* remember these for nil_on_miss case below */
 		o = lo;
 		if (l->tseqbase > lo)
@@ -351,13 +346,13 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 		if (l->tseqbase + BATcount(l) < hi)
 			hi = l->tseqbase + BATcount(l);
 		if (sl == NULL || BATtdense(sl)) {
-			/* l has a dense tail, and so does the left
-			 * candidate list (if it exists); this means
-			 * we don't have to actually look at any
-			 * values in l: we can just do some
-			 * arithmetic; it also means that r1 will be
-			 * dense, and if nil_on_miss is not set, or if
-			 * all values in l match, r2 will too */
+			/* l is dense, and so is the left candidate
+			 * list (if it exists); this means we don't
+			 * have to actually look at any values in l:
+			 * we can just do some arithmetic; it also
+			 * means that r1 will be dense, and if
+			 * nil_on_miss is not set, or if all values in
+			 * l match, r2 will too */
 			seq = l->hseqbase;
 			cnt = BATcount(l);
 			if (sl) {
@@ -386,16 +381,15 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			/* at this point, the matched values in l and
 			 * r (taking candidate lists into account) are
 			 * [lo..hi) which we can translate back to the
-			 * respective head values that we can store in
-			 * r1 and r2; note that r1 will have a dense
-			 * tail since all values in l will match
-			 * something (even if nil if nil_on_miss is
-			 * set) */
+			 * respective OID values that we can store in
+			 * r1 and r2; note that r1 will be dense since
+			 * all values in l will match something (even
+			 * if nil if nil_on_miss is set) */
 			if (only_misses) {
 				/* the return values are
 				 * [seq..lo') + [hi'..seq+cnt)
 				 * where lo' and hi' are lo and hi
-				 * translated back to l's head
+				 * translated back to l's OID
 				 * values */
 				lo = lo + l->hseqbase - l->tseqbase; /* lo' */
 				hi = hi + l->hseqbase - l->tseqbase; /* hi' */
@@ -498,14 +492,13 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			}
 			goto doreturn;
 		}
-		/* l has a dense tail, but the candidate list exists
-		 * and does not have a dense tail; we can, by
-		 * manipulating the range [lo..hi), just look at the
-		 * candidate list values */
+		/* l is dense, but the candidate list exists and is
+		 * not dense; we can, by manipulating the range
+		 * [lo..hi), just look at the candidate list values */
 		assert(!BATtdense(sl));
 		lvals = (const oid *) Tloc(sl, 0);
-		/* translate lo and hi to l's head values that now
-		 * need to match */
+		/* translate lo and hi to l's OID values that now need
+		 * to match */
 		lo = lo - l->tseqbase + l->hseqbase;
 		hi = hi - l->tseqbase + l->hseqbase;
 		cnt = BATcount(sl);
@@ -571,8 +564,8 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 		}
 		goto doreturn;
 	}
-	/* l does not have a dense tail, so we need to look at the
-	 * values and check whether they are in the range [lo..hi) */
+	/* l is not dense, so we need to look at the values and check
+	 * whether they are in the range [lo..hi) */
 	lvals = (const oid *) Tloc(l, 0);
 	seq = l->hseqbase;
 	cnt = BATcount(l);
@@ -639,9 +632,8 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			}
 			goto doreturn;
 		}
-		/* candidate list exists and has a dense tail,
-		 * we can try to restrict the values in l that
-		 * we need to look at */
+		/* candidate list exists and is dense, we can try to
+		 * restrict the values in l that we need to look at */
 		if (sl->tseqbase > l->hseqbase) {
 			/* we don't need to start at the
 			 * beginning of l */
@@ -812,18 +804,18 @@ mergejoin_int(BAT *r1, BAT *r2, BAT *l, BAT *r,
 
 	if (!nil_matches) {
 		/* skip over nils at the start of the columns */
-		if (lscan < lend - lstart && lvals[lstart + lscan] == int_nil) {
+		if (lscan < lend - lstart && is_int_nil(lvals[lstart + lscan])) {
 			lstart = binsearch_int(NULL, 0, lvals, lstart + lscan,
 					       lend - 1, int_nil, 1, 1);
 		} else {
-			while (lvals[lstart] == int_nil)
+			while (is_int_nil(lvals[lstart]))
 				lstart++;
 		}
-		if (rscan < rend - rstart && rvals[rstart + rscan] == int_nil) {
+		if (rscan < rend - rstart && is_int_nil(rvals[rstart + rscan])) {
 			rstart = binsearch_int(NULL, 0, rvals, rstart + rscan,
 					       rend - 1, int_nil, 1, 1);
 		} else {
-			while (rvals[rstart] == int_nil)
+			while (is_int_nil(rvals[rstart]))
 				rstart++;
 		}
 	}
@@ -1109,18 +1101,18 @@ mergejoin_lng(BAT *r1, BAT *r2, BAT *l, BAT *r,
 
 	if (!nil_matches) {
 		/* skip over nils at the start of the columns */
-		if (lscan < lend - lstart && lvals[lstart + lscan] == lng_nil) {
+		if (lscan < lend - lstart && is_lng_nil(lvals[lstart + lscan])) {
 			lstart = binsearch_lng(NULL, 0, lvals, lstart + lscan,
 					       lend - 1, lng_nil, 1, 1);
 		} else {
-			while (lvals[lstart] == lng_nil)
+			while (is_lng_nil(lvals[lstart]))
 				lstart++;
 		}
-		if (rscan < rend - rstart && rvals[rstart + rscan] == lng_nil) {
+		if (rscan < rend - rstart && is_lng_nil(rvals[rstart + rscan])) {
 			rstart = binsearch_lng(NULL, 0, rvals, rstart + rscan,
 					       rend - 1, lng_nil, 1, 1);
 		} else {
-			while (rvals[rstart] == lng_nil)
+			while (is_lng_nil(rvals[rstart]))
 				rstart++;
 		}
 	}
@@ -1475,14 +1467,14 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	if (lstart == lend ||
 	    rstart == rend ||
 	    (!nil_matches &&
-	     ((BATtvoid(l) && l->tseqbase == oid_nil) ||
-	      (BATtvoid(r) && r->tseqbase == oid_nil))) ||
-	    (BATtvoid(l) && l->tseqbase == oid_nil &&
+	     ((BATtvoid(l) && is_oid_nil(l->tseqbase)) ||
+	      (BATtvoid(r) && is_oid_nil(r->tseqbase)))) ||
+	    (BATtvoid(l) && is_oid_nil(l->tseqbase) &&
 	     (r->tnonil ||
-	      (BATtvoid(r) && r->tseqbase != oid_nil))) ||
-	    (BATtvoid(r) && r->tseqbase == oid_nil &&
+	      (BATtvoid(r) && !is_oid_nil(r->tseqbase)))) ||
+	    (BATtvoid(r) && is_oid_nil(r->tseqbase) &&
 	     (l->tnonil ||
-	      (BATtvoid(l) && l->tseqbase != oid_nil)))) {
+	      (BATtvoid(l) && !is_oid_nil(l->tseqbase))))) {
 		/* there are no matches */
 		return nomatch(r1, r2, l, r, lstart, lend, lcand, lcandend,
 			       nil_on_miss, only_misses, "mergejoin", t0);
@@ -1529,7 +1521,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			lstart = 0;
 			lend = (BUN) (lcandend - lcand);
 		}
-		if (l->tseqbase == oid_nil)
+		if (is_oid_nil(l->tseqbase))
 			loff = lng_nil;
 		else
 			loff = (lng) l->tseqbase - (lng) l->hseqbase;
@@ -1540,7 +1532,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			rstart = 0;
 			rend = (BUN) (rcandend - rcand);
 		}
-		if (r->tseqbase == oid_nil)
+		if (is_oid_nil(r->tseqbase))
 			roff = lng_nil;
 		else
 			roff = (lng) r->tseqbase - (lng) r->hseqbase;
@@ -1607,7 +1599,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 				} else if (rvals) {
 					v = VALUE(r, (equal_order ? rcand[0] : rcandend[-1]) - r->hseqbase);
 				} else {
-					rval = roff == lng_nil ? oid_nil : (oid) ((lng) (equal_order ? rcand[0] : rcandend[-1]) + roff);
+					rval = is_lng_nil(roff) ? oid_nil : (oid) ((lng) (equal_order ? rcand[0] : rcandend[-1]) + roff);
 					v = &rval;
 				}
 			} else {
@@ -1616,7 +1608,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 				} else if (rvals) {
 					v = VALUE(r, equal_order ? rstart : rend - 1);
 				} else {
-					if (roff == lng_nil)
+					if (is_lng_nil(roff))
 						rval = oid_nil;
 					else if (equal_order)
 						rval = (oid) ((lng) rstart + r->tseqbase);
@@ -1635,9 +1627,9 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 					nlx = lend - lstart;
 					lstart = lend;
 				}
-			} else if (loff == lng_nil) {
+			} else if (is_lng_nil(loff)) {
 				/* all l values are NIL, and the type is OID */
-				if (* (oid *) v != oid_nil) {
+				if (!is_oid_nil(* (oid *) v)) {
 					/* value we're looking at in r
 					 * is not NIL, so we match
 					 * nothing */
@@ -1677,7 +1669,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 							v = NULL;
 					}
 				}
-			} else if (*(const oid *)v != oid_nil) {
+			} else if (!is_oid_nil(*(const oid *)v)) {
 				if (*(const oid *)v > l->tseqbase) {
 					nlx = lstart;
 					lstart = *(const oid *)v - l->tseqbase;
@@ -1750,7 +1742,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 		nl = 1;		/* we'll match (at least) one in l */
 		nr = 0;		/* maybe we won't match anything in r */
 		if (lcand) {
-			if (loff == lng_nil) {
+			if (is_lng_nil(loff)) {
 				/* all values are nil */
 				lval = oid_nil;
 				v = &lval;
@@ -1804,7 +1796,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 				       cmp(v, VALUE(l, lstart)) == 0)
 					nl++;
 			}
-		} else if (loff == lng_nil) {
+		} else if (is_lng_nil(loff)) {
 			lval = oid_nil;
 			v = &lval;
 			nl = lend - lstart;
@@ -1837,8 +1829,8 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 		 * than rscan away). */
 		if (v == NULL) {
 			nr = 0;	/* nils don't match anything */
-		} else if (roff == lng_nil) {
-			if (*(const oid *) v == oid_nil) {
+		} else if (is_lng_nil(roff)) {
+			if (is_oid_nil(*(const oid *) v)) {
 				/* all values in r match */
 				nr = rcand ? (BUN) (rcandend - rcand) : rend - rstart;
 			} else {
@@ -1951,7 +1943,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 							 cmp(v, VALUE(r, rstart)) == 0);
 					}
 				}
-			} else if ((rval = *(const oid *)v) != oid_nil) {
+			} else if (!is_oid_nil((rval = *(const oid *)v))) {
 				/* r is dense or void-nil, so we don't
 				 * need to search, we know there is
 				 * either zero or one match (note that
@@ -2071,7 +2063,7 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 							 cmp(v, VALUE(r, rend - 1)) == 0);
 					}
 				}
-			} else if ((rval = *(const oid *)v) != oid_nil) {
+			} else if (!is_oid_nil((rval = *(const oid *)v))) {
 				/* r is dense or void-nil, so we don't
 				 * need to search, we know there is
 				 * either zero or one match (note that
@@ -2331,15 +2323,15 @@ mergejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	return GDK_FAIL;
 }
 
-/* binary search in a candidate list, return 1 if found, 0 if not */
-inline int
+/* binary search in a candidate list, return true if found, false if not */
+inline bool
 binsearchcand(const oid *cand, BUN lo, BUN hi, oid v)
 {
 	BUN mid;
 
 	--hi;			/* now hi is inclusive */
 	if (v < cand[lo] || v > cand[hi])
-		return 0;
+		return false;
 	while (hi > lo) {
 		mid = (lo + hi) / 2;
 		if (cand[mid] == v)
@@ -2382,12 +2374,12 @@ binsearchcand(const oid *cand, BUN lo, BUN hi, oid v)
 		    (cmp == NULL ||			\
 		     (*cmp)(v, BUNtail(bi, hb)) == 0))
 
-#define HASHloop_bound_TYPE(bi, h, hb, v, lo, hi, TYPE)		\
-	for (hb = HASHget(h, hash_##TYPE(h, v));		\
-	     hb != HASHnil(h);					\
-	     hb = HASHgetlink(h,hb))				\
-		if (hb >= (lo) && hb < (hi) &&			\
-		    simple_EQ(v, BUNtloc(bi, hb), TYPE))
+#define HASHloop_bound_TYPE(bi, h, hb, v, lo, hi, TYPE)			\
+	for (hb = HASHget(h, hash_##TYPE(h, v));			\
+	     hb != HASHnil(h);						\
+	     hb = HASHgetlink(h,hb))					\
+		if (hb >= (lo) && hb < (hi) &&				\
+		    * (const TYPE *) v == * (const TYPE *) BUNtloc(bi, hb))
 
 #define HASHJOIN(TYPE, WIDTH)						\
 	do {								\
@@ -2398,7 +2390,7 @@ binsearchcand(const oid *cand, BUN lo, BUN hi, oid v)
 			v = FVALUE(l, lstart);				\
 			lstart++;					\
 			nr = 0;						\
-			if (*(const TYPE*)v != TYPE##_nil) {		\
+			if (!is_##TYPE##_nil(*(const TYPE*)v)) {	\
 				for (rb = HASHget##WIDTH(hsh, hash_##TYPE(hsh, v)); \
 				     rb != hashnil;			\
 				     rb = HASHgetlink##WIDTH(hsh, rb))	\
@@ -2444,7 +2436,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 	int lwidth;
 	const void *nil = ATOMnilptr(l->ttype);
 	int (*cmp)(const void *, const void *) = ATOMcompare(l->ttype);
-	oid lval = oid_nil;	/* hold value if l has dense tail */
+	oid lval = oid_nil;	/* hold value if l is dense */
 	const char *v = (const char *) &lval;
 	int lskipped = 0;	/* whether we skipped values in l */
 	const Hash *restrict hsh;
@@ -2490,8 +2482,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 		assert(!r->tvarsized || !r->ttype);
 		lvars = NULL;
 	}
-	/* offset to convert BUN for value in right tail column to OID
-	 * in right head column */
+	/* offset to convert BUN to OID for value in right column */
 	rseq = r->hseqbase;
 
 	/* basic properties will be adjusted if necessary later on,
@@ -2592,7 +2583,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 		while (lcand < lcandend) {
 			lo = *lcand++;
 			if (BATtvoid(l)) {
-				if (l->tseqbase != oid_nil)
+				if (!is_oid_nil(l->tseqbase))
 					lval = lo - l->hseqbase + l->tseqbase;
 			} else {
 				v = VALUE(l, lo - l->hseqbase);
@@ -2682,7 +2673,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 	} else {
 		for (lo = lstart + l->hseqbase; lstart < lend; lo++) {
 			if (BATtvoid(l)) {
-				if (l->tseqbase != oid_nil)
+				if (!is_oid_nil(l->tseqbase))
 					lval = lo - l->hseqbase + l->tseqbase;
 			} else {
 				v = VALUE(l, lstart);
@@ -2707,7 +2698,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 			} else {
 				switch (t) {
 				case TYPE_int:
-					if (nil_matches || *(const int*)v != int_nil) {
+					if (nil_matches || !is_int_nil(*(const int*)v)) {
 						HASHloop_bound_TYPE(ri, hsh, rb, v, rl, rh, int) {
 							ro = (oid) (rb - rl + rseq);
 							if (only_misses) {
@@ -2721,7 +2712,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 					}
 					break;
 				case TYPE_lng:
-					if (nil_matches || *(const lng*)v != lng_nil) {
+					if (nil_matches || !is_lng_nil(*(const lng*)v)) {
 						HASHloop_bound_TYPE(ri, hsh, rb, v, rl, rh, lng) {
 							ro = (oid) (rb - rl + rseq);
 							if (only_misses) {
@@ -2736,7 +2727,7 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches,
 					break;
 #ifdef HAVE_HGE
 				case TYPE_hge:
-					if (nil_matches || *(const hge*)v != hge_nil) {
+					if (nil_matches || !is_hge_nil(*(const hge*)v)) {
 						HASHloop_bound_TYPE(ri, hsh, rb, v, rl, rh, hge) {
 							ro = (oid) (rb - rl + rseq);
 							if (only_misses) {
@@ -2941,7 +2932,7 @@ thetajoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int opcode, BUN ma
 	rwidth = r->twidth;
 
 	if (BATtvoid(l)) {
-		if (l->tseqbase == oid_nil) {
+		if (is_oid_nil(l->tseqbase)) {
 			/* trivial: nils don't match anything */
 			return GDK_SUCCEED;
 		}
@@ -2955,7 +2946,7 @@ thetajoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int opcode, BUN ma
 		loff = (lng) l->tseqbase - (lng) l->hseqbase;
 	}
 	if (BATtvoid(r)) {
-		if (r->tseqbase == oid_nil) {
+		if (is_oid_nil(r->tseqbase)) {
 			/* trivial: nils don't match anything */
 			return GDK_SUCCEED;
 		}
@@ -3154,52 +3145,52 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 
 	switch (t) {
 	case TYPE_bte:
-		if (*(const bte *)c1 == bte_nil ||
-		    *(const bte *)c2 == bte_nil ||
+		if (is_bte_nil(*(const bte *)c1) ||
+		    is_bte_nil(*(const bte *)c2) ||
 		    -*(const bte *)c1 > *(const bte *)c2 ||
 		    ((!hi || !li) && -*(const bte *)c1 == *(const bte *)c2))
 			return GDK_SUCCEED;
 		break;
 	case TYPE_sht:
-		if (*(const sht *)c1 == sht_nil ||
-		    *(const sht *)c2 == sht_nil ||
+		if (is_sht_nil(*(const sht *)c1) ||
+		    is_sht_nil(*(const sht *)c2) ||
 		    -*(const sht *)c1 > *(const sht *)c2 ||
 		    ((!hi || !li) && -*(const sht *)c1 == *(const sht *)c2))
 			return GDK_SUCCEED;
 		break;
 	case TYPE_int:
-		if (*(const int *)c1 == int_nil ||
-		    *(const int *)c2 == int_nil ||
+		if (is_int_nil(*(const int *)c1) ||
+		    is_int_nil(*(const int *)c2) ||
 		    -*(const int *)c1 > *(const int *)c2 ||
 		    ((!hi || !li) && -*(const int *)c1 == *(const int *)c2))
 			return GDK_SUCCEED;
 		break;
 	case TYPE_lng:
-		if (*(const lng *)c1 == lng_nil ||
-		    *(const lng *)c2 == lng_nil ||
+		if (is_lng_nil(*(const lng *)c1) ||
+		    is_lng_nil(*(const lng *)c2) ||
 		    -*(const lng *)c1 > *(const lng *)c2 ||
 		    ((!hi || !li) && -*(const lng *)c1 == *(const lng *)c2))
 			return GDK_SUCCEED;
 		break;
 #ifdef HAVE_HGE
 	case TYPE_hge:
-		if (*(const hge *)c1 == hge_nil ||
-		    *(const hge *)c2 == hge_nil ||
+		if (is_hge_nil(*(const hge *)c1) ||
+		    is_hge_nil(*(const hge *)c2) ||
 		    -*(const hge *)c1 > *(const hge *)c2 ||
 		    ((!hi || !li) && -*(const hge *)c1 == *(const hge *)c2))
 			return GDK_SUCCEED;
 		break;
 #endif
 	case TYPE_flt:
-		if (*(const flt *)c1 == flt_nil ||
-		    *(const flt *)c2 == flt_nil ||
+		if (is_flt_nil(*(const flt *)c1) ||
+		    is_flt_nil(*(const flt *)c2) ||
 		    -*(const flt *)c1 > *(const flt *)c2 ||
 		    ((!hi || !li) && -*(const flt *)c1 == *(const flt *)c2))
 			return GDK_SUCCEED;
 		break;
 	case TYPE_dbl:
-		if (*(const dbl *)c1 == dbl_nil ||
-		    *(const dbl *)c2 == dbl_nil ||
+		if (is_dbl_nil(*(const dbl *)c1) ||
+		    is_dbl_nil(*(const dbl *)c2) ||
 		    -*(const dbl *)c1 > *(const dbl *)c2 ||
 		    ((!hi || !li) && -*(const dbl *)c1 == *(const dbl *)c2))
 			return GDK_SUCCEED;
@@ -3262,7 +3253,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			case TYPE_bte: {
 				sht v1 = (sht) *(const bte *) vr, v2;
 
-				if (v1 == bte_nil)
+				if (is_bte_nil(v1))
 					continue;
 				v2 = v1;
 				v1 -= *(const bte *)c1;
@@ -3278,7 +3269,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			case TYPE_sht: {
 				int v1 = (int) *(const sht *) vr, v2;
 
-				if (v1 == sht_nil)
+				if (is_sht_nil(v1))
 					continue;
 				v2 = v1;
 				v1 -= *(const sht *)c1;
@@ -3294,7 +3285,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			case TYPE_int: {
 				lng v1 = (lng) *(const int *) vr, v2;
 
-				if (v1 == int_nil)
+				if (is_int_nil(v1))
 					continue;
 				v2 = v1;
 				v1 -= *(const int *)c1;
@@ -3311,7 +3302,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			case TYPE_lng: {
 				hge v1 = (hge) *(const lng *) vr, v2;
 
-				if (v1 == lng_nil)
+				if (is_lng_nil(v1))
 					continue;
 				v2 = v1;
 				v1 -= *(const lng *)c1;
@@ -3329,7 +3320,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			case TYPE_lng: {
 				__int128 v1 = (__int128) *(const lng *) vr, v2;
 
-				if (v1 == lng_nil)
+				if (is_lng_nil(v1))
 					continue;
 				v2 = v1;
 				v1 -= *(const lng *)c1;
@@ -3347,7 +3338,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 				lng v1, v2;
 				int abort_on_error = 1;
 
-				if (*(const lng *)vr == lng_nil)
+				if (is_lng_nil(*(const lng *)vr))
 					continue;
 				SUB_WITH_CHECK(lng, *(const lng *)vr,
 					       lng, *(const lng *)c1,
@@ -3378,7 +3369,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 				hge v1, v2;
 				int abort_on_error = 1;
 
-				if (*(const hge *)vr == hge_nil)
+				if (is_hge_nil(*(const hge *)vr))
 					continue;
 				SUB_WITH_CHECK(hge, *(const hge *)vr,
 					       hge, *(const hge *)c1,
@@ -3406,7 +3397,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			case TYPE_flt: {
 				dbl v1 = (dbl) *(const flt *) vr, v2;
 
-				if (v1 == flt_nil)
+				if (is_flt_nil(v1))
 					continue;
 				v2 = v1;
 				v1 -= *(const flt *)c1;
@@ -3423,7 +3414,7 @@ bandjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 				dbl v1, v2;
 				int abort_on_error = 1;
 
-				if (*(const dbl *)vr == dbl_nil)
+				if (is_dbl_nil(*(const dbl *)vr))
 					continue;
 				SUB_WITH_CHECK(dbl, *(const dbl *)vr,
 					       dbl, *(const dbl *)c1,
@@ -3624,10 +3615,9 @@ subleftjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr,
 			nil_on_miss, semi, only_misses, maxsize, t0, 0, "leftjoin");
 }
 
-/* Perform an equi-join over l and r.  Returns two new, aligned,
- * dense-headed bats with in the tail the oids (head column values) of
- * matching tuples.  The result is in the same order as l (i.e. r1 is
- * sorted). */
+/* Perform an equi-join over l and r.  Returns two new, aligned, bats
+ * with the oids of matching tuples.  The result is in the same order
+ * as l (i.e. r1 is sorted). */
 gdk_return
 BATleftjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches, BUN estimate)
 {
@@ -3637,10 +3627,10 @@ BATleftjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matc
 }
 
 /* Performs a left outer join over l and r.  Returns two new, aligned,
- * dense-headed bats with in the tail the oids (head column values) of
- * matching tuples, or the oid in the first output bat and nil in the
- * second output bat if the value in l does not occur in r.  The
- * result is in the same order as l (i.e. r1 is sorted). */
+ * bats with the oids of matching tuples, or the oid in the first
+ * output bat and nil in the second output bat if the value in l does
+ * not occur in r.  The result is in the same order as l (i.e. r1 is
+ * sorted). */
 gdk_return
 BATouterjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches, BUN estimate)
 {
@@ -3649,10 +3639,9 @@ BATouterjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_mat
 			   GDKdebug & ALGOMASK ? GDKusec() : 0);
 }
 
-/* Perform a semi-join over l and r.  Returns two new, aligned,
- * dense-headed bats with in the tail the oids (head column values) of
- * matching tuples.  The result is in the same order as l (i.e. r1 is
- * sorted). */
+/* Perform a semi-join over l and r.  Returns two new, aligned, bats
+ * with the oids of matching tuples.  The result is in the same order
+ * as l (i.e. r1 is sorted). */
 gdk_return
 BATsemijoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches, BUN estimate)
 {
@@ -3661,9 +3650,9 @@ BATsemijoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matc
 			   GDKdebug & ALGOMASK ? GDKusec() : 0);
 }
 
-/* Return the difference of l and r.  The result is a BAT with in the
- * tail the oids of those values in l that do not occur in r.  This is
- * what you might call an anti-semi-join.  The result can be used as a
+/* Return the difference of l and r.  The result is a BAT with the
+ * oids of those values in l that do not occur in r.  This is what you
+ * might call an anti-semi-join.  The result can be used as a
  * candidate list. */
 BAT *
 BATdiff(BAT *l, BAT *r, BAT *sl, BAT *sr, int nil_matches, BUN estimate)

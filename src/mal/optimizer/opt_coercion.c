@@ -74,7 +74,7 @@ coercionOptimizerCalcStep(Client cntxt, MalBlkPtr mb, int i, Coercion *coerce)
 		fprintInstruction(stderr, mb, 0, p, LIST_MAL_ALL);
 #endif
 		getArg(p,1) = coerce[varid].src;
-		if ( chkInstruction(NULL, cntxt->nspace, mb, p) || p->typechk == TYPE_UNKNOWN)
+		if ( chkInstruction(cntxt->usermodule, mb, p) || p->typechk == TYPE_UNKNOWN)
 			getArg(p,1) = varid;
 	}
 	varid = getArg(p,2);
@@ -85,7 +85,7 @@ coercionOptimizerCalcStep(Client cntxt, MalBlkPtr mb, int i, Coercion *coerce)
 		fprintInstruction(stderr, mb, 0, p, LIST_MAL_ALL);
 #endif
 		getArg(p,2) = coerce[varid].src;
-		if ( chkInstruction(NULL, cntxt->nspace, mb, p) || p->typechk == TYPE_UNKNOWN)
+		if ( chkInstruction(cntxt->usermodule, mb, p) || p->typechk == TYPE_UNKNOWN)
 			getArg(p,2) = varid;
 	}
 #ifdef _DEBUG_COERCION_
@@ -111,7 +111,7 @@ coercionOptimizerAggrStep(Client cntxt, MalBlkPtr mb, int i, Coercion *coerce)
 	k = getArg(p,1);
 	if( r == TYPE_dbl &&  coerce[k].src ){
 		getArg(p,1) = coerce[k].src;
-		if ( chkInstruction(NULL, cntxt->nspace, mb, p) || p->typechk == TYPE_UNKNOWN)
+		if ( chkInstruction(cntxt->usermodule, mb, p) || p->typechk == TYPE_UNKNOWN)
 			getArg(p,1)= k;
 	}
 	return;
@@ -125,12 +125,12 @@ OPTcoercionImplementation(Client cntxt,MalBlkPtr mb, MalStkPtr stk, InstrPtr pci
 	int actions = 0;
 	str calcRef= putName("calc");
 	Coercion *coerce = GDKzalloc(sizeof(Coercion) * mb->vtop);
-#ifndef HAVE_EMBEDDED
 	char buf[256];
 	lng usec = GDKusec();
-#endif
+	str msg = MAL_SUCCEED;
+
 	if( coerce == NULL)
-		throw(MAL,"optimizer.coercion",MAL_MALLOC_FAIL);
+		throw(MAL,"optimizer.coercion", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 	(void) cntxt;
 	(void) pci;
 	(void) stk;		/* to fool compilers */
@@ -192,17 +192,16 @@ OPTcoercionImplementation(Client cntxt,MalBlkPtr mb, MalStkPtr stk, InstrPtr pci
 
     /* Defense line against incorrect plans */
     if( actions > 0){
-        chkTypes(cntxt->fdout, cntxt->nspace, mb, FALSE);
-        chkFlow(cntxt->fdout, mb);
-        chkDeclarations(cntxt->fdout, mb);
+        chkTypes(cntxt->usermodule, mb, FALSE);
+        chkFlow(mb);
+        chkDeclarations(mb);
     }
-#ifndef HAVE_EMBEDDED
     /* keep all actions taken as a post block comment */
 	usec = GDKusec()- usec;
     snprintf(buf,256,"%-20s actions=%2d time=" LLFMT " usec","coercion",actions, usec);
     newComment(mb,buf);
 	if( actions >= 0)
 		addtoMalBlkHistory(mb);
-#endif
-	return MAL_SUCCEED;
+
+	return msg;
 }
