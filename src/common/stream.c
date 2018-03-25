@@ -129,40 +129,6 @@
 #define UTF8BOM		"\xEF\xBB\xBF"	/* UTF-8 encoding of Unicode BOM */
 #define UTF8BOMLENGTH	3		/* length of above */
 
-#ifdef _MSC_VER
-/* use intrinsic functions on Windows */
-#define short_int_SWAP(s)	((int16_t) _byteswap_ushort((uint16_t) (s)))
-/* on Windows, long is the same size as int */
-#define normal_int_SWAP(s)	((int) _byteswap_ulong((unsigned long) (s)))
-#define long_long_SWAP(l)	((int64_t) _byteswap_uint64((unsigned __int64) (s)))
-#else
-#define short_int_SWAP(s)				\
-	((int16_t) (((0x00ff & (uint16_t) (s)) << 8) |	\
-		  ((0xff00 & (uint16_t) (s)) >> 8)))
-
-#define normal_int_SWAP(i)						\
-	((int) (((((unsigned) 0xff <<  0) & (unsigned) (i)) << 24) |	\
-		((((unsigned) 0xff <<  8) & (unsigned) (i)) <<  8) |	\
-		((((unsigned) 0xff << 16) & (unsigned) (i)) >>  8) |	\
-		((((unsigned) 0xff << 24) & (unsigned) (i)) >> 24)))
-
-#define long_long_SWAP(l)						\
-	((int64_t) (((((uint64_t) 0xff <<  0) & (uint64_t) (l)) << 56) | \
-		((((uint64_t) 0xff <<  8) & (uint64_t) (l)) << 40) |	\
-		((((uint64_t) 0xff << 16) & (uint64_t) (l)) << 24) |	\
-		((((uint64_t) 0xff << 24) & (uint64_t) (l)) <<  8) |	\
-		((((uint64_t) 0xff << 32) & (uint64_t) (l)) >>  8) |	\
-		((((uint64_t) 0xff << 40) & (uint64_t) (l)) >> 24) |	\
-		((((uint64_t) 0xff << 48) & (uint64_t) (l)) >> 40) |	\
-		((((uint64_t) 0xff << 56) & (uint64_t) (l)) >> 56)))
-#endif
-
-#ifdef HAVE_HGE
-#define huge_int_SWAP(h) \
-		((((hge)long_long_SWAP(h))<<64) |\
-		 (0xffffffffffffffff&long_long_SWAP(h>>64)))
-#endif
-
 struct stream {
 	short byteorder;
 	char access;		/* read/write */

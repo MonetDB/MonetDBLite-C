@@ -620,6 +620,17 @@ dosum(const void *restrict values, int nonil, oid seqb, BUN start, BUN end,
 	oid gid;
 	unsigned int *restrict seen = NULL; /* bitmask for groups that we've seen */
 
+	switch (tp2) {
+	case TYPE_flt:
+		if (tp1 != TYPE_flt)
+			goto unsupported;
+		/* fall through */
+	case TYPE_dbl:
+		if (tp1 != TYPE_flt && tp1 != TYPE_dbl)
+			goto unsupported;
+		return dofsum(values, seqb, start, end, results, ngrp, tp1, tp2, cand, candend, gids, min, max, skip_nils, abort_on_error, nil_if_empty, func);
+	}
+
 	/* allocate bitmap for seen group ids */
 	seen = GDKzalloc(((ngrp + 31) / 32) * sizeof(int));
 	if (seen == NULL) {
@@ -715,34 +726,6 @@ dosum(const void *restrict values, int nonil, oid seqb, BUN start, BUN end,
 		break;
 	}
 #endif
-
-	case TYPE_flt: {
-			flt *restrict sums = (flt *) results;
-			switch (tp1) {
-		case TYPE_flt:
-				AGGR_SUM(flt, flt);
-				break;
-			default:
-				goto unsupported;
-			}
-			break;
-		}
-		case TYPE_dbl: {
-			dbl *restrict sums = (dbl *) results;
-			switch (tp1) {
-			case TYPE_flt:
-				AGGR_SUM(flt, dbl);
-				break;
-			case TYPE_dbl:
-				AGGR_SUM(dbl, dbl);
-				break;
-			default:
-				goto unsupported;
-			}
-			break;
-		}
-
-
 	default:
 		goto unsupported;
 	}
