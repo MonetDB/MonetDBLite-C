@@ -124,28 +124,33 @@ void mserver_reset(int exit)
 	GDKprepareExit();
 	MCstopClients(0);
 	mal_dataflow_reset();
-	THRdel(mal_clients->mythread);
-	GDKfree(mal_clients->errbuf);
-	mal_clients->fdin->s = NULL;
-	bstream_destroy(mal_clients->fdin);
-	GDKfree(mal_clients->prompt);
-	GDKfree(mal_clients->username);
-	freeStack(mal_clients->glb);
-	if (mal_clients->usermodule/* && strcmp(mal_clients->usermodule->name,"user")==0*/)
-		freeModule(mal_clients->usermodule);
 
-	mal_clients->fdin = 0;
-	mal_clients->prompt = 0;
-	mal_clients->username = 0;
-	mal_clients->curprg = 0;
-	mal_clients->usermodule = 0;
+	if(mal_clients) {
+		THRdel(mal_clients->mythread);
+		GDKfree(mal_clients->errbuf);
+		mal_clients->fdin->s = NULL;
+		bstream_destroy(mal_clients->fdin);
+		GDKfree(mal_clients->prompt);
+		GDKfree(mal_clients->username);
+		freeStack(mal_clients->glb);
+		if (mal_clients->usermodule/* && strcmp(mal_clients->usermodule->name,"user")==0*/)
+			freeModule(mal_clients->usermodule);
 
-	mal_client_reset();
+		mal_clients->fdin = 0;
+		mal_clients->prompt = 0;
+		mal_clients->username = 0;
+		mal_clients->curprg = 0;
+		mal_clients->usermodule = 0;
+		mal_client_reset();
+	}
+
 	mal_runtime_reset();
 	mal_module_reset();
 	opt_pipes_reset();
-	GDKfree(mal_session_uuid);
-	mal_session_uuid = NULL;
+	if(mal_session_uuid) {
+		GDKfree(mal_session_uuid);
+		mal_session_uuid = NULL;
+	}
 
 	memset((char*) monet_cwd, 0, sizeof(monet_cwd));
 	monet_memory = 0;

@@ -70,6 +70,7 @@ monetdb_connection monetdb_connect(void) {
 	if (!MCvalid(conn)) {
 		return NULL;
 	}
+	conn->curmodule = conn->usermodule;
 	if (SQLinitClient(conn) != MAL_SUCCEED) {
 		return NULL;
 	}
