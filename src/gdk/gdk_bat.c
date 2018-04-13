@@ -378,49 +378,38 @@ BATattach(int tt, const char *heapfile, int role)
 #if defined(HAVE_EMBEDDED) && defined(HAVE_EMBEDDED_JAVA)
 			if (swapendianess) {
 				BUN j = 0, end = 0;
-				uint8_t stype = ATOMstorage(tt);
-				switch(stype) {
-					case TYPE_sht: {
-						sht *bufptr = (sht*) p;
-						for(j = 0; j < end; j++) {
-							bufptr[j] = short_int_SWAP(bufptr[j]);
-						}
-						break;
+				int stype = ATOMstorage(tt);
+				if(stype == TYPE_sht) {
+					sht *bufptr = (sht*) p;
+					for(j = 0; j < end; j++) {
+						bufptr[j] = short_int_SWAP(bufptr[j]);
 					}
-					case TYPE_int:
-					case TYPE_flt:
-					case TYPE_date:
-					case TYPE_daytime:
-					case TYPE_timestamp: {
-						int *bufptr = (int*) p;
-						end = m / atomsize;
-						if(stype == TYPE_timestamp)
-							end <<= 2; /* 4 times entries (alignment -> 4 bytes + date -> 1 byte + daytime -> 1 byte) */
-						/* the alignment field is not properly swapped, but we never use it anyway */
-						for(j = 0; j < end; j++) {
-							bufptr[j] = normal_int_SWAP(bufptr[j]);
-						}
-						break;
+				} else if(stype == TYPE_int || stype == TYPE_flt || stype == TYPE_date || stype == TYPE_daytime
+							|| stype == TYPE_timestamp) {
+					int *bufptr = (int*) p;
+					end = m / atomsize;
+					if(stype == TYPE_timestamp)
+						end <<= 2; /* 4 times entries (alignment -> 4 bytes + date -> 1 byte + daytime -> 1 byte) */
+					/* the alignment field is not properly swapped, but we never use it anyway */
+					for(j = 0; j < end; j++) {
+						bufptr[j] = normal_int_SWAP(bufptr[j]);
 					}
-					case TYPE_dbl:
-					case TYPE_lng: {
-						lng *bufptr = (lng*) p;
-						for(j = 0, end = m / atomsize; j < end; j++) {
-							bufptr[j] = long_long_SWAP(bufptr[j]);
-						}
-						break;
+				} else if(stype == TYPE_dbl || stype == TYPE_lng) {
+					lng *bufptr = (lng*) p;
+					for(j = 0, end = m / atomsize; j < end; j++) {
+						bufptr[j] = long_long_SWAP(bufptr[j]);
 					}
+				}
 #ifdef HAVE_HGE
-					case TYPE_hge: {
-						hge *bufptr = (hge*) p;
-						for(j = 0, end = m / atomsize; j < end; j++) {
-							bufptr[j] = huge_int_SWAP(bufptr[j]);
-						}
-						break;
+				else if(stype == TYPE_hge) {
+					hge *bufptr = (hge*) p;
+					for(j = 0, end = m / atomsize; j < end; j++) {
+						bufptr[j] = huge_int_SWAP(bufptr[j]);
 					}
-					default:
-						 assert(0);
+				}
 #endif
+				else {
+					assert(0);
 				}
 			}
 #endif
