@@ -250,6 +250,10 @@ BATdense(oid hseq, oid tseq, BUN cnt)
 	return bn;
 }
 
+extern int TYPE_date;
+extern int TYPE_daytime;
+extern int TYPE_timestamp;
+
 BAT *
 BATattach(int tt, const char *heapfile, int role)
 {
@@ -258,8 +262,8 @@ BATattach(int tt, const char *heapfile, int role)
 	size_t m;
 	FILE *f;
 #if defined(HAVE_EMBEDDED) && defined(HAVE_EMBEDDED_JAVA)
-		//The JVM is always Big-Endian, so the integer values must be swapped if so
-		int swapendianess = MT_check_endianness() != HOST_BIG_ENDIAN;
+	//The JVM is always Big-Endian, so the integer values must be swapped if so
+	int swapendianess = MT_check_endianness() != HOST_BIG_ENDIAN;
 #endif
 
 	ERRORcheck(tt <= 0 , "BATattach: bad tail type (<=0)\n", NULL);
@@ -373,22 +377,32 @@ BATattach(int tt, const char *heapfile, int role)
 		while (n > 0 && (m = fread(p, 1, (size_t) MIN(1024*1024, n), f)) > 0) {
 #if defined(HAVE_EMBEDDED) && defined(HAVE_EMBEDDED_JAVA)
 			if (swapendianess) {
-				size_t j = 0, end = 0;
-				switch(ATOMstorage(tt)) {
+				BUN j = 0, end = 0;
+				uint8_t stype = ATOMstorage(tt);
+				switch(stype) {
 					case TYPE_sht: {
-						short *bufptr = (short*) p;
-						for(j = 0, end = m / atomsize; j < end; j++) {
+						sht *bufptr = (sht*) p;
+						for(j = 0; j < end; j++) {
 							bufptr[j] = short_int_SWAP(bufptr[j]);
 						}
 						break;
 					}
-					case TYPE_int: {
+					case TYPE_int:
+					case TYPE_flt:
+					case TYPE_date:
+					case TYPE_daytime:
+					case TYPE_timestamp: {
 						int *bufptr = (int*) p;
-						for(j = 0, end = m / atomsize; j < end; j++) {
+						end = m / atomsize;
+						if(stype == TYPE_timestamp)
+							end <<= 2; /* 4 times entries (alignment -> 4 bytes + date -> 1 byte + daytime -> 1 byte) */
+						/* the alignment field is not properly swapped, but we never use it anyway */
+						for(j = 0; j < end; j++) {
 							bufptr[j] = normal_int_SWAP(bufptr[j]);
 						}
 						break;
 					}
+					case TYPE_dbl:
 					case TYPE_lng: {
 						lng *bufptr = (lng*) p;
 						for(j = 0, end = m / atomsize; j < end; j++) {
@@ -399,11 +413,13 @@ BATattach(int tt, const char *heapfile, int role)
 #ifdef HAVE_HGE
 					case TYPE_hge: {
 						hge *bufptr = (hge*) p;
-						for(j = 0 end = m / atomsize; j < end; j++) {
+						for(j = 0, end = m / atomsize; j < end; j++) {
 							bufptr[j] = huge_int_SWAP(bufptr[j]);
 						}
 						break;
 					}
+					default:
+						 assert(0);
 #endif
 				}
 			}
