@@ -678,9 +678,7 @@ BATmsyncImplementation(void *arg)
 void
 BATmsync(BAT *b)
 {
-	assert(!GDKinmemory());
-
-	if (isVIEW(b) || (GDKdebug & NOSYNCMASK))
+	if (GDKinmemory() || isVIEW(b) || (GDKdebug & NOSYNCMASK))
 		return;
 	/* we don't sync transients */
 	if (b->theap.farmid != 0 ||
