@@ -20,6 +20,8 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #define __visibility__(X)
 
+#include <dirent.h>
+
 #elifdef _MSC_VER
 
 #if _MSC_VER < 1800
@@ -71,10 +73,14 @@
 #define isfinite(x)        _finite(x)
 #endif
 
+#include "windows/dirent.h"
+
 #else //UNIX
 
 #define SIZEOF_INT __SIZEOF_INT__
 #define SIZEOF_LONG __SIZEOF_LONG__
+
+#include <dirent.h>
 
 #endif
 
@@ -161,7 +167,7 @@
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
-#define HAVE_DIRENT_H 1
+/* #undef HAVE_DIRENT_H 1 */
 
 #ifndef NATIVE_WIN32
 /* Define to 1 if you have the <dlfcn.h> header file. */

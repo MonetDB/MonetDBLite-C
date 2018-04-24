@@ -324,14 +324,6 @@
 # include <sys/file.h>
 #endif
 
-#ifdef HAVE_DIRENT_H
-#ifdef _MSC_VER
-#include "dirent.h"
-#else
-#include <dirent.h>
-#endif
-#endif
-
 #include <limits.h>		/* for *_MIN and *_MAX */
 #include <float.h>		/* for FLT_MAX and DBL_MAX */
 
