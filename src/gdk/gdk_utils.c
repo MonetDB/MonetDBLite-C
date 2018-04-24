@@ -1516,7 +1516,7 @@ GDKfree(void *s)
 #endif
 
 	free((char *) s - MALLOC_EXTRA_SPACE);
-	heapdec((lng) asize);
+	heapdec(asize);
 }
 
 #undef GDKrealloc
