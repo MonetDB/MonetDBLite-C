@@ -911,14 +911,14 @@ reduce_dir_name(const char *src, char *dst, size_t cap)
 
 #undef _stat64
 int
-win_stat(const char *pathname, struct stat *st)
+win_stat(const char *pathname, struct _stat64 *st)
 {
 	char buf[128], *p = reduce_dir_name(pathname, buf, sizeof(buf));
 	int ret;
 
 	if (p == NULL)
 		return -1;
-	ret = _stat64(p, (struct _stat64*) st);
+	ret = _stat64(p, st);
 	if (p != buf)
 		free(p);
 	return ret;

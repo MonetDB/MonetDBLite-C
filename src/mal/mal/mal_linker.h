@@ -9,6 +9,8 @@
 #ifndef _MAL_LINKER_H
 #define _MAL_LINKER_H
 
+#include "monetdb_config.h"
+
 #define MAL_EXT ".mal"
 #define SQL_EXT ".sql"
 

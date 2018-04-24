@@ -26,6 +26,13 @@
 
 #ifdef NATIVE_WIN32
 
+#ifdef _MSC_VER
+#include "dirent.h"
+#else
+#include <dirent.h>
+#endif
+
+
 #include "fsync.c"
 
 /* Some definitions that we need to compile on Windows.

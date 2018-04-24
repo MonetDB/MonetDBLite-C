@@ -9,6 +9,8 @@
 #ifndef _GDK_BBP_H_
 #define _GDK_BBP_H_
 
+#include "monetdb_config.h"
+
 #define BBPLOADED	1	/* set if bat in memory */
 #define BBPSWAPPED	2	/* set if dirty bat is not in memory */
 #define BBPTMP		4	/* set if non-persistent bat has image on disk */

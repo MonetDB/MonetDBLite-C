@@ -218,7 +218,7 @@ void
 runtimeProfileExit(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, RuntimeProfile prof)
 {
 #ifdef HAVE_EMBEDDED
-	float perc;
+	flt perc;
 	(void) mb;
 	(void) stk;
 	(void) pci;
@@ -232,7 +232,7 @@ runtimeProfileExit(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, Runt
 		cntxt->progress_done = cntxt->progress_len;
 	}
 
-	perc = cntxt->progress_done/(cntxt->progress_len*1.0);
+	perc = (flt) (cntxt->progress_done/(cntxt->progress_len*1.0));
 	if (perc > 1) perc = 1;
 	if (perc < 0) perc = 0;
 

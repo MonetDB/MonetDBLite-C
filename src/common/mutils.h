@@ -9,6 +9,8 @@
 #ifndef _MUTILS_H_
 #define _MUTILS_H_
 
+#include "monetdb_config.h"
+
 #define mutils_export extern
 
 #if defined(NATIVE_WIN32) && defined(_MSC_VER)

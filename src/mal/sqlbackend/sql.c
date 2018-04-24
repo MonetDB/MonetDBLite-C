@@ -1988,8 +1988,8 @@ mvc_export_table_wrap( Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci)
 	bat scaleId= *getArgReference_bat(stk, pci,11);
 	stream *s;
 	bat bid;
-	int i,res, flen;
-	size_t l;
+	int i,res;
+	size_t l, flen;
 	str tblname, colname, tpename, msg= MAL_SUCCEED;
 	int *digits, *scaledigits;
 	oid o = 0;
@@ -2681,7 +2681,7 @@ str mvc_append_bats_wrap(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci
 	(void) mb;
 	for (i = 0; i < pci->retc; i++) {
 		lng *batid = getArgReference_lng(stk, pci, pci->retc + i);
-		*getArgReference_bat(stk, pci, i) = *batid;
+		*getArgReference_bat(stk, pci, i) = (bat) *batid;
 	}
 	return msg;
 }

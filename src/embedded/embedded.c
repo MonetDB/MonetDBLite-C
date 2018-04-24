@@ -14,6 +14,7 @@
 #include "monetdb_config.h"
 #include "embedded.h"
 
+#include "gdk.h"
 #include "mal.h"
 #include "mal_client.h"
 #include "mal_builder.h"
@@ -218,7 +219,7 @@ int monetdb_is_initialized(void) {
 }
 
 
-static char* monetdb_query_internal(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id, char language) {
+static char* monetdb_query_internal(monetdb_connection conn, char* query, char execute, monetdb_result** result, lng* affected_rows, lng* prepare_id, char language) {
 	str res = MAL_SUCCEED;
 	Client c = (Client) conn;
 	mvc* m;
@@ -354,7 +355,7 @@ char* monetdb_set_autocommit(monetdb_connection conn, char val) {
 	return(monetdb_query_internal(conn, query, 1, NULL, NULL, NULL, 'X'));
 }
 
-char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, long* affected_rows, long* prepare_id) {
+char* monetdb_query(monetdb_connection conn, char* query, char execute, monetdb_result** result, lng* affected_rows, lng* prepare_id) {
 	return(monetdb_query_internal(conn, query, execute, result, affected_rows, prepare_id, 'S'));
 }
 
@@ -544,7 +545,7 @@ void monetdb_shutdown(void) {
 #define GENERATE_BASE_HEADERS(type, tpename)                                   \
 	static int tpename##_is_null(type value)
 
-#define GENERATE_BASE_FUNCTIONS(tpe, tpename, mname)                                  \
+#define GENERATE_BASE_FUNCTIONS(tpe, tpename, mname)                           \
 	GENERATE_BASE_HEADERS(tpe, tpename);                                       \
 	static int tpename##_is_null(tpe value) { return value == mname##_nil; }
 
@@ -566,8 +567,8 @@ GENERATE_BASE_HEADERS(monetdb_data_timestamp, timestamp);
 
 
 #define GENERATE_BAT_INPUT_BASE(tpe)                                           \
-	monetdb_column_##tpe *bat_data =                                  \
-		GDKzalloc(sizeof(monetdb_column_##tpe));                      \
+	monetdb_column_##tpe *bat_data =                                           \
+		GDKzalloc(sizeof(monetdb_column_##tpe));                               \
 	if (!bat_data) {                                                           \
 		msg = GDKstrdup("Malloc failure!");                                    \
 		goto wrapup;                                                           \
@@ -577,7 +578,7 @@ GENERATE_BASE_HEADERS(monetdb_data_timestamp, timestamp);
 	bat_data->scale = pow(10, sqltpe->scale);                                  \
 	column_result = (monetdb_column*) bat_data;
 
-#define GENERATE_BAT_INPUT(b, tpe, mtype)                                             \
+#define GENERATE_BAT_INPUT(b, tpe, mtype)                                      \
 	{                                                                          \
 		GENERATE_BAT_INPUT_BASE(tpe);                                          \
 		bat_data->count = BATcount(b);                                         \
@@ -588,9 +589,9 @@ GENERATE_BASE_HEADERS(monetdb_data_timestamp, timestamp);
 			msg = GDKstrdup("Malloc failure!");                                \
 			goto wrapup;                                                       \
 		}                                                                      \
-		if (b->tdense) {                                       \
+		if (b->tdense) {                                                       \
 			size_t it = 0;                                                     \
-			tpe val = b->T.seq;                                                \
+			tpe val = (tpe) b->T.seq;                                          \
 			/* bat is dense, materialize it */                                 \
 			for (it = 0; it < bat_data->count; it++) {                         \
 				bat_data->data[it] = val++;                                    \

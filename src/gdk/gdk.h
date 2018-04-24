@@ -305,6 +305,8 @@
 #ifndef _GDK_H_
 #define _GDK_H_
 
+#include "monetdb_config.h"
+
 /* standard includes upon which all configure tests depend */
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>

@@ -8,6 +8,9 @@
 
 #ifndef _GDK_SEARCH_H_
 #define _GDK_SEARCH_H_
+
+#include "monetdb_config.h"
+
 /*
  * @+ Hash indexing
  *

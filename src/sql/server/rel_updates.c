@@ -1686,7 +1686,11 @@ copyto(mvc *sql, symbol *sq, str filename, dlist *seps, str null_string)
 	fname_e = filename?exp_atom_clob(sql->sa, filename):NULL;
 
 	if (filename) {
+#ifdef _MSC_VER
+		struct _stat64 fs;
+#else
 		struct stat fs;
+#endif
 		if (!copy_allowed(sql, 0)) 
 			return sql_error(sql, 02, SQLSTATE(42000) "COPY INTO: insufficient privileges: "
 					"COPY INTO file requires database administrator rights, "

@@ -9,6 +9,8 @@
 #ifndef GDK_IMPS_H
 #define GDK_IMPS_H
 
+#include "monetdb_config.h"
+
 /*
  * the cache dictionary struct
  */
