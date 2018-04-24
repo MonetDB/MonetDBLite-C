@@ -11,9 +11,9 @@
  * Inverse RAPI
  */
 
+#include "monetdb_config.h"
 #include "embedded.h"
 
-#include "monetdb_config.h"
 #include "mal.h"
 #include "mal_client.h"
 #include "mal_builder.h"
