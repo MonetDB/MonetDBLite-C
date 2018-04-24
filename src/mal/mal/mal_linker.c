@@ -20,16 +20,17 @@
 #include "mutils.h"
 #include <sys/types.h> /* opendir */
 #ifdef HAVE_DIRENT_H
+#ifdef _MSC_VER
+#include "dirent.h"
+#else
 #include <dirent.h>
+#endif
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_UNISTD
 #include <unistd.h>
-
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-#define open _open
-#define close _close
 #endif
 
 #define MAXMODULES 128
@@ -51,9 +52,6 @@ static void* lastfile = NULL;
  */
 #ifndef F_OK
 #define F_OK 0
-#endif
-#ifdef _MSC_VER
-#define access(f, m)	_access(f, m)
 #endif
 
 /* Search for occurrence of the function in the library identified by the filename.  */

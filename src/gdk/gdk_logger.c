@@ -882,10 +882,6 @@ tr_commit(logger *lg, trans *tr)
 
 static gdk_return log_sequence_nrs(logger *lg);
 
-#ifdef _MSC_VER
-#define access(file, mode)	_access(file, mode)
-#endif
-
 /* Update the last transaction id written in the catalog file.
  * Only used by the shared logger. */
 static gdk_return

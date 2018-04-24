@@ -11,6 +11,9 @@
 
 #define mutils_export extern
 
+#if defined(NATIVE_WIN32) && defined(_MSC_VER)
+#include "dirent.h"
+#endif
 
 #ifndef S_IRUSR
 #define S_IRUSR 0000400		/* read permission, owner */

@@ -325,7 +325,11 @@
 #endif
 
 #ifdef HAVE_DIRENT_H
-# include <dirent.h>
+#ifdef _MSC_VER
+#include "dirent.h"
+#else
+#include <dirent.h>
+#endif
 #endif
 
 #include <limits.h>		/* for *_MIN and *_MAX */
@@ -496,7 +500,6 @@ typedef int16_t sht;
 //typedef int64_t lng;
 //typedef uint64_t ulng;
 
-#define SIZEOF_OID	SIZEOF_SIZE_T
 typedef size_t oid;
 #define OIDFMT		"%zu"
 
@@ -508,10 +511,7 @@ typedef float flt;
 typedef double dbl;
 typedef char *str;
 
-#define SIZEOF_LNG		8
 #define LL_CONSTANT(val)	INT64_C(val)
-//#define LLFMT			"%" PRId64
-//#define ULLFMT			"%" PRIu64
 
 typedef oid var_t;		/* type used for heap index of var-sized BAT */
 #define SIZEOF_VAR_T	SIZEOF_OID
@@ -2024,9 +2024,6 @@ gdk_export gdk_return void_inplace(BAT *b, oid id, const void *val, bit force)
 gdk_export BAT *BATattach(int tt, const char *heapfile, int role);
 
 #ifdef NATIVE_WIN32
-#ifdef _MSC_VER
-#define fileno _fileno
-#endif
 #define fdopen _fdopen
 #define putenv _putenv
 #endif

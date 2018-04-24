@@ -15,7 +15,9 @@
 #include "sql_string.h"
 #include "sql_atom.h"
 
+#ifdef HAVE_UNISTD
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <ctype.h>
 

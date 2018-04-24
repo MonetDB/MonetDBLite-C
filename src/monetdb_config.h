@@ -5,27 +5,84 @@
 #ifndef _SEEN_MONETDB_CONFIG_H
 #define _SEEN_MONETDB_CONFIG_H 1
 
-
-#define SIZEOF_INT __SIZEOF_INT__
-#define SIZEOF_LONG __SIZEOF_LONG__
-#define SIZEOF_LONG_LONG __SIZEOF_LONG_LONG__
-#ifndef SIZEOF_SIZE_T
-#define SIZEOF_SIZE_T __SIZEOF_SIZE_T__
-#endif
-#define SIZEOF_VOID_P __SIZEOF_POINTER__
-
-
-#ifdef __MINGW32__
-#define NATIVE_WIN32 1
-#define _Printf_format_string_
-#pragma GCC diagnostic ignored "-Wattributes"
-#define __visibility__(X)
-#endif
+#define SIZEOF_LNG		8
+#define SIZEOF_OID SIZEOF_LNG
 
 #ifdef NATIVE_WIN32
 #include <windows.h>
 #undef ERROR
 #endif
+
+#ifdef __MINGW32__
+
+#define NATIVE_WIN32 1
+#define _Printf_format_string_
+#pragma GCC diagnostic ignored "-Wattributes"
+#define __visibility__(X)
+
+#elifdef _MSC_VER
+
+#if _MSC_VER < 1800
+#error old versions of Visual Studio are no longer supported
+#endif
+
+#ifdef _WIN64
+#define __SIZEOF_SIZE_T__ 8
+#else
+#define __SIZEOF_SIZE_T__ 4
+#endif
+
+/* The size of `int', as computed by sizeof. */
+#define SIZEOF_INT 4
+
+/* The size of `long', as computed by sizeof. */
+#define SIZEOF_LONG 4
+
+/* The size of `ptrdiff_t', as computed by sizeof. */
+#ifdef _WIN64
+#define SIZEOF_PTRDIFF_T 8
+#else
+#define SIZEOF_PTRDIFF_T 4
+#endif
+
+#include <sys/stat.h>
+#define lstat _stat64
+#ifdef stat
+#undef stat
+#endif
+#define stat                _stat64
+#ifdef fstat
+#undef fstat
+#endif
+
+#define fstat              _fstat64
+#define strcasecmp         _stricmp
+#define strncasecmp        _strnicmp
+#define open               _open
+#define close              _close
+#define read               _read
+#define write              _write
+#define access(f, m)       _access(f, m)
+#define ftruncate(fd, sz)  (-(_chsize_s((fd), (__int64) (sz)) != 0))
+#define fileno             _fileno
+
+#ifndef isfinite
+/* with more recent Visual Studio, isfinite is defined */
+#define isfinite(x)        _finite(x)
+#endif
+
+#else //UNIX
+
+#define SIZEOF_INT __SIZEOF_INT__
+#define SIZEOF_LONG __SIZEOF_LONG__
+
+#endif
+
+#define SIZEOF_LONG_LONG __SIZEOF_LONG_LONG__
+#ifndef SIZEOF_SIZE_T
+#define SIZEOF_SIZE_T __SIZEOF_SIZE_T__
+#endif
+#define SIZEOF_VOID_P __SIZEOF_POINTER__
 
 
 ///* Define if building universal (internal helper macro) */
@@ -91,7 +148,9 @@
 //#define HAVE_CLOCK_GETTIME 1
 
 /* Define to 1 if you have the `ctime_r' function. */
+#ifndef _MSC_VER
 #define HAVE_CTIME_R 1
+#endif
 
 /* Define if you have ctime_r(time_t*,char *buf,size_t s) */
 /* #undef HAVE_CTIME_R3 */
@@ -107,6 +166,10 @@
 #ifndef NATIVE_WIN32
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+#endif
+
+#ifndef _MSC_VER
+#define HAVE_UNISTD 1
 #endif
 
 /* Support for MonetDB as a library */
@@ -170,7 +233,9 @@
 #define HAVE_GETOPT_LONG 1
 
 /* Define to 1 if you have the `gettimeofday' function. */
+#ifndef _MSC_VER
 #define HAVE_GETTIMEOFDAY 1
+#endif
 
 /* Define to 1 if you have the `getuid' function. */
 // #define HAVE_GETUID 1
@@ -282,7 +347,9 @@
 /* #undef HAVE_PROCFS_H */
 
 /* Define to 1 if you have the <pthread.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_PTHREAD_H 1
+#endif
 
 /* Define if you have the pthread_kill function */
 #define HAVE_PTHREAD_KILL 1
@@ -303,10 +370,14 @@
 #define HAVE_ROUND 1
 
 /* Define to 1 if you have the <sched.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SCHED_H 1
+#endif
 
 /* Define to 1 if you have the <semaphore.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SEMAPHORE_H 0
+#endif
 
 /* Define to 1 if you have the `setenv' function. */
 #define HAVE_SETENV 1
@@ -345,7 +416,9 @@
 #define HAVE_STRFTIME 1
 
 /* Define to 1 if you have the <strings.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_STRINGS_H 1
+#endif
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
@@ -385,7 +458,9 @@
 /* #undef HAVE_SYS_DIR_H */
 
 /* Define to 1 if you have the <sys/file.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SYS_FILE_H 1
+#endif
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
@@ -400,7 +475,9 @@
 /* #undef HAVE_SYS_NDIR_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SYS_PARAM_H 1
+#endif
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #define HAVE_SYS_RESOURCE_H 1
@@ -420,7 +497,9 @@
 #endif
 
 /* Define to 1 if you have the <sys/time.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SYS_TIME_H 1
+#endif
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 0
@@ -467,7 +546,10 @@
 #define HAVE_UNAME 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
+/* Define to 1 if you have the <sys/param.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_UNISTD_H 1
+#endif
 
 /* Define to 1 if you have the <winsock.h> header file. */
 /* #undef HAVE_WINSOCK_H */
@@ -791,38 +873,6 @@ typedef lng ptrdiff_t;
 # endif
 #endif
 
-/* define printf formats for printing size_t and ssize_t variables */
-#if  SIZEOF_SIZE_T == SIZEOF_INT
-# define SZFMT "%u"
-# define SSZFMT "%d"
-#elif SIZEOF_SIZE_T == SIZEOF_LONG
-# define SZFMT "%lu"
-# define SSZFMT "%ld"
-#elif SIZEOF_SIZE_T == SIZEOF_LONG_LONG || SIZEOF_SIZE_T == SIZEOF___INT64
-# define SZFMT ULLFMT
-# define SSZFMT LLFMT
-#else
-# error no definition for SZFMT/SSZFMT
-#endif
-
-/* define printf formats for printing ptrdiff_t variables */
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901 && !defined(__svr4__) && !defined(WIN32) && !defined(__sgi) || defined(__hpux)
-#define PDFMT "%td"
-#elif SIZEOF_PTRDIFF_T == SIZEOF_INT
-#define PDFMT "%d"
-#elif SIZEOF_PTRDIFF_T == SIZEOF_LONG
-#define PDFMT "%ld"
-#elif SIZEOF_PTRDIFF_T == SIZEOF_LONG_LONG || SIZEOF_PTRDIFF_T == SIZEOF___INT64
-#define PDFMT LLFMT
-#else
-#error no definition for PDFMT
-#endif
-
-/* define printf format for printing pointer values */
-#define PTRFMT		"%p"
-#define PTRFMTCAST	(void *)	/* no cast needed */
-
-
 /* defines to help the compiler check printf-style format arguments */
 #if !defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 /* This feature is available in gcc versions 2.5 and later.  */
@@ -870,4 +920,3 @@ typedef lng ptrdiff_t;
 #define PROMPT2		"\001\002\n"	/* prompt: more data needed */
 
 #endif /* _SEEN_MONETDB_CONFIG_H */
-

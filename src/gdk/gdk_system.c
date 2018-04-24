@@ -43,7 +43,9 @@
 
 #include <signal.h>
 
-#include <unistd.h>		/* for sysconf symbols */
+#ifdef HAVE_UNISTD
+#include <unistd.h> 	/* for sysconf symbols */
+#endif
 
 MT_Lock MT_system_lock MT_LOCK_INITIALIZER("MT_system_lock");
 

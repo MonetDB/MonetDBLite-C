@@ -36,7 +36,9 @@
 #include "mtime.h"
 #include "optimizer.h"
 #include "opt_inline.h"
+#ifdef HAVE_UNISTD
 #include <unistd.h>
+#endif
 
 /*
 

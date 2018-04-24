@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_SQL_SRC_MONETDBLITE_SRC_SQL_SERVER_SQL_PARSER_TAB_H_INCLUDED
-# define YY_SQL_SRC_MONETDBLITE_SRC_SQL_SERVER_SQL_PARSER_TAB_H_INCLUDED
+#ifndef YY_SQL_SRC_SQL_SERVER_SQL_PARSER_TAB_H_INCLUDED
+# define YY_SQL_SRC_SQL_SERVER_SQL_PARSER_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -722,7 +722,7 @@ extern int sqldebug;
 
 union YYSTYPE
 {
-#line 110 "src/monetdblite/src/sql/server/sql_parser.y" /* yacc.c:1909  */
+#line 112 "src/sql/server/sql_parser.y" /* yacc.c:1909  */
 
 	int		i_val,bval;
 	lng		l_val,operation;
@@ -732,7 +732,7 @@ union YYSTYPE
 	dlist*		l;
 	sql_subtype	type;
 
-#line 736 "src/monetdblite/src/sql/server/sql_parser.tab.h" /* yacc.c:1909  */
+#line 736 "src/sql/server/sql_parser.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -744,4 +744,4 @@ typedef union YYSTYPE YYSTYPE;
 
 int sqlparse (mvc *m);
 
-#endif /* !YY_SQL_SRC_MONETDBLITE_SRC_SQL_SERVER_SQL_PARSER_TAB_H_INCLUDED  */
+#endif /* !YY_SQL_SRC_SQL_SERVER_SQL_PARSER_TAB_H_INCLUDED  */

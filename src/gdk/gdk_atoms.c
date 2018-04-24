@@ -918,10 +918,7 @@ atom_io(ptr, Int, int)
 #else /* SIZEOF_VOID_P == SIZEOF_LNG */
 atom_io(ptr, Lng, lng)
 #endif
-#if defined(_MSC_VER) && !defined(isfinite)
-/* with more recent Visual Studio, isfinite is defined */
-#define isfinite(x)	_finite(x)
-#endif
+
 
 ssize_t
 dblFromStr(const char *src, size_t *len, dbl **dst)

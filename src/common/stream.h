@@ -21,7 +21,9 @@
  * required for proper conversion on different byte order platforms.
  */
 
+#ifdef HAVE_UNISTD
 #include <unistd.h>
+#endif
 #include <ctype.h>
 #include <stdio.h>
 
@@ -91,7 +93,7 @@ typedef __int128_t hge;
 #define short_int_SWAP(s)	((short) _byteswap_ushort((unsigned short) (s)))
 /* on Windows, long is the same size as int */
 #define normal_int_SWAP(s)	((int) _byteswap_ulong((unsigned long) (s)))
-#define long_long_SWAP(l)	((lng) _byteswap_uint64((unsigned __int64) (s)))
+#define long_long_SWAP(s)	((lng) _byteswap_uint64((unsigned __int64) (s)))
 #else
 #define short_int_SWAP(s) ((short)(((0x00ff&(s))<<8) | ((0xff00&(s))>>8)))
 
