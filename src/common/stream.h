@@ -21,6 +21,10 @@
  * required for proper conversion on different byte order platforms.
  */
 
+#include "monetdb_config.h"
+
+#include "dirent.h"
+ 
 #ifdef HAVE_UNISTD
 #include <unistd.h>
 #endif

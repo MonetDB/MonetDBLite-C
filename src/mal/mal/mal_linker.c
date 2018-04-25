@@ -19,6 +19,7 @@
 
 #include "mutils.h"
 #include <sys/types.h> /* opendir */
+#include "dirent.h"
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif

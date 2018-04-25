@@ -8,25 +8,24 @@
 #define SIZEOF_LNG		8
 #define SIZEOF_OID SIZEOF_LNG
 
-#ifdef NATIVE_WIN32
-#include <windows.h>
-#undef ERROR
-#endif
-
 #ifdef __MINGW32__
 
 #define NATIVE_WIN32 1
+#include <windows.h>
+#undef ERROR
+
 #define _Printf_format_string_
 #pragma GCC diagnostic ignored "-Wattributes"
 #define __visibility__(X)
 
-#include <dirent.h>
-
-#elifdef _MSC_VER
+#elif defined( _MSC_VER)
 
 #if _MSC_VER < 1800
 #error old versions of Visual Studio are no longer supported
 #endif
+
+#define NATIVE_WIN32 1
+#include <windows.h>
 
 #ifdef _WIN64
 #define __SIZEOF_SIZE_T__ 8
@@ -66,21 +65,15 @@
 #define write              _write
 #define access(f, m)       _access(f, m)
 #define ftruncate(fd, sz)  (-(_chsize_s((fd), (__int64) (sz)) != 0))
-#define fileno             _fileno
-
-#ifndef isfinite
-/* with more recent Visual Studio, isfinite is defined */
-#define isfinite(x)        _finite(x)
-#endif
-
-#include "windows/dirent.h"
+#define fileno(fd)         _fileno(fd)
+#define pclose             _pclose
+#define getpid             _getpid
+#define strdup             _strdup
 
 #else //UNIX
 
 #define SIZEOF_INT __SIZEOF_INT__
 #define SIZEOF_LONG __SIZEOF_LONG__
-
-#include <dirent.h>
 
 #endif
 
@@ -167,9 +160,9 @@
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
-/* #undef HAVE_DIRENT_H 1 */
+//#define HAVE_DIRENT_H 1
 
-#ifndef NATIVE_WIN32
+#if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 #endif
@@ -215,7 +208,9 @@
 #define HAVE_FSEEKO 1
 
 /* Define to 1 if you have the `fsync' function. */
+#ifndef _MSC_VER
 #define HAVE_FSYNC 1
+#endif
 
 /* Define to 1 if you have the `ftime' function. */
 #define HAVE_FTIME 1
@@ -256,7 +251,9 @@
 /* #undef HAVE_IEEEFP_H */
 
 /* Define to 1 if the system has the type `intptr_t'. */
+#ifndef _MSC_VER
 #define HAVE_INTPTR_T 0
+#endif
 
 /* Define to 1 if you have the <io.h> header file. */
 /* #undef HAVE_IO_H */
@@ -471,7 +468,7 @@
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
 
-#ifndef NATIVE_WIN32
+#if !defined(_MSC_VER)
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #define HAVE_SYS_MMAN_H 1
 #endif
@@ -497,7 +494,7 @@
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
 //#define HAVE_SYS_SYSCTL_H 1
 
-#ifndef NATIVE_WIN32
+#if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
 /* Define to 1 if you have the <sys/times.h> header file. */
 #define HAVE_SYS_TIMES_H 1
 #endif
@@ -676,7 +673,7 @@
 //#define SIZEOF___INT64 0
 
 /* type used for sockets */
-#ifndef NATIVE_WIN32
+#if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
 #define SOCKET int
 #endif
 ///* Shared Object extension */
@@ -831,10 +828,12 @@
 #include <stdint.h>
 #endif
 #ifndef HAVE_INTPTR_T
-typedef ssize_t intptr_t;
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #endif
 #ifndef HAVE_UINTPTR_T
-typedef size_t uintptr_t;
+#include <BaseTsd.h>
+typedef SIZE_T size_t;
 #endif
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
