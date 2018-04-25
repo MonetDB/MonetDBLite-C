@@ -23,7 +23,9 @@
 
 #include "monetdb_config.h"
 
+#if defined(NATIVE_WIN32) && defined(_MSC_VER)
 #include "dirent.h"
+#endif
  
 #ifdef HAVE_UNISTD
 #include <unistd.h>

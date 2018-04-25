@@ -160,7 +160,7 @@
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
-//#define HAVE_DIRENT_H 1
+#define HAVE_DIRENT_H 1
 
 #if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
 /* Define to 1 if you have the <dlfcn.h> header file. */
@@ -468,7 +468,7 @@
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
 
-#if !defined(_MSC_VER)
+#if defined(NATIVE_WIN32) && !defined(_MSC_VER)
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #define HAVE_SYS_MMAN_H 1
 #endif

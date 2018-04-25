@@ -1745,6 +1745,7 @@ open_wastream(const char *filename)
 
 #ifdef _MSC_VER
 /* special case code for reading from/writing to a Windows cmd window */
+#include <windows.h>
 
 struct console {
 	HANDLE h;

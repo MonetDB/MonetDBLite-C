@@ -12,6 +12,8 @@
 #error this file should not be included outside its source directory
 #endif
 
+#include "monetdb_config.h"
+
 #define DISABLE_PARENT_HASH 1
 /* #define PERSISTENTHASH 1 */
 #define PERSISTENTIDX 1

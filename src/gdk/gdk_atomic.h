@@ -38,6 +38,8 @@
 #ifndef _GDK_ATOMIC_H_
 #define _GDK_ATOMIC_H_
 
+#include "monetdb_config.h"
+
 /* define this if you don't want to use atomic instructions */
 /* #define NO_ATOMIC_INSTRUCTIONS */
 
@@ -73,7 +75,7 @@
 
 #define ATOMIC_GET(var, lck)		var
 #define ATOMIC_SET(var, val, lck)	_InterlockedExchange64(&var, (val))
-#define ATOMIC_ADD(var, val, lck)	_InterlockedExchangeAdd64(&var, val)
+#define ATOMIC_ADD(var, val, lck)	_InterlockedExchangeAdd64(&var, (val))
 #define ATOMIC_SUB(var, val, lck)	_InterlockedExchangeAdd64(&var, -(val))
 #define ATOMIC_INC(var, lck)		_InterlockedIncrement64(&var)
 #define ATOMIC_DEC(var, lck)		_InterlockedDecrement64(&var)

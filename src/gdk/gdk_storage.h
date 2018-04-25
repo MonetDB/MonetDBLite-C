@@ -9,6 +9,8 @@
 #ifndef _GDK_STORAGE_H_
 #define _GDK_STORAGE_H_
 
+#include "monetdb_config.h"
+
 extern void DESCclean(BAT *);
 
 #endif /* _GDK_STORAGE_H_ */

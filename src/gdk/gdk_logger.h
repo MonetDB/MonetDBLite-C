@@ -9,6 +9,8 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
+#include "monetdb_config.h"
+
 #define LOGFILE "log"
 #define LOGFILE_SHARED "log_shared"
 

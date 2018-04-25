@@ -9,6 +9,8 @@
 #ifndef _GDK_ATOMS_H_
 #define _GDK_ATOMS_H_
 
+#include "monetdb_config.h"
+
 #define MAXATOMS	128
 
 /*

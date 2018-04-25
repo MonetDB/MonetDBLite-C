@@ -9,6 +9,8 @@
 #ifndef _GDK_SYSTEM_H_
 #define _GDK_SYSTEM_H_
 
+#include "monetdb_config.h"
+
 // greatly simplified
 #define gdk_export extern
 
@@ -73,6 +75,19 @@ gdk_export int MT_join_thread(MT_Id t);
 #define THREAD_STACK_SIZE	((size_t)2*1024*1024)
 #endif
 
+/*
+ * @- MT Lock API
+ */
+#if !defined(HAVE_PTHREAD_H) && defined(WIN32)
+typedef HANDLE pthread_mutex_t;
+typedef void *pthread_mutexattr_t;
+gdk_export void pthread_mutex_init(pthread_mutex_t *,
+				   const pthread_mutexattr_t *);
+gdk_export void pthread_mutex_destroy(pthread_mutex_t *);
+gdk_export int pthread_mutex_lock(pthread_mutex_t *);
+gdk_export int pthread_mutex_trylock(pthread_mutex_t *);
+gdk_export int pthread_mutex_unlock(pthread_mutex_t *);
+#endif
 
 /*
  * @- MT Lock API
@@ -262,22 +277,23 @@ gdk_export ATOMIC_TYPE volatile GDKlocksleepcnt;
 /*
  * @- MT Semaphore API
  */
-
-typedef struct {
-	int cnt;
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-} pthread_sema_t;
-
 #if !defined(HAVE_PTHREAD_H) && defined(WIN32)
-typedef HANDLE pthread_sema_t;
-#endif
 
+typedef HANDLE pthread_sema_t;
 gdk_export void pthread_sema_init(pthread_sema_t *s, int flag, int nresources);
 gdk_export void pthread_sema_destroy(pthread_sema_t *s);
 gdk_export void pthread_sema_up(pthread_sema_t *s);
 gdk_export void pthread_sema_down(pthread_sema_t *s);
 
+#else
+
+#define pthread_sema_t		sem_t
+#define pthread_sema_init	sem_init
+#define pthread_sema_destroy	sem_destroy
+#define pthread_sema_up		sem_post
+#define pthread_sema_down(x)	while(sem_wait(x))
+
+#endif
 
 typedef struct {
 	pthread_sema_t sema;

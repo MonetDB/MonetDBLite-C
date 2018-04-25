@@ -47,6 +47,10 @@ static char THRprintbuf[BUFSIZ];
 #define chdir _chdir
 #endif
 
+#ifdef _MSC_VER
+extern  _ACRTIMP int __cdecl _getpid(void);
+#endif
+
 static volatile ATOMIC_FLAG GDKstopped = ATOMIC_FLAG_INIT;
 static void GDKunlockHome(int farmid);
 
@@ -1512,7 +1516,7 @@ GDKfree(void *s)
 #endif
 
 	free((char *) s - MALLOC_EXTRA_SPACE);
-	heapdec((ssize_t) asize);
+	heapdec(asize);
 }
 
 #undef GDKrealloc
