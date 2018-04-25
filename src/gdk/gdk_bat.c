@@ -408,9 +408,6 @@ BATattach(int tt, const char *heapfile, int role)
 					}
 				}
 #endif
-				else {
-					assert(0);
-				}
 			}
 #endif
 			p += m;

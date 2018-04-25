@@ -670,10 +670,10 @@ GDKreset(int status, int exit)
 void
 GDKexit(int status)
 {
-	if (!GDKinmemory() && GET_GDKLOCK(0) == NULL) {
-		assert(0);
+	/*if (!GDKinmemory() && GET_GDKLOCK(0) == NULL) {
+		assert(0); You are forgetting the case when a GDKfatal is called at the startup of the server
 		return;
-	}
+	}*/
 	GDKprepareExit();
 	GDKreset(status, 1);
 }
