@@ -229,6 +229,10 @@ __hidden bool binsearchcand(const oid *cand, BUN lo, BUN hi, oid v)
 	__attribute__((__visibility__("hidden")));
 __hidden void gdk_bbp_reset(void)
 	__attribute__((__visibility__("hidden")));
+#if !defined(HAVE_PTHREAD_H) && defined(WIN32)
+__hidden void gdk_system_init(void)
+	__attribute__((__visibility__("hidden")));
+#endif
 __hidden void gdk_system_reset(void)
 	__attribute__((__visibility__("hidden")));
 

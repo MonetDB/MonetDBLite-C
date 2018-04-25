@@ -158,6 +158,13 @@ static CRITICAL_SECTION winthread_cs;
 static int winthread_cs_init = 0;
 
 void
+gdk_system_init(void)
+{
+	InitializeCriticalSection(&winthread_cs);
+	winthread_cs_init = 1;
+}
+
+void
 gdk_system_reset(void)
 {
 	winthread_cs_init = 0;
@@ -258,13 +265,7 @@ MT_create_thread(MT_Id *t, void (*f) (void *), void *arg, enum MT_thr_detach d)
 	if (w == NULL)
 		return -1;
 
-	if (winthread_cs_init == 0) {
-		/* we only get here before any threads are created,
-		 * and this is the only time that winthread_cs_init is
-		 * ever changed */
-		InitializeCriticalSection(&winthread_cs);
-		winthread_cs_init = 1;
-	}
+
 	join_threads();
 	w->func = f;
 	w->arg = arg;

@@ -87,7 +87,6 @@ int mal_init(void){
 	MT_lock_init( &mal_delayLock, "mal_delayLock");
 	MT_lock_init( &mal_beatLock, "mal_beatLock");
 	MT_lock_init( &mal_oltpLock, "mal_oltpLock");
-	MT_lock_init( &mal_mgmtLock, "mal_mgmtLock");
 
 #endif
 

@@ -314,6 +314,9 @@ GDKinit(str dbpath)
 	int farmid;
 	char buf[16];
 
+#if !defined(HAVE_PTHREAD_H) && defined(WIN32)
+	gdk_system_init();
+#endif
 
 	if (dbpath) {
 		BBPaddfarm(dbpath, (1 << PERSISTENT) | (1 << TRANSIENT));
