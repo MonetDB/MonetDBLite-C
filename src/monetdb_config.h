@@ -160,9 +160,9 @@
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
-#define HAVE_DIRENT_H 1
+//#define HAVE_DIRENT_H 1
 
-#if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
+#if !defined(NATIVE_WIN32)
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 #endif
@@ -468,7 +468,7 @@
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
 
-#if defined(NATIVE_WIN32) && !defined(_MSC_VER)
+#if !defined(_MSC_VER)
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #define HAVE_SYS_MMAN_H 1
 #endif
@@ -494,7 +494,7 @@
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
 //#define HAVE_SYS_SYSCTL_H 1
 
-#if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
+#if !defined(NATIVE_WIN32)
 /* Define to 1 if you have the <sys/times.h> header file. */
 #define HAVE_SYS_TIMES_H 1
 #endif
@@ -673,7 +673,7 @@
 //#define SIZEOF___INT64 0
 
 /* type used for sockets */
-#if !defined(NATIVE_WIN32) && !defined(_MSC_VER)
+#if !defined(NATIVE_WIN32)
 #define SOCKET int
 #endif
 ///* Shared Object extension */

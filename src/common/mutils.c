@@ -7,6 +7,7 @@
  */
 
 #include "monetdb_config.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -26,11 +27,7 @@
 
 #ifdef NATIVE_WIN32
 
-#ifdef _MSC_VER
 #include "dirent.h"
-#else
-#include <dirent.h>
-#endif
 
 
 #include "fsync.c"
