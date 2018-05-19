@@ -29,7 +29,9 @@
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 
 /* FlushFileBuffers */
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <errno.h>
 #include <io.h>
