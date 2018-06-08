@@ -220,8 +220,8 @@
    */
 //#define HAVE_DIRENT_H 1
 
-#if !defined(NATIVE_WIN32)
 /* Define to 1 if you have the <dlfcn.h> header file. */
+#ifndef NATIVE_WIN32
 #define HAVE_DLFCN_H 1
 #endif
 
@@ -409,8 +409,10 @@
 #define HAVE_PTHREAD_H 1
 #endif
 
-/* Define if you have the pthread_kill function */
+/* Define if you have the pthread_kill function and SIGHUP  */
+#ifndef __MINGW32__
 #define HAVE_PTHREAD_KILL 1
+#endif
 
 /* Define if you have the pthread_sigmask function */
 //#define HAVE_PTHREAD_SIGMASK 1
@@ -523,8 +525,8 @@
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 //#define HAVE_SYS_IOCTL_H 1
 
-#if !defined(_MSC_VER)
 /* Define to 1 if you have the <sys/mman.h> header file. */
+#ifndef NATIVE_WIN32
 #define HAVE_SYS_MMAN_H 1
 #endif
 
@@ -549,7 +551,7 @@
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
 //#define HAVE_SYS_SYSCTL_H 1
 
-#if !defined(NATIVE_WIN32)
+#ifndef NATIVE_WIN32
 /* Define to 1 if you have the <sys/times.h> header file. */
 #define HAVE_SYS_TIMES_H 1
 #endif

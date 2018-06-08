@@ -1686,7 +1686,7 @@ copyto(mvc *sql, symbol *sq, str filename, dlist *seps, str null_string)
 	fname_e = filename?exp_atom_clob(sql->sa, filename):NULL;
 
 	if (filename) {
-#ifdef _MSC_VER
+#ifdef NATIVE_WIN32
 		struct _stat64 fs;
 #else
 		struct stat fs;
