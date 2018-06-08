@@ -1,3 +1,4 @@
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
@@ -125,12 +126,12 @@ MSinitClientPrg(Client cntxt, str mod, str nme)
 	if (cntxt->curprg  && idcmp(nme, cntxt->curprg->name) == 0)
 		return MSresetClientPrg(cntxt, putName(mod), putName(nme));
 	cntxt->curprg = newFunction(putName(mod), putName(nme), FUNCTIONsymbol);
+	if( cntxt->curprg == 0)
+		throw(MAL, "initClientPrg", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 	if( (idx= findVariable(cntxt->curprg->def,"main")) >=0)
 		setVarType(cntxt->curprg->def, idx, TYPE_void);
 	insertSymbol(cntxt->usermodule,cntxt->curprg);
 	
-	if( cntxt->curprg == 0)
-		throw(MAL, "initClientPrg", SQLSTATE(HY001) MAL_MALLOC_FAIL);
 	if (cntxt->glb == NULL )
 		cntxt->glb = newGlobalStack(MAXGLOBALS + cntxt->curprg->def->vsize);
 	if( cntxt->glb == NULL)

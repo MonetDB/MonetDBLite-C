@@ -13,6 +13,7 @@
 #include "sql_gencode.h"
 #include "rel_rel.h"
 #include "rel_exp.h"
+#include "rel_prop.h"
 #include "rel_optimizer.h"
 
 #include "mal_namespace.h"
@@ -2839,12 +2840,20 @@ stmt_func(backend *be, stmt *ops, const char *name, sql_rel *rel, int f_union)
 	InstrPtr q = NULL;
 	const char *mod = "user";
 	node *n;
+	prop *p = NULL;
 
 	/* dump args */
 	if (ops && ops->nr < 0)
 		return NULL;
 
-	rel = rel_optimizer(be->mvc, rel);
+	p = find_prop(rel->p, PROP_REMOTE);
+	if (p) 
+		rel->p = prop_remove(rel->p, p);
+	rel = rel_optimizer(be->mvc, rel, 0);
+	if (p) {
+		p->p = rel->p;
+		rel->p = p;
+	}
 
 	if (monet5_create_relational_function(be->mvc, mod, name, rel, ops, NULL, 1) < 0)
 		 return NULL;

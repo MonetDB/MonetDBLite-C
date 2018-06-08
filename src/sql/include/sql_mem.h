@@ -14,10 +14,24 @@
 #define SQL_OK 	1
 #define SQL_ERR 0
 
+#ifdef WIN32
+#if defined(LIBSQLSERVER) || defined(LIBSQLCOMMON) || defined(LIBBATSTORE) || defined(LIBSTORE) || defined(LIBSQL)
+#define sql_export extern __declspec(dllexport)
+#define sqlcommon_export extern __declspec(dllexport)
+#define sqlbat_export extern __declspec(dllexport)
+#define sqlstore_export extern __declspec(dllexport)
+#else
+#define sql_export extern __declspec(dllimport)
+#define sqlcommon_export extern __declspec(dllimport)
+#define sqlbat_export extern __declspec(dllimport)
+#define sqlstore_export extern __declspec(dllimport)
+#endif
+#else
 #define sql_export extern
 #define sqlcommon_export extern
 #define sqlbat_export extern
 #define sqlstore_export extern
+#endif
 
 #define MNEW( type ) (type*)GDKmalloc(sizeof(type) )
 #define ZNEW( type ) (type*)GDKzalloc(sizeof(type) )
@@ -64,5 +78,76 @@ extern size_t sa_size( sql_allocator *sa );
 
 #define _strlen(s) (int)strlen(s)
 
+#if !defined(NDEBUG) && !defined(STATIC_CODE_ANALYSIS) && defined(__GNUC__)
+#define sa_alloc(sa, sz)					\
+	({							\
+		sql_allocator *_sa = (sa);			\
+		size_t _sz = (sz);				\
+		void *_res = sa_alloc(_sa, _sz);		\
+		ALLOCDEBUG					\
+			fprintf(stderr,				\
+				"#sa_alloc(%p,%zu) -> %p"	\
+				" %s[%s:%d]\n",			\
+				_sa, _sz, _res,			\
+				__func__, __FILE__, __LINE__);	\
+		_res;						\
+	})
+#define sa_zalloc(sa, sz)					\
+	({							\
+		sql_allocator *_sa = (sa);			\
+		size_t _sz = (sz);				\
+		void *_res = sa_zalloc(_sa, _sz);		\
+		ALLOCDEBUG					\
+			fprintf(stderr,				\
+				"#sa_zalloc(%p,%zu) -> %p"	\
+				" %s[%s:%d]\n",			\
+				_sa, _sz, _res,			\
+				__func__, __FILE__, __LINE__);	\
+		_res;						\
+	})
+#define sa_realloc(sa, ptr, sz, osz)					\
+	({								\
+		sql_allocator *_sa = (sa);				\
+		void *_ptr = (ptr);					\
+		size_t _sz = (sz);					\
+		size_t _osz = (osz);					\
+		void *_res = sa_realloc(_sa, _ptr, _sz, _osz);		\
+		ALLOCDEBUG						\
+			fprintf(stderr,					\
+				"#sa_realloc(%p,%p,%zu,%zu) -> %p"	\
+				" %s[%s:%d]\n",				\
+				_sa, _ptr, _sz, _osz,			\
+				_res,					\
+				__func__, __FILE__, __LINE__);		\
+		_res;							\
+	})
+#define sa_strdup(sa, s)					\
+	({							\
+		sql_allocator *_sa = (sa);			\
+		const char *_s = (s);				\
+		char *_res = sa_strdup(_sa, _s);		\
+		ALLOCDEBUG					\
+			fprintf(stderr,				\
+				"#sa_strdup(%p,len=%zu) -> %p"	\
+				" %s[%s:%d]\n",			\
+				_sa, strlen(_s), _res,		\
+				__func__, __FILE__, __LINE__);	\
+		_res;						\
+	})
+#define sa_strndup(sa, s, l)					\
+	({							\
+		sql_allocator *_sa = (sa);			\
+		const char *_s = (s);				\
+		size_t _l = (l);				\
+		char *_res = sa_strndup(_sa, _s, _l);		\
+		ALLOCDEBUG					\
+			fprintf(stderr,				\
+				"#sa_strndup(%p,len=%zu) -> %p"	\
+				" %s[%s:%d]\n",			\
+				_sa, _l, _res,			\
+				__func__, __FILE__, __LINE__);	\
+		_res;						\
+	})
+#endif
 
 #endif /*_SQL_MEM_H_*/
