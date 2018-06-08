@@ -138,10 +138,11 @@ void mserver_reset(int exit)
 	mal_clients->username = 0;
 	mal_clients->curprg = 0;
 	mal_clients->usermodule = 0;
+	// do this first otherwise we never exit sessions
+	mal_module_reset();
 
 	mal_client_reset();
 	mal_runtime_reset();
-	mal_module_reset();
 	opt_pipes_reset();
 	GDKfree(mal_session_uuid);
 	mal_session_uuid = NULL;
