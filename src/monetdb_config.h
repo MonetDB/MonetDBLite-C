@@ -5,26 +5,140 @@
 #ifndef _SEEN_MONETDB_CONFIG_H
 #define _SEEN_MONETDB_CONFIG_H 1
 
+#define SIZEOF_LNG		8
+#define SIZEOF_OID SIZEOF_LNG
 
-#define SIZEOF_INT __SIZEOF_INT__
+#ifdef __MINGW32__
+
+#define NATIVE_WIN32 1
+#include <windows.h>
+#undef ERROR
+
+#define _Printf_format_string_
+#pragma GCC diagnostic ignored "-Wattributes"
+#define __visibility__(X)
+
+#elif defined( _MSC_VER)
+
+#if _MSC_VER < 1800
+#error old versions of Visual Studio are no longer supported
+#endif
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
+#endif
+
+#include <stdlib.h>
+#if defined(_DEBUG) && defined(_CRTDBG_MAP_ALLOC)
+/* In this case, malloc and friends are redefined in crtdbg.h to debug
+ * versions.  We need to include stdlib.h first or else we get
+ * conflicting declarations. */
+#include <crtdbg.h>
+#endif
+
+/* standard C-99 include files */
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+
+/* Windows include files */
+#include <process.h>
+#include <windows.h>
+#include <ws2tcpip.h>
+
+/* and one more include */
+#include <sys/types.h>
+
+#define NATIVE_WIN32 1
+
+#ifdef _WIN64
+#define __SIZEOF_SIZE_T__ 8
+#else
+#define __SIZEOF_SIZE_T__ 4
+#endif
+
+/* The size of `int', as computed by sizeof. */
+#define SIZEOF_INT 4
+
+/* The size of `long', as computed by sizeof. */
+#define SIZEOF_LONG 4
+
+/* The size of `ptrdiff_t', as computed by sizeof. */
+#ifdef _WIN64
+#define SIZEOF_PTRDIFF_T 8
+#else
+#define SIZEOF_PTRDIFF_T 4
+#endif
+
+#define SIZEOF_WCHAR_T 2
+
+#include <sys/stat.h>
+#define lstat _stat64
+#ifdef stat
+#undef stat
+#endif
+#define stat                _stat64
+#ifdef fstat
+#undef fstat
+#endif
+
+#define fstat              _fstat64
+#define open               _open
+#define close              _close
+#define read               _read
+#define write              _write
+#define access(f, m)       _access(f, m)
+#define ftruncate(fd, sz)  (-(_chsize_s((fd), (__int64) (sz)) != 0))
+#define fileno(fd)         _fileno(fd)
+#define pclose             _pclose
+#define getpid             _getpid
+#define isatty             _isatty
+
+#ifdef pipe
+#undef pipe
+#endif
+#define pipe(p) _pipe(p, 8192, O_BINARY)
+
+#define ctime_r(t,b,s)	(ctime_s(b,s,t) ? NULL : (b))
+
+#define strdup(s)	_strdup(s)
+#ifndef strcasecmp
+#define strcasecmp(x,y) _stricmp(x,y)
+#endif
+#ifndef strncasecmp
+#define strncasecmp(x,y,z) _strnicmp(x,y,z)
+#endif
+
+#ifdef _WIN64
+#define HAVE__MUL128 1
+#endif
+
+#ifdef _WIN64
+#define ssize_t int64_t
+#else
+#define ssize_t int
+#endif
+
+#ifndef WIN32
+#define WIN32 1
+#endif
+
+#else //UNIX
+
+#define SIZEOF_INT __SIZEOF_INT__f
 #define SIZEOF_LONG __SIZEOF_LONG__
+
+#endif
+
 #define SIZEOF_LONG_LONG __SIZEOF_LONG_LONG__
 #ifndef SIZEOF_SIZE_T
 #define SIZEOF_SIZE_T __SIZEOF_SIZE_T__
 #endif
 #define SIZEOF_VOID_P __SIZEOF_POINTER__
-
-
-#ifdef __MINGW32__
-#define NATIVE_WIN32 1
-#define _Printf_format_string_
-#define __visibility__(X)
-#endif
-
-#ifdef NATIVE_WIN32
-#include <windows.h>
-#undef ERROR
-#endif
 
 
 ///* Define if building universal (internal helper macro) */
@@ -45,8 +159,8 @@
 /* Directory separator */
 #define DIR_SEP_STR "/"
 
-#define LLFMT "%lld"
-#define ULLFMT "%llu"
+#define LLFMT "%"PRId64
+#define ULLFMT "%"PRIu64
 
 #else
 
@@ -62,6 +176,8 @@
 #endif
 
 
+/*#define HAVE_INTTYPES_H 1*/
+
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like `struct s { int n; double
    d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
@@ -72,14 +188,14 @@
 #define FLEXIBLE_ARRAY_MEMBER /**/
 
 /* Define to 1 if you have the `asctime_r' function. */
-#define HAVE_ASCTIME_R 1
+/* #define HAVE_ASCTIME_R 1 */
 
 /* Define if you have asctime_r(struct tm*,char *buf,size_t s) */
 /* #undef HAVE_ASCTIME_R3 */
 
 
 /* Define to 1 if you have the `backtrace' function. */
-#define HAVE_BACKTRACE 1
+/*#define HAVE_BACKTRACE 1*/
 
 /* Define to 1 if you have the `cbrt' function. */
 #define HAVE_CBRT 1
@@ -92,6 +208,9 @@
 
 /* Define if you have ctime_r(time_t*,char *buf,size_t s) */
 /* #undef HAVE_CTIME_R3 */
+#ifdef _MSC_VER
+#define HAVE_CTIME_R3 1
+#endif
 
 /* Define to 1 if you have the declaration of `tzname', and to 0 if you don't.
    */
@@ -99,11 +218,15 @@
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
-#define HAVE_DIRENT_H 1
+//#define HAVE_DIRENT_H 1
 
-#ifndef NATIVE_WIN32
 /* Define to 1 if you have the <dlfcn.h> header file. */
+#ifndef NATIVE_WIN32
 #define HAVE_DLFCN_H 1
+#endif
+
+#ifndef _MSC_VER
+#define HAVE_UNISTD 1
 #endif
 
 /* Support for MonetDB as a library */
@@ -113,10 +236,10 @@
 /* #undef HAVE_EMBEDDED_R */
 
 /* Define to 1 if you have the <execinfo.h> header file. */
-#define HAVE_EXECINFO_H 1
+/*#define HAVE_EXECINFO_H 1*/
 
 /* Define to 1 if you have the `fabsf' function. */
-#define HAVE_FABSF 1
+/*#define HAVE_FABSF 1*/
 
 /* Define to 1 if you have the `fallocate' function. */
 /* #undef HAVE_FALLOCATE */
@@ -131,7 +254,7 @@
 /* #undef HAVE_FDATASYNC */
 
 /* Define to 1 if you have the <fenv.h> header file. */
-#define HAVE_FENV_H 1
+/*#define HAVE_FENV_H 1*/
 
 /* Define to 1 if you have the `fpclass' function. */
 /* #undef HAVE_FPCLASS */
@@ -143,31 +266,35 @@
 #define HAVE_FSEEKO 1
 
 /* Define to 1 if you have the `fsync' function. */
+#ifndef _MSC_VER
 #define HAVE_FSYNC 1
+#endif
 
 /* Define to 1 if you have the `ftime' function. */
 #define HAVE_FTIME 1
 
 /* Define to 1 if you have the `getaddrinfo' function. */
-#define HAVE_GETADDRINFO 1
+/* #define HAVE_GETADDRINFO 1 */
 
 /* Define to 1 if you have the `getexecname' function. */
 /* #undef HAVE_GETEXECNAME */
 
 /* Define to 1 if you have the `getlogin' function. */
-#define HAVE_GETLOGIN 1
+/*#define HAVE_GETLOGIN 1*/
 
 /* Define to 1 if you have the `getopt' function. */
-#define HAVE_GETOPT 1
+/*#define HAVE_GETOPT 1*/
 
 /* Define to 1 if you have the <getopt.h> header file. */
-#define HAVE_GETOPT_H 1
+/*#define HAVE_GETOPT_H 1*/
 
 /* Define to 1 if you have the `getopt_long' function. */
-#define HAVE_GETOPT_LONG 1
+/*#define HAVE_GETOPT_LONG 1*/
 
 /* Define to 1 if you have the `gettimeofday' function. */
+#ifndef _MSC_VER
 #define HAVE_GETTIMEOFDAY 1
+#endif
 
 /* Define to 1 if you have the `getuid' function. */
 // #define HAVE_GETUID 1
@@ -182,16 +309,12 @@
 /* #undef HAVE_IEEEFP_H */
 
 /* Define to 1 if the system has the type `intptr_t'. */
-#define HAVE_INTPTR_T 0
-
-/* Define to 1 if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <io.h> header file. */
 /* #undef HAVE_IO_H */
 
 /* Define to 1 if you have the `isinf' function. */
-#define HAVE_ISINF 1
+/*#define HAVE_ISINF 1*/
 
 /* Define to 1 if you have the <kvm.h> header file. */
 /* #undef HAVE_KVM_H */
@@ -201,43 +324,40 @@
 
 
 /* Define to 1 if you have the <libgen.h> header file. */
-#define HAVE_LIBGEN_H 1
+/*#define HAVE_LIBGEN_H 1*/
 
 /* Define to 1 if you have the <libintl.h> header file. */
 /* #undef HAVE_LIBINTL_H */
 
 /* Define if you have the pthread library */
-#define HAVE_LIBPTHREAD 1
+/*#define HAVE_LIBPTHREAD 1*/
 
 /* Define if you have the z library */
 //#define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <limits.h> header file. */
-#define HAVE_LIMITS_H 1
+/*#define HAVE_LIMITS_H 1*/
 
 /* Define to 1 if you have the `llabs' function. */
 #define HAVE_LLABS 1
 
 /* Define to 1 if you have the <locale.h> header file. */
-#define HAVE_LOCALE_H 1
+/* #define HAVE_LOCALE_H 1 */
 
 /* Define to 1 if you have the `localtime_r' function. */
-#define HAVE_LOCALTIME_R 1
+/* #define HAVE_LOCALTIME_R 1 */
 
 /* Define to 1 if you have the `lockf' function. */
 #define HAVE_LOCKF 1
 
-/* Define to 1 if the system has the type `long long'. */
-#define HAVE_LONG_LONG 1
-
 /* Define to 1 if you have the <mach/mach_init.h> header file. */
-#define HAVE_MACH_MACH_INIT_H 1
+/*#define HAVE_MACH_MACH_INIT_H 1*/
 
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
-#define HAVE_MACH_O_DYLD_H 1
+/*#define HAVE_MACH_O_DYLD_H 1*/
 
 /* Define to 1 if you have the <mach/task.h> header file. */
-#define HAVE_MACH_TASK_H 1
+/*#define HAVE_MACH_TASK_H 1*/
 
 /* Define to 1 if you have the `madvise' function. */
 #define HAVE_MADVISE 1
@@ -249,7 +369,7 @@
 /* #undef HAVE_MAPI */
 
 /* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
+/*#define HAVE_MEMORY_H 1*/
 
 /* Define to 1 if you have the `mremap' function. */
 /* #undef HAVE_MREMAP */
@@ -264,13 +384,13 @@
 //#define HAVE_NETINET_IN_H 1
 
 /* Define to 1 if you have the `nextafterf' function. */
-#define HAVE_NEXTAFTERF 1
+/*#define HAVE_NEXTAFTERF 1*/
 
 /* Define to 1 if you have the `nl_langinfo' function. */
 #define HAVE_NL_LANGINFO 1
 
 /* Define to 1 if you have the `popen' function. */
-#define HAVE_POPEN 1
+/*#define HAVE_POPEN 1*/
 
 /* Define to 1 if you have the `posix_fadvise' function. */
 /* #undef HAVE_POSIX_FADVISE */
@@ -285,10 +405,14 @@
 /* #undef HAVE_PROCFS_H */
 
 /* Define to 1 if you have the <pthread.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_PTHREAD_H 1
+#endif
 
-/* Define if you have the pthread_kill function */
+/* Define if you have the pthread_kill function and SIGHUP  */
+#ifndef __MINGW32__
 #define HAVE_PTHREAD_KILL 1
+#endif
 
 /* Define if you have the pthread_sigmask function */
 //#define HAVE_PTHREAD_SIGMASK 1
@@ -297,40 +421,44 @@
 #define HAVE_PTRDIFF_T 1
 
 /* Define to 1 if you have the `putenv' function. */
-#define HAVE_PUTENV 1
+//#define HAVE_PUTENV 1
 
 /* Define to 1 if you have the <pwd.h> header file. */
 // #define HAVE_PWD_H 1
 
 /* Define to 1 if you have the `round' function. */
-#define HAVE_ROUND 1
+/*#define HAVE_ROUND 1*/
 
 /* Define to 1 if you have the <sched.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SCHED_H 1
+#endif
 
 /* Define to 1 if you have the <semaphore.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SEMAPHORE_H 0
+#endif
 
 /* Define to 1 if you have the `setenv' function. */
 #define HAVE_SETENV 1
 
 /* Define to 1 if you have the `setlocale' function. */
-#define HAVE_SETLOCALE 1
+//#define HAVE_SETLOCALE 1
 
 /* Define to 1 if you have the `setsid' function. */
-#define HAVE_SETSID 1
+//#define HAVE_SETSID 1
 
 /* Define to 1 if you have the `shutdown' function. */
-#define HAVE_SHUTDOWN 1
+//#define HAVE_SHUTDOWN 1
 
 /* Define to 1 if you have the `sigaction' function. */
-#define HAVE_SIGACTION 1
+//#define HAVE_SIGACTION 1
 
 /* Define to 1 if you have the <signal.h> header file. */
-#define HAVE_SIGNAL_H 1
+//#define HAVE_SIGNAL_H 1
 
 /* Define to 1 if the system has the type `socklen_t'. */
-#define HAVE_SOCKLEN_T 1
+//#define HAVE_SOCKLEN_T 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
@@ -339,46 +467,48 @@
 #define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#define HAVE_STDLIB_H 1
+//#define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the `strcasestr' function. */
 #define HAVE_STRCASESTR 1
 
 /* Define to 1 if you have the `strftime' function. */
-#define HAVE_STRFTIME 1
+//#define HAVE_STRFTIME 1
 
 /* Define to 1 if you have the <strings.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_STRINGS_H 1
+#endif
 
 /* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
+//#define HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strncasecmp' function. */
-#define HAVE_STRNCASECMP 1
+//#define HAVE_STRNCASECMP 1
 
 /* Define to 1 if you have the <stropts.h> header file. */
 /* #undef HAVE_STROPTS_H */
 
 /* Define to 1 if you have the `strptime' function. */
-#define HAVE_STRPTIME 1
+//#define HAVE_STRPTIME 1
 
 /* Define to 1 if you have the `strsignal' function. */
-#define HAVE_STRSIGNAL 1
+//#define HAVE_STRSIGNAL 1
 
 /* Define to 1 if you have the `strtod' function. */
-#define HAVE_STRTOD 1
+//#define HAVE_STRTOD 1
 
 /* Define to 1 if you have the `strtof' function. */
-#define HAVE_STRTOF 1
+//#define HAVE_STRTOF 1
 
 /* Define to 1 if you have the `strtoll' function. */
-#define HAVE_STRTOLL 1
+//#define HAVE_STRTOLL 1
 
 /* Define to 1 if you have the `strtoull' function. */
-#define HAVE_STRTOULL 1
+//#define HAVE_STRTOULL 1
 
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
-#define HAVE_STRUCT_TM_TM_ZONE 1
+//#define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if you have the `sysconf' function. */
 #define HAVE_SYSCONF 1
@@ -388,13 +518,15 @@
 /* #undef HAVE_SYS_DIR_H */
 
 /* Define to 1 if you have the <sys/file.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SYS_FILE_H 1
+#endif
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
-#define HAVE_SYS_IOCTL_H 1
+//#define HAVE_SYS_IOCTL_H 1
 
-#ifndef NATIVE_WIN32
 /* Define to 1 if you have the <sys/mman.h> header file. */
+#ifndef NATIVE_WIN32
 #define HAVE_SYS_MMAN_H 1
 #endif
 
@@ -403,13 +535,15 @@
 /* #undef HAVE_SYS_NDIR_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SYS_PARAM_H 1
+#endif
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
-#define HAVE_SYS_RESOURCE_H 1
+//#define HAVE_SYS_RESOURCE_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-#define HAVE_SYS_SOCKET_H 1
+//#define HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -423,60 +557,65 @@
 #endif
 
 /* Define to 1 if you have the <sys/time.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_SYS_TIME_H 1
+#endif
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 0
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
-#define HAVE_SYS_UIO_H 1
+//#define HAVE_SYS_UIO_H 1
 
 /* Define to 1 if you have the <sys/un.h> header file. */
-#define HAVE_SYS_UN_H 1
+//#define HAVE_SYS_UN_H 1
 
 /* Define to 1 if you have the <sys/utime.h> header file. */
 /* #undef HAVE_SYS_UTIME_H */
 
 /* Define to 1 if you have the <sys/wait.h> header file. */
-#define HAVE_SYS_WAIT_H 1
+//#define HAVE_SYS_WAIT_H 1
 
 /* Define to 1 if you have the `task_info' function. */
-#define HAVE_TASK_INFO 1
+//#define HAVE_TASK_INFO 1
 
 /* Define to 1 if you have the <termios.h> header file. */
-#define HAVE_TERMIOS_H 1
+//#define HAVE_TERMIOS_H 1
 
 /* Define to 1 if you have the `times' function. */
-#define HAVE_TIMES 1
+//#define HAVE_TIMES 1
 
 /* Define to 1 if you have the <time.h> header file. */
-#define HAVE_TIME_H 1
+//#define HAVE_TIME_H 1
 
 /* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
-#define HAVE_TM_ZONE 1
+//#define HAVE_TM_ZONE 1
 
 /* Define to 1 if you have the `trunc' function. */
-#define HAVE_TRUNC 1
+//#define HAVE_TRUNC 1
 
 /* Define to 1 if you don't have `tm_zone' but do have the external array
    `tzname'. */
 /* #undef HAVE_TZNAME */
 
 /* Define to 1 if the system has the type `uintptr_t'. */
-#define HAVE_UINTPTR_T 1
+//#define HAVE_UINTPTR_T 1
 
 /* Define to 1 if you have the `uname' function. */
 #define HAVE_UNAME 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
+/* Define to 1 if you have the <sys/param.h> header file. */
+#ifndef _MSC_VER
 #define HAVE_UNISTD_H 1
+#endif
 
 /* Define to 1 if you have the <winsock.h> header file. */
 /* #undef HAVE_WINSOCK_H */
 
 /* Define to 1 if the system has the type `_Bool'. */
-#define HAVE__BOOL 1
+//#define HAVE__BOOL 1
 
 /* Define if you have _sys_siglist */
 /* #undef HAVE__SYS_SIGLIST */
@@ -497,7 +636,7 @@
 #define HOST "unknown"
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST 
+#define ICONV_CONST
 //
 ///* location where libraries are installed */
 //#define LIBDIR "/usr/local/lib"
@@ -591,7 +730,7 @@
 //#define SIZEOF___INT64 0
 
 /* type used for sockets */
-#ifndef NATIVE_WIN32
+#if !defined(NATIVE_WIN32)
 #define SOCKET int
 #endif
 ///* Shared Object extension */
@@ -745,12 +884,6 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
-#ifndef HAVE_INTPTR_T
-typedef ssize_t intptr_t;
-#endif
-#ifndef HAVE_UINTPTR_T
-typedef size_t uintptr_t;
-#endif
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif
@@ -765,17 +898,11 @@ typedef size_t uintptr_t;
 #define SLASH_2_DIR_SEP(s) {char *t; for(t=strchr(s, '/'    ); t; t=strchr(t+1, '/'    )) *t=DIR_SEP;}
 #define DIR_SEP_2_SLASH(s) {char *t; for(t=strchr(s, DIR_SEP); t; t=strchr(t+1, DIR_SEP)) *t='/'    ;}
 
-#ifdef HAVE_LONG_LONG
-typedef long long lng;
-typedef unsigned long long ulng;
-# define SIZEOF_LNG SIZEOF_LONG_LONG
-#else
-# ifdef HAVE___INT64
-typedef __int64 lng;
-typedef unsigned __int64 ulng;
-#  define SIZEOF_LNG SIZEOF___INT64
-# endif
-#endif
+#include <inttypes.h>
+
+typedef int64_t lng;
+typedef uint64_t ulng;
+
 
 #ifdef HAVE___INT128
 typedef __int128 hge;
@@ -799,38 +926,6 @@ typedef int ptrdiff_t;
 typedef lng ptrdiff_t;
 # endif
 #endif
-
-/* define printf formats for printing size_t and ssize_t variables */
-#if  SIZEOF_SIZE_T == SIZEOF_INT
-# define SZFMT "%u"
-# define SSZFMT "%d"
-#elif SIZEOF_SIZE_T == SIZEOF_LONG
-# define SZFMT "%lu"
-# define SSZFMT "%ld"
-#elif SIZEOF_SIZE_T == SIZEOF_LONG_LONG || SIZEOF_SIZE_T == SIZEOF___INT64
-# define SZFMT ULLFMT
-# define SSZFMT LLFMT
-#else
-# error no definition for SZFMT/SSZFMT
-#endif
-
-/* define printf formats for printing ptrdiff_t variables */
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901 && !defined(__svr4__) && !defined(WIN32) && !defined(__sgi) || defined(__hpux)
-#define PDFMT "%td"
-#elif SIZEOF_PTRDIFF_T == SIZEOF_INT
-#define PDFMT "%d"
-#elif SIZEOF_PTRDIFF_T == SIZEOF_LONG
-#define PDFMT "%ld"
-#elif SIZEOF_PTRDIFF_T == SIZEOF_LONG_LONG || SIZEOF_PTRDIFF_T == SIZEOF___INT64
-#define PDFMT LLFMT
-#else
-#error no definition for PDFMT
-#endif
-
-/* define printf format for printing pointer values */
-#define PTRFMT		"%p"
-#define PTRFMTCAST	(void *)	/* no cast needed */
-
 
 /* defines to help the compiler check printf-style format arguments */
 #if !defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
@@ -879,4 +974,3 @@ typedef lng ptrdiff_t;
 #define PROMPT2		"\001\002\n"	/* prompt: more data needed */
 
 #endif /* _SEEN_MONETDB_CONFIG_H */
-

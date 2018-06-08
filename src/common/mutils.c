@@ -7,10 +7,13 @@
  */
 
 #include "monetdb_config.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
@@ -24,7 +27,7 @@
 
 #ifdef NATIVE_WIN32
 
-#include <dirent.h>
+#include "dirent.h"
 
 
 #include "fsync.c"

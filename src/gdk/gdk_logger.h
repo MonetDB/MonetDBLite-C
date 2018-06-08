@@ -9,6 +9,8 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
+#include "monetdb_config.h"
+
 #define LOGFILE "log"
 #define LOGFILE_SHARED "log_shared"
 
@@ -43,6 +45,10 @@ typedef struct logger {
 	int version;
 	lng id;
 	int tid;
+#ifdef GDKLIBRARY_NIL_NAN
+	/* convert old style floating point NIL values to NaN */
+	int convert_nil_nan;
+#endif
 	char *fn;
 	char *dir;
 	char *local_dir; /* the directory in which the non-shared log is written */

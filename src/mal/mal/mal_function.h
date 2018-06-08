@@ -24,8 +24,8 @@ mal_export Symbol   newFunction(str mod, str nme,int kind);
 mal_export int      getPC(MalBlkPtr mb, InstrPtr p);
 
 mal_export Symbol   getFunctionSymbol(Module scope, InstrPtr p);
-mal_export void chkFlow(stream *out, MalBlkPtr mb);
-mal_export void chkDeclarations(stream *out, MalBlkPtr mb);
+mal_export void chkFlow(MalBlkPtr mb);
+mal_export void chkDeclarations(MalBlkPtr mb);
 mal_export void clrDeclarations(MalBlkPtr mb);
 mal_export int isLoopBarrier(MalBlkPtr mb, int pc);
 mal_export int getBlockExit(MalBlkPtr mb,int pc);
@@ -38,7 +38,7 @@ mal_export void debugFunction(stream *fd, MalBlkPtr mb, MalStkPtr stk, int flg, 
 
 mal_export int getBarrierEnvelop(MalBlkPtr mb);
 
-mal_export Symbol cloneFunction(stream *out, Module scope, Symbol proc, MalBlkPtr mb, InstrPtr p);
+mal_export Symbol cloneFunction(Module scope, Symbol proc, MalBlkPtr mb, InstrPtr p);
 
 #include "mal_exception.h"
 

@@ -71,6 +71,7 @@ runtimeProfileInit(Client cntxt, MalBlkPtr mb, MalStkPtr stk)
 	else if ( qtop +1 == qsize )
 		QRYqueue = (QueryQueue) GDKrealloc( QRYqueue, sizeof (struct QRYQUEUE) * (qsize +=256));
 	if ( QRYqueue == NULL){
+		addMalException(mb,"runtimeProfileInit" MAL_MALLOC_FAIL);
 		GDKfree(tmp);			/* may be NULL, but doesn't harm */
 		MT_lock_unset(&mal_delayLock);
 		return;
@@ -217,7 +218,7 @@ void
 runtimeProfileExit(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, RuntimeProfile prof)
 {
 #ifdef HAVE_EMBEDDED
-	float perc;
+	flt perc;
 	(void) mb;
 	(void) stk;
 	(void) pci;
@@ -231,7 +232,7 @@ runtimeProfileExit(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, Runt
 		cntxt->progress_done = cntxt->progress_len;
 	}
 
-	perc = cntxt->progress_done/(cntxt->progress_len*1.0);
+	perc = (flt) (cntxt->progress_done/(cntxt->progress_len*1.0));
 	if (perc > 1) perc = 1;
 	if (perc < 0) perc = 0;
 
@@ -258,10 +259,8 @@ runtimeProfileExit(Client cntxt, MalBlkPtr mb, MalStkPtr stk, InstrPtr pci, Runt
 	pci->totticks += pci->ticks;
 	pci->calls++;
 	
-	if(malProfileMode > 0 ){
-		pci->wbytes = getVolume(stk, pci, 1);
+	if(malProfileMode > 0 )
 		profilerEvent(mb, stk, pci, FALSE, cntxt->username);
-	}
 	if( malProfileMode < 0){
 		/* delay profiling until you encounter start of MAL function */
 		if( getInstrPtr(mb,0) == pci)

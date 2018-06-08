@@ -9,29 +9,17 @@
 #ifndef GDK_POSIX_H
 #define GDK_POSIX_H
 
+#include "monetdb_config.h"
+
 #include <sys/types.h>
 
-#ifdef HAVE_MALLOC_H
-# include <malloc.h>
-#endif
+#include <time.h>
 
 #ifdef HAVE_FTIME
-#include <sys/timeb.h>
+#include <sys/timeb.h>		/* ftime */
 #endif
-
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
-#if defined(HAVE_WINSOCK_H) && defined(NATIVE_WIN32)
-#include <winsock.h>		/* for timeval */
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>		/* gettimeofday */
 #endif
 
 #include "gdk_system.h" /* gdk_export */
@@ -181,7 +169,7 @@ gdk_export int dlclose(void *handle);
 gdk_export void *dlsym(void *handle, const char *name);
 gdk_export char *dlerror(void);
 
-gdk_export int win_stat(const char *, struct stat *);
+gdk_export int win_stat(const char *, struct _stat64 *);
 gdk_export int win_rmdir(const char *);
 gdk_export int win_rename(const char *, const char *);
 gdk_export int win_unlink(const char *);
@@ -191,14 +179,17 @@ gdk_export int win_mkdir(const char *, const int mode);
 #define mkdir		win_mkdir
 #define rmdir		win_rmdir
 #define rename		win_rename
-#define unlink		win_unlink
+#define remove		win_unlink
 
 #endif	/* NATIVE_WIN32 */
 
-
-#ifdef HAVE_EMBEDDED_R
-	gdk_export char* monetdb_lib_path;
+#if defined(HAVE_EMBEDDED_R) || defined(HAVE_EMBEDDED_JAVA)
+gdk_export char* monetdb_lib_path;
 #endif
 
+#ifdef HAVE_EMBEDDED_JAVA
+gdk_export void freeMonetDB5LibraryPath(void);
+gdk_export int setMonetDB5LibraryPath(const char* path);
+#endif
 
 #endif /* GDK_POSIX_H */

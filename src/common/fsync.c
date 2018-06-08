@@ -22,12 +22,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifdef HAVE_UNISTD
 #include <unistd.h>
+#endif
 
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 
 /* FlushFileBuffers */
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <errno.h>
 #include <io.h>

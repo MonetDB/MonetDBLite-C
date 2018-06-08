@@ -9,6 +9,8 @@
 #ifndef _MAL_LINKER_H
 #define _MAL_LINKER_H
 
+#include "monetdb_config.h"
+
 #define MAL_EXT ".mal"
 #define SQL_EXT ".sql"
 
@@ -23,13 +25,12 @@
 
 /* #define DEBUG_MAL_LINKER */
 #define MONET64 1
-mal_export MALfcn getAddress(stream *out, str filename, str fcnname,int silent);
+mal_export MALfcn getAddress(str fcnname);
 mal_export char *MSP_locate_sqlscript(const char *mod_name, bit recurse);
 mal_export str loadLibrary(str modulename, int flag);
 mal_export char *locate_file(const char *basename, const char *ext, bit recurse);
 mal_export int malLibraryEnabled(str name);
 mal_export char* malLibraryHowToEnable(str name);
 mal_export char * MSP_locate_script(const char *filename);
-mal_export void mal_linker_reset(void);
 
 #endif /* _MAL_LINKER_H */

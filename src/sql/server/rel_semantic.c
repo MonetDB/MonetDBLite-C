@@ -18,8 +18,9 @@
 #include "rel_sequence.h"
 #include "rel_exp.h"
 
+#ifdef HAVE_UNISTD
 #include <unistd.h>
-#include <stdio.h>
+#endif
 #include <string.h>
 #include <ctype.h>
 
@@ -138,6 +139,8 @@ rel_semantic(mvc *sql, symbol *s)
 	case SQL_DROP_VIEW:
 	case SQL_ALTER_TABLE:
 
+	case SQL_COMMENT:
+
 	case SQL_GRANT:
 	case SQL_REVOKE:
 	case SQL_GRANT_ROLES:
@@ -180,6 +183,7 @@ rel_semantic(mvc *sql, symbol *s)
 	case SQL_INSERT:
 	case SQL_UPDATE:
 	case SQL_DELETE:
+	case SQL_TRUNCATE:
 	case SQL_COPYFROM:
 	case SQL_BINCOPYFROM:
 	case SQL_COPYLOADER:
@@ -193,7 +197,8 @@ rel_semantic(mvc *sql, symbol *s)
 		dnode *d;
 		sql_rel *r = NULL;
 
-		stack_push_frame(sql, "MUL");
+		if(!stack_push_frame(sql, "MUL"))
+			return sql_error(sql, 02, SQLSTATE(HY001) MAL_MALLOC_FAIL);
 		for (d = s->data.lval->h; d; d = d->next) {
 			symbol *sym = d->data.sym;
 			sql_rel *nr = rel_semantic(sql, sym);
@@ -228,6 +233,6 @@ rel_semantic(mvc *sql, symbol *s)
 		return rel_selects(sql, s);
 
 	default:
-		return sql_error(sql, 02, "symbol type not found");
+		return sql_error(sql, 02, SQLSTATE(42000) "Symbol type not found");
 	}
 }

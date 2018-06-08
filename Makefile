@@ -18,22 +18,22 @@ INCLUDE_FLAGS= -Isrc/ -Isrc/common  \
 -Isrc/sql/include -Isrc/sql/common -Isrc/sql/server -Isrc/sql/storage -Isrc/sql/storage/bat
 
 SOEXT=so
-		
+
 ifeq ($(OS),Windows_NT)
 	SOEXT=dll
 	LDFLAGS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
 	CFLAGS += -Wno-attributes -Wno-format
 	CC=gcc
 else
-    UNAME_S := $(shell uname -s)
-    CFLAGS += -fPIC
-    LDFLAGS += -ldl -lpthread
-    ifeq ($(UNAME_S),Linux)
+	UNAME_S := $(shell uname -s)
+	CFLAGS += -fPIC
+	LDFLAGS += -ldl -lpthread
+	ifeq ($(UNAME_S),Linux)
 		LDFLAGS += -lrt
-    endif
-    ifeq ($(UNAME_S),Darwin)
+	endif
+	ifeq ($(UNAME_S),Darwin)
 		SOEXT=dylib
-    endif
+	endif
 endif
 
 

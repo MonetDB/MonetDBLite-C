@@ -245,34 +245,7 @@ comment "Prepare a table result set for the COPY INTO stream";
 unsafe pattern export_table(fname:str, fmt:str, colsep:str, recsep:str, qout:str, nullrep:str, tbl:bat[:str], attr:bat[:str], tpe:bat[:str], len:bat[:int],scale:bat[:int], cols:bat[:any]...) :int 
 address mvc_export_table_wrap
 comment "Prepare a table result set for the COPY INTO stream";
-
-unsafe pattern declaredTable( name:str ) :int 
-address mvc_declared_table_wrap
-comment "Prepare a declared table"; 
-
-unsafe pattern dtColumn(rs:int, tname:str, name:str, typename:str, digits:int, scale:int) :void
-address mvc_declared_table_column_wrap;
-
-unsafe pattern dropDeclaredTable( name:str ) :void 
-address mvc_drop_declared_table_wrap
-comment "drop a declared table"; 
-
-unsafe pattern dropDeclaredTables( nr:int ) :void 
-address mvc_drop_declared_tables_wrap
-comment "drop top n declared tables"; 
-
-pattern drop_func_upgrade_oct2014(id:int) :int
-address UPGdrop_func
-comment "Drop the function identified by id, needed for the Oct2014 upgrade";
-
-pattern create_func_upgrade_oct2014(sname:str,f:str) :int
-address UPGcreate_func
-comment "Create the function described by f, needed for the Oct2014 upgrade";
-
-pattern create_view_upgrade_oct2014(sname:str,v:str) :int
-address UPGcreate_view
-comment "Create the view described by f, needed for the Oct2014 upgrade";
-
+ 
 unsafe pattern exportOperation() :void
 address mvc_export_operation_wrap
 comment "Export result of schema/transaction queries"; 
