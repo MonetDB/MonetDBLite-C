@@ -302,8 +302,7 @@ cleanup:
 	bstream_destroy(c->fdin);
 	c->fdin = NULL;
 
-	res = SQLautocommit(m);
-	if (res) {
+	if (SQLautocommit(m) != MAL_SUCCEED) {
 		return GDKstrdup("Cannot COMMIT/ROLLBACK without a valid transaction.");
 	}
 	if (res != MAL_SUCCEED && res_internal != NULL) {
