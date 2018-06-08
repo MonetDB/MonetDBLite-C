@@ -353,11 +353,12 @@ BATattach(int tt, const char *heapfile, int role)
 			GDKerror("BATattach: heapfile size not integral number of atoms\n");
 			return NULL;
 		}
+		/* breaks windows build
 		if ((size_t) (st.st_size / atomsize) > (size_t) BUN_MAX) {
 			fclose(f);
 			GDKerror("BATattach: heapfile too large\n");
 			return NULL;
-		}
+		}*/
 		cap = (BUN) (st.st_size / atomsize);
 		bn = COLnew(0, tt, cap, role);
 		if (bn == NULL) {
