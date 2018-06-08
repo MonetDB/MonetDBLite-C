@@ -1695,7 +1695,7 @@ copyto(mvc *sql, symbol *sq, str filename, dlist *seps, str null_string)
 		if (filename && !MT_path_absolute(filename))
 			return sql_error(sql, 02, SQLSTATE(42000) "COPY INTO: filename must "
 					"have absolute path: %s", filename);
-		if (lstat(filename, &fs) == 0)
+		if (stat(filename, &fs) == 0)
 			return sql_error(sql, 02, SQLSTATE(42000) "COPY INTO: file already "
 					"exists: %s", filename);
 	}
