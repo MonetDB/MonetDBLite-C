@@ -75,6 +75,7 @@ monetdb_connection monetdb_connect(void) {
 	if (getSQLContext(conn, NULL, &m, NULL) != MAL_SUCCEED) {
 		return NULL;
 	}
+	conn->curmodule = conn->usermodule = userModule();
 	m->session->auto_commit = 1;
 	return conn;
 }
