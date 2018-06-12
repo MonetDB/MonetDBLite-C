@@ -45,6 +45,26 @@ matrix:
             - g++-6
       env:
         - MATRIX_EVAL="export CC=gcc-6"
+
+      - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="export CC=gcc-7"
+
+      - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env:
+        - MATRIX_EVAL="export CC=gcc-8"
  
     - os: linux
       addons:
