@@ -563,14 +563,15 @@ sql_update_dec2016_sp2(Client c, mvc *sql)
 	char *schema = stack_get_string(sql, "current_schema");
 	res_table *output;
 	BAT *b;
-
+	int digits = 19;
+#ifdef HAVE_HGE
+	if (have_hge) {
+		digits = 39;
+	}
+#endif
 	if (buf == NULL)
 		throw(SQL, "sql_update_dec2016_sp2", SQLSTATE(HY001) MAL_MALLOC_FAIL);
-	pos += snprintf(buf + pos, bufsize - pos, "select id from sys.types where sqlname = 'decimal' and digits = %d;\n",
-#ifdef HAVE_HGE
-			have_hge ? 39 :
-#endif
-			19);
+	pos += snprintf(buf + pos, bufsize - pos, "select id from sys.types where sqlname = 'decimal' and digits = %d;\n", digits);
 	err = SQLstatementIntern(c, &buf, "update", 1, 0, &output);
 	if (err) {
 		GDKfree(buf);
