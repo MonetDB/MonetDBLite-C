@@ -494,7 +494,8 @@ sql_update_dec2016(Client c, mvc *sql)
 			" update sys.storagemodelinput\n"
 			" set \"distinct\" = \"count\"\n"
 			" where \"type\" = 'varchar' or \"type\"='clob';\n"
-			"end;\n"
+			"end;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
 			"create function sys.storagemodel()\n"
 			"returns table (\n"
 			" \"schema\" string,\n"
@@ -991,7 +992,9 @@ sql_update_mar2018(Client c, mvc *sql)
 " WHERE k.table_id = c.table_id AND c.table_id = t.id AND kc.id = k.id AND kc.name = c.name\n"
 "   AND k.type IN (0, 1)\n"
 " ORDER BY t.schema_id, t.name, c.name, k.type, k.name, kc.nr;\n"
-"GRANT SELECT ON sys.dependency_columns_on_keys TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_columns_on_keys TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "CREATE VIEW sys.dependency_tables_on_views AS\n"
 "SELECT t.schema_id AS table_schema_id, t.id AS table_id, t.name AS table_name, v.schema_id AS view_schema_id, v.id AS view_id, v.name AS view_name, dep.depend_type AS depend_type\n"
 "  FROM sys.tables AS t, sys.tables AS v, sys.dependencies AS dep\n"
@@ -1019,7 +1022,9 @@ sql_update_mar2018(Client c, mvc *sql)
 " WHERE f.id = dep.id AND v.id = dep.depend_id\n"
 "   AND dep.depend_type = 5 AND v.type IN (1, 11)\n"
 " ORDER BY f.schema_id, f.name, v.schema_id, v.name;\n"
-"GRANT SELECT ON sys.dependency_functions_on_views TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_functions_on_views TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "CREATE VIEW sys.dependency_schemas_on_users AS\n"
 "SELECT s.id AS schema_id, s.name AS schema_name, u.name AS user_name, CAST(6 AS smallint) AS depend_type\n"
 "  FROM sys.users AS u, sys.schemas AS s\n"
@@ -1046,7 +1051,9 @@ sql_update_mar2018(Client c, mvc *sql)
 " WHERE c.id = dep.id AND f.id = dep.depend_id\n"
 "   AND dep.depend_type = 7 AND f.type <> 2\n"
 " ORDER BY c.name, c.table_id, f.name, f.id;\n"
-"GRANT SELECT ON sys.dependency_columns_on_functions TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_columns_on_functions TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "CREATE VIEW sys.dependency_functions_on_functions AS\n"
 "SELECT f1.schema_id, f1.id AS function_id, f1.name AS function_name, f1.type AS function_type,\n"
 "       f2.schema_id AS used_in_function_schema_id, f2.id AS used_in_function_id, f2.name AS used_in_function_name, f2.type AS used_in_function_type, dep.depend_type AS depend_type\n"
@@ -1072,7 +1079,9 @@ sql_update_mar2018(Client c, mvc *sql)
 " WHERE dep.id = c.id AND dep.depend_id = tri.id AND c.table_id = t.id\n"
 "   AND dep.depend_type = 8\n"
 " ORDER BY t.schema_id, t.name, tri.name, c.name;\n"
-"GRANT SELECT ON sys.dependency_columns_on_triggers TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_columns_on_triggers TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "CREATE VIEW sys.dependency_functions_on_triggers AS\n"
 "SELECT f.schema_id AS function_schema_id, f.id AS function_id, f.name AS function_name, f.type AS function_type,\n"
 "       tri.id AS trigger_id, tri.name AS trigger_name, tri.table_id AS trigger_table_id, dep.depend_type AS depend_type\n"
@@ -1102,7 +1111,9 @@ sql_update_mar2018(Client c, mvc *sql)
 "  FROM sys.tables AS t, sys.keys AS k, sys.keys AS fk\n"
 " WHERE fk.rkey = k.id and k.table_id = t.id\n"
 " ORDER BY t.schema_id, t.name, fk.name;\n"
-"GRANT SELECT ON sys.dependency_tables_on_foreignkeys TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_tables_on_foreignkeys TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "CREATE VIEW sys.dependency_keys_on_foreignkeys AS\n"
 "SELECT k.table_id AS key_table_id, k.id AS key_id, k.name AS key_name, fk.table_id AS fk_table_id, fk.id AS fk_id, fk.name AS fk_name, CAST(k.type AS smallint) AS key_type, CAST(11 AS smallint) AS depend_type\n"
 "  FROM sys.keys AS k, sys.keys AS fk\n"
@@ -1129,7 +1140,9 @@ sql_update_mar2018(Client c, mvc *sql)
 " WHERE c.id = dep.id AND p.id = dep.depend_id\n"
 "   AND dep.depend_type = 13 AND p.type = 2\n"
 " ORDER BY c.name, c.table_id, p.name, p.id;\n"
-"GRANT SELECT ON sys.dependency_columns_on_procedures TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_columns_on_procedures TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "CREATE VIEW sys.dependency_functions_on_procedures AS\n"
 "SELECT f.schema_id AS function_schema_id, f.id AS function_id, f.name AS function_name, f.type AS function_type,\n"
 "       p.schema_id AS procedure_schema_id, p.id AS procedure_id, p.name AS procedure_name, p.type AS procedure_type, dep.depend_type AS depend_type\n"
@@ -1158,7 +1171,9 @@ sql_update_mar2018(Client c, mvc *sql)
 " WHERE dep.id = dt.id AND dep.depend_id = a.id AND a.func_id = f.id\n"
 "   AND dep.depend_type = 15\n"
 " ORDER BY dt.sqlname, f.name, a.number, a.name;\n"
-"GRANT SELECT ON sys.dependency_args_on_types TO PUBLIC;\n"
+"GRANT SELECT ON sys.dependency_args_on_types TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
+
 "UPDATE sys._tables SET system = true\n"
 " WHERE name IN ('ids', 'dependencies_vw', 'dependency_owners_on_schemas', 'dependency_columns_on_keys',\n"
 " 'dependency_tables_on_views', 'dependency_views_on_views', 'dependency_columns_on_views', 'dependency_functions_on_views',\n"
