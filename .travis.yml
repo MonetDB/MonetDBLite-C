@@ -46,7 +46,7 @@ matrix:
       env:
         - MATRIX_EVAL="export CC=gcc-6"
 
-      - os: linux
+    - os: linux
       addons:
         apt:
           sources:
@@ -56,7 +56,7 @@ matrix:
       env:
         - MATRIX_EVAL="export CC=gcc-7"
 
-      - os: linux
+    - os: linux
       addons:
         apt:
           sources:
