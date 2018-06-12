@@ -351,7 +351,7 @@ MCforkClient(Client father)
 		son->promptlength = strlen(prompt);
 		/* reuse the scopes wherever possible */
 		if (son->usermodule == 0) {
-			son->usermodule = userModule();
+			son->usermodule = son->curmodule = userModule();
 			if(son->usermodule == 0) {
 				MCcloseClient(son);
 				return NULL;

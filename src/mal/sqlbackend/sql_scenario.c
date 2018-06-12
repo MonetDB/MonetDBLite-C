@@ -540,6 +540,7 @@ SQLinitClient(Client c)
 				sa_destroy(m->sa);
 			m->sa = NULL;
 			m->sqs = NULL;
+			GDKfree(createdb_buf);
 		}
 
 #else
@@ -668,6 +669,7 @@ SQLexitClient(Client c)
 	if ((err = SQLresetClient(c)) != MAL_SUCCEED)
 		return err;
 	MALexitClient(c);
+	MCcloseClient(c);
 	return MAL_SUCCEED;
 }
 

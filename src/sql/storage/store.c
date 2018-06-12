@@ -1732,6 +1732,10 @@ store_exit(void)
 		sql_trans_destroy(gtrans);
 		gtrans = NULL;
 	}
+
+	// this simply leaks otherwise
+	list_destroy(active_sessions);
+
 	store_allocator = NULL;
 
 	// this is required to not create phantom dependencies after same-process restart
