@@ -44,7 +44,7 @@ symbol_create_list(sql_allocator *sa, int token, dlist *data)
 		symbol_init(s, token, type_list);
 		s->data.lval = data;
 		if (symbol_debug)
-			fprintf(stderr, "%p = symbol_create_list(%s,%p)\n", (void*) s, token2string(s->token), s->data.lval);
+			fprintf(stderr, "%p = symbol_create_list(%s,%p)\n", (void*) s, token2string(s->token), (void*) s->data.lval);
 	}
 	return s;
 }
