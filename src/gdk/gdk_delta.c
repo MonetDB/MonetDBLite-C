@@ -39,7 +39,7 @@ BATcommit(BAT *b)
 			   BATgetId(b),
 			   b->theap.free,
 			   b->batInserted,
-			   b->theap.base);
+			   (void*) b->theap.base);
 	if (!BATdirty(b)) {
 		b->batDirtyflushed = 0;
 	}
@@ -51,7 +51,7 @@ BATcommit(BAT *b)
 			   BATgetId(b),
 			   b->theap.free,
 			   b->batInserted,
-			   b->theap.base);
+			   (void*) b->theap.base);
 }
 
 /*

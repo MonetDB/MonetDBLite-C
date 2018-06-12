@@ -27,7 +27,7 @@
 			BATgetId(P1),				\
 			(P1)->theap.free,			\
 			(P1)->batInserted,			\
-			(P1)->theap.base);			\
+			(void*) (P1)->theap.base);			\
 	} while (0)
 /*
  * Upon saving a BAT, we should convert the delta marker BUN pointers

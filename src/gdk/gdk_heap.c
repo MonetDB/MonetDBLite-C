@@ -115,7 +115,7 @@ HEAPalloc(Heap *h, size_t nitems, size_t itemsize)
 	     h->size < (h->farmid == 0 ? GDK_mmap_minsize_persistent : GDK_mmap_minsize_transient))) {
 		h->storage = STORE_MEM;
 		h->base = (char *) GDKmalloc(h->size);
-		HEAPDEBUG fprintf(stderr, "#HEAPalloc %zu %p\n", h->size, h->base);
+		HEAPDEBUG fprintf(stderr, "#HEAPalloc %zu %p\n", h->size, (void*) h->base);
 	}
 	if (!GDKinmemory() && h->filename[0] != '\0' && h->base == NULL) {
 		char *nme;
@@ -236,7 +236,7 @@ HEAPextend(Heap *h, size_t size, int mayshare)
 		if (!must_mmap) {
 			h->newstorage = h->storage = STORE_MEM;
 			h->base = GDKrealloc(h->base, size);
-			HEAPDEBUG fprintf(stderr, "#HEAPextend: extending malloced heap %zu %zu %p %p\n", size, h->size, bak.base, h->base);
+			HEAPDEBUG fprintf(stderr, "#HEAPextend: extending malloced heap %zu %zu %p %p\n", size, h->size, (void*) bak.base, (void*) h->base);
 			h->size = size;
 			if (h->base)
 				return GDK_SUCCEED; /* success */
@@ -332,7 +332,7 @@ HEAPshrink(Heap *h, size_t size)
 		HEAPDEBUG fprintf(stderr, "#HEAPshrink: shrinking malloced "
 				  "heap %zu %zu %p "
 				  "%p\n", h->size, size,
-				  h->base, p);
+				  (void*) h->base, (void*) p);
 	} else {
 		char *path;
 
@@ -358,7 +358,7 @@ HEAPshrink(Heap *h, size_t size)
 				  "%p\n",
 				  h->storage == STORE_MMAP ? "shared" : "privately",
 				  h->filename, h->size, size,
-				  h->base, p);
+				  (void*) h->base, (void*) p);
 	}
 	if (p) {
 		h->size = size;
@@ -576,7 +576,7 @@ HEAPfree(Heap *h, int rmheap)
 		if (h->storage == STORE_MEM) {	/* plain memory */
 			HEAPDEBUG fprintf(stderr, "#HEAPfree %zu"
 					  " %p\n",
-					  h->size, h->base);
+					  h->size, (void*) h->base);
 			GDKfree(h->base);
 		} else if (h->storage == STORE_CMEM) {
 			//heap is stored in regular C memory rather than GDK memory,so we call free()
@@ -591,7 +591,7 @@ HEAPfree(Heap *h, int rmheap)
 			}
 			HEAPDEBUG fprintf(stderr, "#munmap(base=%p, "
 					  "size=%zu) = %d\n",
-					  (void *)h->base,
+					  (void *) h->base,
 					  h->size, (int) ret);
 		}
 	}

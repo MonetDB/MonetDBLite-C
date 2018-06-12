@@ -346,7 +346,7 @@ MT_mremap(const char *path, int mode, void *old_address, size_t old_size, size_t
 		if (munmap((char *) old_address + *new_size,
 			   old_size - *new_size) < 0) {
 			GDKsyserror("MT_mremap: munmap(%p,%zu) failed\n",
-				    ((char *) old_address + *new_size),
+					(void*) ((char *) old_address + *new_size),
 				    old_size - *new_size);
 			fprintf(stderr, "= %s:%d: MT_mremap(%s,%p,%zu,%zu): munmap() failed\n", __FILE__, __LINE__, path?path:"NULL", old_address, old_size, *new_size);
 			/* even though the system call failed, we
