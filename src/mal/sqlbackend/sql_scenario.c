@@ -669,7 +669,7 @@ SQLexitClient(Client c)
 	if ((err = SQLresetClient(c)) != MAL_SUCCEED)
 		return err;
 	MALexitClient(c);
-	MCcloseClient(c);
+	//FIXME MCcloseClient(c);
 	return MAL_SUCCEED;
 }
 
