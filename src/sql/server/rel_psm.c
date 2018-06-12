@@ -1526,7 +1526,7 @@ rel_psm(mvc *sql, symbol *s)
 		sql->type = Q_UPDATE;
 	} 	break;
 	default:
-		return sql_error(sql, 01, SQLSTATE(42000) "Schema statement unknown symbol(%p)->token = %s", s, token2string(s->token));
+		return sql_error(sql, 01, SQLSTATE(42000) "Schema statement unknown symbol(%p)->token = %s", (void*) s, token2string(s->token));
 	}
 	return ret;
 }
