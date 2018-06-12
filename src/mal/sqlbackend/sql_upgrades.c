@@ -969,7 +969,8 @@ sql_update_mar2018(Client c, mvc *sql)
 "SELECT id, name, schema_id, cast(null as int) as table_id, cast(null as varchar(124)) as table_name, 'sequence', 'sys.sequences' FROM sys.sequences UNION ALL\n"
 "SELECT id, sqlname, schema_id, cast(null as int) as table_id, cast(null as varchar(124)) as table_name, 'type', 'sys.types' FROM sys.types WHERE id > 2000 /* exclude system types to prevent duplicates with auths.id */\n"
 " ORDER BY id;\n"
-"GRANT SELECT ON sys.ids TO PUBLIC;\n"
+"GRANT SELECT ON sys.ids TO PUBLIC;\n");
+	pos += snprintf(buf + pos, bufsize - pos,
 "CREATE VIEW sys.dependencies_vw AS\n"
 "SELECT d.id, i1.obj_type, i1.name,\n"
 "       d.depend_id as used_by_id, i2.obj_type as used_by_obj_type, i2.name as used_by_name,\n"
@@ -994,7 +995,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY t.schema_id, t.name, c.name, k.type, k.name, kc.nr;\n"
 "GRANT SELECT ON sys.dependency_columns_on_keys TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "CREATE VIEW sys.dependency_tables_on_views AS\n"
 "SELECT t.schema_id AS table_schema_id, t.id AS table_id, t.name AS table_name, v.schema_id AS view_schema_id, v.id AS view_id, v.name AS view_name, dep.depend_type AS depend_type\n"
 "  FROM sys.tables AS t, sys.tables AS v, sys.dependencies AS dep\n"
@@ -1024,7 +1024,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY f.schema_id, f.name, v.schema_id, v.name;\n"
 "GRANT SELECT ON sys.dependency_functions_on_views TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "CREATE VIEW sys.dependency_schemas_on_users AS\n"
 "SELECT s.id AS schema_id, s.name AS schema_name, u.name AS user_name, CAST(6 AS smallint) AS depend_type\n"
 "  FROM sys.users AS u, sys.schemas AS s\n"
@@ -1053,7 +1052,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY c.name, c.table_id, f.name, f.id;\n"
 "GRANT SELECT ON sys.dependency_columns_on_functions TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "CREATE VIEW sys.dependency_functions_on_functions AS\n"
 "SELECT f1.schema_id, f1.id AS function_id, f1.name AS function_name, f1.type AS function_type,\n"
 "       f2.schema_id AS used_in_function_schema_id, f2.id AS used_in_function_id, f2.name AS used_in_function_name, f2.type AS used_in_function_type, dep.depend_type AS depend_type\n"
@@ -1081,7 +1079,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY t.schema_id, t.name, tri.name, c.name;\n"
 "GRANT SELECT ON sys.dependency_columns_on_triggers TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "CREATE VIEW sys.dependency_functions_on_triggers AS\n"
 "SELECT f.schema_id AS function_schema_id, f.id AS function_id, f.name AS function_name, f.type AS function_type,\n"
 "       tri.id AS trigger_id, tri.name AS trigger_name, tri.table_id AS trigger_table_id, dep.depend_type AS depend_type\n"
@@ -1113,7 +1110,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY t.schema_id, t.name, fk.name;\n"
 "GRANT SELECT ON sys.dependency_tables_on_foreignkeys TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "CREATE VIEW sys.dependency_keys_on_foreignkeys AS\n"
 "SELECT k.table_id AS key_table_id, k.id AS key_id, k.name AS key_name, fk.table_id AS fk_table_id, fk.id AS fk_id, fk.name AS fk_name, CAST(k.type AS smallint) AS key_type, CAST(11 AS smallint) AS depend_type\n"
 "  FROM sys.keys AS k, sys.keys AS fk\n"
@@ -1142,7 +1138,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY c.name, c.table_id, p.name, p.id;\n"
 "GRANT SELECT ON sys.dependency_columns_on_procedures TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "CREATE VIEW sys.dependency_functions_on_procedures AS\n"
 "SELECT f.schema_id AS function_schema_id, f.id AS function_id, f.name AS function_name, f.type AS function_type,\n"
 "       p.schema_id AS procedure_schema_id, p.id AS procedure_id, p.name AS procedure_name, p.type AS procedure_type, dep.depend_type AS depend_type\n"
@@ -1173,7 +1168,6 @@ sql_update_mar2018(Client c, mvc *sql)
 " ORDER BY dt.sqlname, f.name, a.number, a.name;\n"
 "GRANT SELECT ON sys.dependency_args_on_types TO PUBLIC;\n");
 	pos += snprintf(buf + pos, bufsize - pos,
-
 "UPDATE sys._tables SET system = true\n"
 " WHERE name IN ('ids', 'dependencies_vw', 'dependency_owners_on_schemas', 'dependency_columns_on_keys',\n"
 " 'dependency_tables_on_views', 'dependency_views_on_views', 'dependency_columns_on_views', 'dependency_functions_on_views',\n"
