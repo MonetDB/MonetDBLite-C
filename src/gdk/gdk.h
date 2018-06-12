@@ -569,7 +569,7 @@ typedef struct {
 	size_t free;		/* index where free area starts. */
 	size_t size;		/* size of the heap (bytes) */
 	char *base;		/* base pointer in memory. */
-	char filename[32];	/* file containing image of the heap */
+	char filename[100];	/* file containing image of the heap */
 
 	bool copied:1,		/* a copy of an existing map. */
 		hashash:1,	/* the string heap contains hash values */
@@ -1575,7 +1575,7 @@ typedef struct {
 	char bak[16];		/* logical name backup (tmp_%o) */
 	bat next;		/* next BBP slot in linked list */
 	BAT *desc;		/* the BAT descriptor */
-	char physical[20];	/* dir + basename for storage */
+	char physical[30];	/* dir + basename for storage */
 	str options;		/* A string list of options */
 	int refs;		/* in-memory references on which the loaded status of a BAT relies */
 	int lrefs;		/* logical references on which the existence of a BAT relies */
