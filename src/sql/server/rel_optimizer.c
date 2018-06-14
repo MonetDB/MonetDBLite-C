@@ -727,7 +727,7 @@ find_fk( mvc *sql, list *rels, list *exps)
 		if (!find_prop(je->p, PROP_JOINIDX)) {
 			int swapped = 0;
 			list *aaje = matching_joins(sql->sa, rels, aje, je);
-			list *eje = list_select(aaje, (void*)1, (fcmp) &exp_is_eqjoin, (fdup)NULL);
+			list *eje = list_select(aaje, (void*)1, (fcmp) (void*) &exp_is_eqjoin, (fdup)NULL);
 			sql_rel *lr = find_rel(rels, le), *olr = lr;
 			sql_rel *rr = find_rel(rels, re), *orr = rr;
 			sql_rel *bt = NULL;
