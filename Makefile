@@ -1,5 +1,5 @@
 OPTIMIZE=$(OPT)
-
+# dummy
 ifneq ($(OPTIMIZE), true)
 	OPTFLAGS=-g -Wall -Wextra -Werror
 	OBJDIR=build/debug
