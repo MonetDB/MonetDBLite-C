@@ -232,7 +232,7 @@ BLOBtostr(str *tostr, size_t *l, const blob *p)
 		return 3;
 	}
 
-	sprintf(*tostr, "(%zu:", p->nitems);
+	sprintf(*tostr, "("ULLFMT":", (uint64_t) p->nitems);
 	s = *tostr + strlen(*tostr);
 
 	for (i = 0; i < p->nitems; i++) {
@@ -450,7 +450,7 @@ SQLBLOBfromstr(const char *instr, size_t *l, blob **val)
 	 */
 	i = strlen(instr);
 	if (i % 2 == 1) {
-		GDKerror("sqlblob_fromstr: Illegal blob length '%zu' (should be even)\n", i);
+		GDKerror("sqlblob_fromstr: Illegal blob length (should be even)\n");
 		return -1;
 	}
 	nitems = i / 2;

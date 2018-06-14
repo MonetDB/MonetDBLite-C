@@ -1099,9 +1099,6 @@ THRnew(const char *name)
 		s->data[0] = THRdata[0];
 		s->sp = THRsp();
 
-		PARDEBUG fprintf(stderr, "#%x %zu sp = %zu\n", (unsigned) s->tid, (size_t) pid, (size_t) s->sp);
-		PARDEBUG fprintf(stderr, "#nrofthreads %d\n", GDKnrofthreads);
-
 		GDKnrofthreads++;
 		s->name = GDKstrdup(name);
 	}
@@ -1117,7 +1114,6 @@ THRdel(Thread t)
 		GDKfatal("THRdel: illegal call\n");
 	}
 	MT_lock_set(&GDKthreadLock);
-	PARDEBUG fprintf(stderr, "#pid = %zu, disconnected, %d left\n", (size_t) t->pid, GDKnrofthreads);
 
 	GDKfree(t->name);
 	t->name = NULL;

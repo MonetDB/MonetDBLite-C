@@ -521,7 +521,7 @@ listFunction(stream *fd, MalBlkPtr mb, MalStkPtr stk, int flg, int first, int si
 				GDKfree(ps);
 			} else mnstr_printf(fd,"#failed instruction2str()\n");
 		}
-		mnstr_printf(fd, "%% %zu # length\n", len);
+		mnstr_printf(fd, "%% "ULLFMT" # length\n", (uint64_t) len);
 	}
 	for (i = first; i < first +size && i < mb->stop; i++)
 		printInstruction(fd, mb, stk, getInstrPtr(mb, i), flg);
