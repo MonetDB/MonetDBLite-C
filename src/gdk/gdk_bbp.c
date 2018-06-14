@@ -1388,7 +1388,7 @@ BBPreadEntries(FILE *fp, unsigned bbpversion)
 		BBP_logical(bid) = GDKstrdup(s);
 		/* tailname is ignored */
 		if (strlen(filename) >= sizeof(BBP_physical(bid)))
-			GDKfatal("BBPinit: physical name for BAT (%s) is too long (%zu bytes).", filename, sizeof(BBP_physical(bid)) - 1);
+			GDKfatal("BBPinit: physical name for BAT (%s) is too long.", filename);
 		strncpy(BBP_physical(bid), filename, sizeof(BBP_physical(bid)));
 #ifdef STATIC_CODE_ANALYSIS
 		/* help coverity */
@@ -1739,7 +1739,7 @@ static inline int
 heap_entry(FILE *fp, BAT *b)
 {
 	return fprintf(fp, " %s %d %d %d " BUNFMT " " BUNFMT " " BUNFMT " "
-		       BUNFMT " " OIDFMT " %zu %zu %d",
+		       BUNFMT " " OIDFMT " %"PRIu64" %"PRIu64" %d",
 		       b->ttype >= 0 ? BATatoms[b->ttype].name : ATOMunknown_name(b->ttype),
 		       b->twidth,
 		       b->tvarsized | (b->tvheap ? b->tvheap->hashash << 1 : 0),
@@ -1754,8 +1754,8 @@ heap_entry(FILE *fp, BAT *b)
 		       b->tnosorted,
 		       b->tnorevsorted,
 		       b->tseqbase,
-		       b->theap.free,
-		       b->theap.size,
+		       (uint64_t) b->theap.free,
+			   (uint64_t) b->theap.size,
 		       (int) b->theap.newstorage);
 }
 
@@ -1764,8 +1764,8 @@ vheap_entry(FILE *fp, Heap *h)
 {
 	if (h == NULL)
 		return 0;
-	return fprintf(fp, " %zu %zu %d",
-		       h->free, h->size, (int) h->newstorage);
+	return fprintf(fp, " %"PRIu64" %"PRIu64" %d",
+			(uint64_t) h->free, (uint64_t) h->size, (int) h->newstorage);
 }
 
 static gdk_return
