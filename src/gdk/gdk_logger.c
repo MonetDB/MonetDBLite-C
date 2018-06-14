@@ -1433,8 +1433,8 @@ logger_set_logdir_path(char *filename, const char *fn,
 	int role = PERSISTENT; /* default role is persistent, i.e. the default dbfarm */
 
 	if (MT_path_absolute(logdir)) {
-		char logdir_parent_path[FILENAME_MAX] = "";
-		char logdir_name[FILENAME_MAX] = "";
+		char logdir_parent_path[FILENAME_MAX-3] = "";
+		char logdir_name[FILENAME_MAX-3] = "";
 
 		/* split the logdir string into absolute parent dir
 		 * path and (relative) log dir name */
