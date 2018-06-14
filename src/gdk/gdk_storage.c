@@ -305,9 +305,7 @@ GDKmove(int farmid, const char *dir1, const char *nme1, const char *ext1, const 
 {
 	char *path1;
 	char *path2;
-	int ret, t0 = 0;
-
-	IODEBUG t0 = GDKms();
+	int ret = 0;
 
 	if ((nme1 == NULL) || (*nme1 == 0)) {
 		errno = EFAULT;
@@ -320,7 +318,6 @@ GDKmove(int farmid, const char *dir1, const char *nme1, const char *ext1, const 
 		if (ret < 0)
 			GDKsyserror("GDKmove: cannot rename %s to %s\n", path1, path2);
 
-		IODEBUG fprintf(stderr, "#move %s %s = %d (%dms)\n", path1, path2, ret, GDKms() - t0);
 	} else {
 		ret = -1;
 	}
@@ -334,7 +331,6 @@ GDKextendf(int fd, size_t size, const char *fn)
 {
 	struct stat stb;
 	int rt = 0;
-	int t0 = 0;
 	(void) fn;
 	assert(!GDKinmemory());
 
@@ -348,7 +344,6 @@ GDKextendf(int fd, size_t size, const char *fn)
 		return GDK_FAIL;
 	}
 	/* if necessary, extend the underlying file */
-	IODEBUG t0 = GDKms();
 	if (stb.st_size < (off_t) size) {
 #ifdef HAVE_FALLOCATE
 		if ((rt = fallocate(fd, 0, stb.st_size, (off_t) size - stb.st_size)) < 0 &&
