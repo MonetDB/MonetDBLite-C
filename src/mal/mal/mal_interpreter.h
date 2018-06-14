@@ -34,90 +34,7 @@ mal_export str malCommandCall(MalStkPtr stk, InstrPtr pci);
 mal_export int isNotUsedIn(InstrPtr p, int start, int a);
 
 mal_export ptr getArgReference(MalStkPtr stk, InstrPtr pci, int k);
-#if !defined(NDEBUG) && defined(__GNUC__)
-/* for ease of programming and debugging (assert reporting a useful
- * location), we use a GNU C extension to check the type of arguments,
- * and of course only when assertions are enabled */
-#define getArgReference_TYPE(s, pci, k, TYPE)					\
-	({															\
-		assert((s)->stk[(pci)->argv[k]].vtype == TYPE_##TYPE);	\
-		(TYPE *) getArgReference((s), (pci), (k));				\
-	})
-#define getArgReference_bit(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_bit);				\
-		(bit *) &v->val.btval;						\
-	})
-#define getArgReference_sht(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_sht);				\
-		&v->val.shval;								\
-	})
-#define getArgReference_bat(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_bat);				\
-		&v->val.bval;								\
-	})
-#define getArgReference_int(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_int);				\
-		&v->val.ival;								\
-	})
-#define getArgReference_bte(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_bte);				\
-		&v->val.btval;								\
-	})
-#define getArgReference_oid(s, pci, k)							\
-	({															\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];				\
-		assert(v->vtype == TYPE_oid || v->vtype == TYPE_void);	\
-		&v->val.oval;											\
-	})
-#define getArgReference_ptr(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_ptr);				\
-		&v->val.pval;								\
-	})
-#define getArgReference_flt(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_flt);				\
-		&v->val.fval;								\
-	})
-#define getArgReference_dbl(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_dbl);				\
-		&v->val.dval;								\
-	})
-#define getArgReference_lng(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_lng);				\
-		&v->val.lval;								\
-	})
-#ifdef HAVE_HGE
-#define getArgReference_hge(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_hge);				\
-		&v->val.hval;								\
-	})
-#endif
-#define getArgReference_str(s, pci, k)				\
-	({												\
-		ValRecord *v = &(s)->stk[(pci)->argv[k]];	\
-		assert(v->vtype == TYPE_str);				\
-		&v->val.sval;								\
-	})
-#else
+
 #define getArgReference_TYPE(s, pci, k, TYPE)	((TYPE *) getArgReference(s, pci, k))
 #define getArgReference_bit(s, pci, k)	((bit *) &(s)->stk[(pci)->argv[k]].val.btval)
 #define getArgReference_sht(s, pci, k)	(&(s)->stk[(pci)->argv[k]].val.shval)
@@ -133,6 +50,5 @@ mal_export ptr getArgReference(MalStkPtr stk, InstrPtr pci, int k);
 #define getArgReference_hge(s, pci, k)	(&(s)->stk[(pci)->argv[k]].val.hval)
 #endif
 #define getArgReference_str(s, pci, k)	(&(s)->stk[(pci)->argv[k]].val.sval)
-#endif
 
 #endif /*  _MAL_INTERPRET_H*/

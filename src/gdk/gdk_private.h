@@ -74,7 +74,6 @@ __hidden void BATsetdims(BAT *b)
 __hidden gdk_return BBPcacheit(BAT *bn, bool lock)
 	__attribute__((__warn_unused_result__))
 	__attribute__((__visibility__("hidden")));
-void BBPdump(void);		/* never called: for debugging only */
 __hidden void BBPexit(void)
 	__attribute__((__visibility__("hidden")));
 __hidden BAT *BBPgetdesc(bat i)
@@ -320,67 +319,3 @@ extern MT_Lock MT_system_lock;
  * incompatible) */
 #define EXTRALEN ((SIZEOF_BUN + GDK_VARALIGN - 1) & ~(GDK_VARALIGN - 1))
 
-#if !defined(NDEBUG) && !defined(STATIC_CODE_ANALYSIS)
-/* see comment in gdk.h */
-#ifdef __GNUC__
-#define GDKmunmap(p, l)						\
-	({	void *_ptr = (p);				\
-		size_t _len = (l);				\
-		gdk_return _res = GDKmunmap(_ptr, _len);	\
-		ALLOCDEBUG					\
-			fprintf(stderr,				\
-				"#GDKmunmap(%p,%zu) -> %u"	\
-				" %s[%s:%d]\n",			\
-				_ptr, _len, _res,		\
-				__func__, __FILE__, __LINE__);	\
-		_res;						\
-	})
-#define GDKmremap(p, m, oa, os, ns)					\
-	({								\
-		const char *_path = (p);				\
-		int _mode = (m);					\
-		void *_oa = (oa);					\
-		size_t _os = (os);					\
-		size_t *_ns = (ns);					\
-		size_t _ons = *_ns;					\
-		void *_res = GDKmremap(_path, _mode, _oa, _os, _ns);	\
-		ALLOCDEBUG						\
-			fprintf(stderr,					\
-				"#GDKmremap(%s,0x%x,%p,%zu,%zu > %zu) -> %p" \
-				" %s[%s:%d]\n",				\
-				_path ? _path : "NULL", (unsigned) _mode, \
-				_oa, _os, _ons, *_ns,			\
-				_res,					\
-				__func__, __FILE__, __LINE__);		\
-		_res;							\
-	 })
-#else
-static inline gdk_return
-GDKmunmap_debug(void *ptr, size_t len, const char *filename, int lineno)
-{
-	gdk_return res = GDKmunmap(ptr, len);
-	ALLOCDEBUG fprintf(stderr,
-			   "#GDKmunmap(%p,%zu) -> %d [%s:%d]\n",
-			   ptr, len, (int) res, filename, lineno);
-	return res;
-}
-#define GDKmunmap(p, l)		GDKmunmap_debug((p), (l), __FILE__, __LINE__)
-static inline void *
-GDKmremap_debug(const char *path, int mode, void *old_address, size_t old_size, size_t *new_size, const char *filename, int lineno)
-{
-	size_t orig_new_size = *new_size;
-	void *res = GDKmremap(path, mode, old_address, old_size, new_size);
-	ALLOCDEBUG
-		fprintf(stderr,
-			"#GDKmremap(%s,0x%x,%p,%zu,%zu > %zu) -> %p"
-			" [%s:%d]\n",
-			path ? path : "NULL", mode,
-			old_address, old_size, orig_new_size, *new_size,
-			res,
-			filename, lineno);
-	return res;
-}
-#define GDKmremap(p, m, oa, os, ns)	GDKmremap_debug(p, m, oa, os, ns, __FILE__, __LINE__)
-
-#endif
-#endif
