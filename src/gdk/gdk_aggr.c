@@ -155,11 +155,6 @@ BATgroupaggrinit(BAT *b, BAT *g, BAT *e, BAT *s,
 		if (ngrp == 1 && cand == NULL) {			\
 			/* single group, no candidate list */		\
 			TYPE2 sum;					\
-			ALGODEBUG fprintf(stderr,			\
-					  "#%s: no candidates, no groups; " \
-					  "start " BUNFMT ", end " BUNFMT \
-					  ", nonil = %d\n",		\
-					  func, start, end, nonil);	\
 			sum = 0;					\
 			if (nonil) {					\
 				*seen = start < end;			\
@@ -197,11 +192,6 @@ BATgroupaggrinit(BAT *b, BAT *g, BAT *e, BAT *s,
 			/* single group, with candidate list */		\
 			TYPE2 sum;					\
 			bool seenval = false;				\
-			ALGODEBUG fprintf(stderr,			\
-					  "#%s: with candidates, no groups; " \
-					  "start " BUNFMT ", end " BUNFMT \
-					  "\n",				\
-					  func, start, end);		\
 			sum = 0;					\
 			while (cand < candend && nils == 0) {		\
 				i = *cand++ - seqb;			\
@@ -226,11 +216,6 @@ BATgroupaggrinit(BAT *b, BAT *g, BAT *e, BAT *s,
 				*sums = sum;				\
 		} else if (cand == NULL) {				\
 			/* multiple groups, no candidate list */	\
-			ALGODEBUG fprintf(stderr,			\
-					  "#%s: no candidates, with groups; " \
-					  "start " BUNFMT ", end " BUNFMT \
-					  "\n",				\
-					  func, start, end);		\
 			for (i = start; i < end; i++) {			\
 				if (gids == NULL ||			\
 				    (gids[i] >= min && gids[i] <= max)) { \
@@ -263,11 +248,6 @@ BATgroupaggrinit(BAT *b, BAT *g, BAT *e, BAT *s,
 			}						\
 		} else {						\
 			/* multiple groups, with candidate list */	\
-			ALGODEBUG fprintf(stderr,			\
-					  "#%s: with candidates, with " \
-					  "groups; start " BUNFMT ", "	\
-					  "end " BUNFMT "\n",		\
-					  func, start, end);		\
 			while (cand < candend) {			\
 				i = *cand++ - seqb;			\
 				if (i >= end)				\
