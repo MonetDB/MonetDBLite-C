@@ -21,13 +21,6 @@
 		(P1)->theap.free = 0;				\
 		(P1)->batInserted = 0;				\
 		(P1)->tshift = ATOMelmshift(Tsize(P1));		\
-		DELTADEBUG fprintf(stderr,			\
-			"#DELTAinit %s free %zu ins " BUNFMT	\
-			" base %p\n",				\
-			BATgetId(P1),				\
-			(P1)->theap.free,			\
-			(P1)->batInserted,			\
-			(void*) (P1)->theap.base);			\
 	} while (0)
 /*
  * Upon saving a BAT, we should convert the delta marker BUN pointers

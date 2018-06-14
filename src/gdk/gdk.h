@@ -1190,7 +1190,7 @@ gdk_export bte ATOMelmshift(int sz);
 		BUN _p = BUNlast(b);					\
 		if (_p >= BATcapacity(b)) {				\
 			if (_p == BUN_MAX || BATcount(b) == BUN_MAX) {	\
-				GDKerror("bunfastapp: too many elements to accomodate (" BUNFMT ")\n", BUN_MAX); \
+				GDKerror("bunfastapp: too many elements to accomodate\n"); \
 				goto bunins_failed;			\
 			}						\
 			if (BATextend((b), BATgrows(b)) != GDK_SUCCEED)	\
