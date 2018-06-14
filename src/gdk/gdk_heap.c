@@ -176,7 +176,7 @@ HEAPalloc(Heap *h, size_t nitems, size_t itemsize)
 gdk_return
 HEAPextend(Heap *h, size_t size, int mayshare)
 {
-	char nme[sizeof(h->filename)], *ext;
+	char nme[sizeof(h->filename)], *ext = NULL;
 	const char *failure = "None";
 
 	if (h->filename[0] != '\0' && !GDKinmemory()) {
@@ -613,7 +613,6 @@ HEAPload_intern(Heap *h, const char *nme, const char *ext, const char *suffix, i
 	size_t minsize;
 	int ret = 0;
 	char *srcpath, *dstpath, *tmp;
-	int t0;
 
 	h->storage = h->newstorage = h->size < 4 * GDK_mmap_pagesize ? STORE_MEM : STORE_MMAP;
 
@@ -660,7 +659,6 @@ HEAPload_intern(Heap *h, const char *nme, const char *ext, const char *suffix, i
 	srcpath = tmp;
 	strcat(srcpath, suffix);
 
-	t0 = GDKms();
 	ret = rename(srcpath, dstpath);
 
 	GDKfree(srcpath);
