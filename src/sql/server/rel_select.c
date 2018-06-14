@@ -4987,7 +4987,7 @@ static void
 rel_remove_internal_exp(sql_rel *rel)
 {
 	if (rel->exps) {
-		list *n_exps = list_select(rel->exps, rel, (fcmp)&exp_is_not_intern, (fdup)NULL);
+		list *n_exps = list_select(rel->exps, rel, (fcmp)(void*) &exp_is_not_intern, (fdup)NULL);
 
 		rel->exps = n_exps;
 	}

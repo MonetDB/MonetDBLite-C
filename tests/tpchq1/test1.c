@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 
 	for (i = 0; i < 10; i++) {
 		char* dbfarm = NULL;
-		char dbfarmdelbuf[BUFSIZ];
+		char dbfarmdelbuf[BUFSIZ + 10];
 
 		if (i % 2 == 0) {
 

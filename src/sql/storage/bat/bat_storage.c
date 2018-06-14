@@ -3086,9 +3086,9 @@ bat_storage_init( store_functions *sf)
 	sf->clear_idx = (clear_idx_fptr)&clear_idx;
 	sf->clear_del = (clear_del_fptr)&clear_del;
 
-	sf->update_table = (update_table_fptr)&update_table;
-	sf->log_table = (update_table_fptr)&log_table;
-	sf->snapshot_table = (update_table_fptr)&snapshot_table;
+	sf->update_table = (update_table_fptr) (void*) &update_table;
+	sf->log_table = (update_table_fptr)(void*) &log_table;
+	sf->snapshot_table = (update_table_fptr)(void*)&snapshot_table;
 	sf->gtrans_update = (gtrans_update_fptr)&gtr_update;
 	sf->gtrans_minmax = (gtrans_update_fptr)&gtr_minmax;
 }
