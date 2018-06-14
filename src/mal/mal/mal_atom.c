@@ -96,56 +96,56 @@ malAtomProperty(MalBlkPtr mb, InstrPtr pci)
 		break;
 	case 'n':
 		if (idcmp("null", name) == 0 && pci->argc == 1) {
-			const void *atmnull = ((const void *(*)(void))pci->fcn)();
+			const void *atmnull = ((const void *(*)(void))(void*)pci->fcn)();
 
 			BATatoms[tpe].atomNull = atmnull;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		if (idcmp("nequal", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomCmp = (int (*)(const void *, const void *))pci->fcn;
+			BATatoms[tpe].atomCmp = (int (*)(const void *, const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 'p':
 		if (idcmp("put", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomPut = (var_t (*)(Heap *, var_t *, const void *))pci->fcn;
+			BATatoms[tpe].atomPut = (var_t (*)(Heap *, var_t *, const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 's':
 		if (idcmp("storage", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].storage = (*(int (*)(void))pci->fcn)();
+			BATatoms[tpe].storage = (*(int (*)(void))(void*)pci->fcn)();
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 't':
 		if (idcmp("tostr", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomToStr = (ssize_t (*)(str *, size_t *, const void *))pci->fcn;
+			BATatoms[tpe].atomToStr = (ssize_t (*)(str *, size_t *, const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 'u':
 		if (idcmp("unfix", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomUnfix = (int (*)(const void *))pci->fcn;
+			BATatoms[tpe].atomUnfix = (int (*)(const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 'r':
 		if (idcmp("read", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomRead = (void *(*)(void *, stream *, size_t))pci->fcn;
+			BATatoms[tpe].atomRead = (void *(*)(void *, stream *, size_t))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 'w':
 		if (idcmp("write", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomWrite = (gdk_return (*)(const void *, stream *, size_t))pci->fcn;
+			BATatoms[tpe].atomWrite = (gdk_return (*)(const void *, stream *, size_t))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
