@@ -47,14 +47,14 @@ malAtomProperty(MalBlkPtr mb, InstrPtr pci)
 	switch (name[0]) {
 	case 'd':
 		if (idcmp("del", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomDel = (void (*)(Heap *, var_t *))pci->fcn;
+			BATatoms[tpe].atomDel = (void (*)(Heap *, var_t *)) (void*) pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 'c':
 		if (idcmp("cmp", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomCmp = (int (*)(const void *, const void *))pci->fcn;
+			BATatoms[tpe].atomCmp = (int (*)(const void *, const void *)) (void*) pci->fcn;
 			BATatoms[tpe].linear = true;
 			setAtomName(pci);
 			return MAL_SUCCEED;
@@ -62,12 +62,12 @@ malAtomProperty(MalBlkPtr mb, InstrPtr pci)
 		break;
 	case 'f':
 		if (idcmp("fromstr", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomFromStr = (ssize_t (*)(const char *, size_t *, ptr *))pci->fcn;
+			BATatoms[tpe].atomFromStr = (ssize_t (*)(const char *, size_t *, ptr *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		if (idcmp("fix", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomFix = (int (*)(const void *))pci->fcn;
+			BATatoms[tpe].atomFix = (int (*)(const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
@@ -77,19 +77,19 @@ malAtomProperty(MalBlkPtr mb, InstrPtr pci)
 			/* heap function makes an atom varsized */
 			BATatoms[tpe].size = sizeof(var_t);
 			assert_shift_width(ATOMelmshift(ATOMsize(tpe)), ATOMsize(tpe));
-			BATatoms[tpe].atomHeap = (void (*)(Heap *, size_t))pci->fcn;
+			BATatoms[tpe].atomHeap = (void (*)(Heap *, size_t))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		if (idcmp("hash", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomHash = (BUN (*)(const void *))pci->fcn;
+			BATatoms[tpe].atomHash = (BUN (*)(const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
 		break;
 	case 'l':
 		if (idcmp("length", name) == 0 && pci->argc == 1) {
-			BATatoms[tpe].atomLen = (size_t (*)(const void *))pci->fcn;
+			BATatoms[tpe].atomLen = (size_t (*)(const void *))(void*)pci->fcn;
 			setAtomName(pci);
 			return MAL_SUCCEED;
 		}
