@@ -35,11 +35,6 @@ BATcommit(BAT *b)
 {
 	if (b == NULL)
 		return;
-	DELTADEBUG fprintf(stderr, "#BATcommit1 %s free %zu ins " BUNFMT " base %p\n",
-			   BATgetId(b),
-			   b->theap.free,
-			   b->batInserted,
-			   (void*) b->theap.base);
 	if (!BATdirty(b)) {
 		b->batDirtyflushed = 0;
 	}
@@ -47,11 +42,6 @@ BATcommit(BAT *b)
 		b->batDirtydesc = 1;
 	}
 	b->batInserted = BUNlast(b);
-	DELTADEBUG fprintf(stderr, "#BATcommit2 %s free %zu ins " BUNFMT " base %p\n",
-			   BATgetId(b),
-			   b->theap.free,
-			   b->batInserted,
-			   (void*) b->theap.base);
 }
 
 /*
@@ -84,7 +74,6 @@ BATundo(BAT *b)
 
 	if (b == NULL)
 		return;
-	DELTADEBUG fprintf(stderr, "#BATundo %s \n", BATgetId(b));
 	if (b->batDirtyflushed) {
 		b->batDirtydesc = b->theap.dirty = 1;
 	} else {
