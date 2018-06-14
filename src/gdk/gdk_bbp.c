@@ -1739,7 +1739,7 @@ static inline int
 heap_entry(FILE *fp, BAT *b)
 {
 	return fprintf(fp, " %s %d %d %d " BUNFMT " " BUNFMT " " BUNFMT " "
-		       BUNFMT " " OIDFMT " %"PRIu64" %"PRIu64" %d",
+		       BUNFMT " " OIDFMT " "ULLFMT" "ULLFMT" %d",
 		       b->ttype >= 0 ? BATatoms[b->ttype].name : ATOMunknown_name(b->ttype),
 		       b->twidth,
 		       b->tvarsized | (b->tvheap ? b->tvheap->hashash << 1 : 0),
@@ -1764,7 +1764,7 @@ vheap_entry(FILE *fp, Heap *h)
 {
 	if (h == NULL)
 		return 0;
-	return fprintf(fp, " %"PRIu64" %"PRIu64" %d",
+	return fprintf(fp, " "ULLFMT" "ULLFMT" %d",
 			(uint64_t) h->free, (uint64_t) h->size, (int) h->newstorage);
 }
 
