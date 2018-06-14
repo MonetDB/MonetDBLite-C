@@ -1232,8 +1232,9 @@ exp_is_join(sql_exp *e, list *rels)
 }
 
 int
-exp_is_eqjoin(sql_exp *e)
+exp_is_eqjoin(sql_exp *e, list *rels)
 {
+	(void) rels;
 	if (e->flag == cmp_equal) {
 		sql_exp *l = e->l;
 		sql_exp *r = e->r;
