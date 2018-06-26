@@ -1455,6 +1455,8 @@ BBPheader(FILE *fp)
 	if (fgets(buf, sizeof(buf), fp) == NULL) {
 		GDKfatal("BBPinit: short BBP");
 	}
+	ATOMIC_SET(BBPsize, 1, BBPsizeLock);
+	BBPdirty(1);
 	/* when removing GDKLIBRARY_TALIGN, also remove the strstr
 	 * call and just sscanf from buf */
 	if ((s = strstr(buf, "BBPsize")) != NULL) {
@@ -1591,11 +1593,12 @@ BBPinit(void)
 	/* scan the BBP.dir to obtain current size */
 	BBPlimit = 0;
 	memset(BBP, 0, sizeof(BBP));
-	ATOMIC_SET(BBPsize, 1, BBPsizeLock);
-	BBPdirty(1);
 
 	if (!GDKinmemory()) {
 		bbpversion = BBPheader(fp);
+	} else {
+		ATOMIC_SET(BBPsize, 1, BBPsizeLock);
+		BBPdirty(1);
 	}
 	BBPextend(0, FALSE);		/* allocate BBP records */
 	ATOMIC_SET(BBPsize, 1, BBPsizeLock);
