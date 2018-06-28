@@ -501,8 +501,8 @@ typedef char *str;
 
 #define SIZEOF_LNG		8
 #define LL_CONSTANT(val)	INT64_C(val)
-//#define LLFMT			"%" PRId64
-//#define ULLFMT			"%" PRIu64
+#define LLFMT			"%" PRId64
+#define ULLFMT			"%" PRIu64
 
 typedef oid var_t;		/* type used for heap index of var-sized BAT */
 #define SIZEOF_VAR_T	SIZEOF_OID
@@ -517,11 +517,7 @@ typedef oid var_t;		/* type used for heap index of var-sized BAT */
 typedef oid BUN;		/* BUN position */
 #define SIZEOF_BUN	SIZEOF_OID
 #define BUNFMT		OIDFMT
-/* alternatively:
-typedef size_t BUN;
-#define SIZEOF_BUN	SIZEOF_SIZE_T
-#define BUNFMT		"%zu"
-*/
+
 #if SIZEOF_BUN == SIZEOF_INT
 #define BUN_NONE ((BUN) INT_MAX)
 #else
