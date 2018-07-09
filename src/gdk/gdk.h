@@ -326,6 +326,10 @@
 
 #ifdef HAVE_DIRENT_H
 # include <dirent.h>
+#else
+#ifdef _MSC_VER
+#include "dirent-windows.h"
+#endif
 #endif
 
 #include <limits.h>		/* for *_MIN and *_MAX */
