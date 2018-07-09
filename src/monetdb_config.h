@@ -5,7 +5,9 @@
 #ifndef _SEEN_MONETDB_CONFIG_H
 #define _SEEN_MONETDB_CONFIG_H 1
 
-
+#ifdef _MSC_VER
+#define NATIVE_WIN32
+#endif
 
 
 #ifdef __MINGW32__
@@ -901,13 +903,7 @@ typedef lng ptrdiff_t;
 #undef HAVE_SYS_PARAM_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_UNISTD_H
-
-
-
-
-
-
-
+#undef HAVE_DIRENT_H
 
 #endif
 
