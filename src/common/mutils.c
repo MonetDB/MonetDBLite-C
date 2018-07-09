@@ -13,7 +13,6 @@
 #ifndef NATIVE_WIN32
 #include <unistd.h>
 #else
-#include <dirent.h>
 #include "fsync.h"
 #include <stdio.h>
 #endif
