@@ -367,6 +367,10 @@ add_library(libmonetdb5 SHARED
 add_executable(readme 
         tests/readme/readme.c
 )
+set(lib "monetdb5 pthread dl m")
+if (WIN32)
+        set(lib "libmonetdb5")
+endif()
 
-target_link_libraries(readme monetdb5 pthread dl m)
+target_link_libraries(readme ${lib})
 
