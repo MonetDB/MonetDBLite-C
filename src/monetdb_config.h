@@ -27,16 +27,17 @@
 #define strcasecmp _stricmp 
 #define strncasecmp _strnicmp 
 #define ftruncate _chsize
-typedef long long ssize_t;
 
 #define __SIZEOF_INT__ 4
 #define __SIZEOF_LONG__ 4
 #define __SIZEOF_LONG_LONG__ 8
 
 #ifndef _WIN64
+typedef long ssize_t;
 #define __SIZEOF_SIZE_T__ 4
 #define __SIZEOF_POINTER__ 4 
 #else
+typedef long long ssize_t;
 #define __SIZEOF_SIZE_T__ 8
 #define __SIZEOF_POINTER__ 8 
 #endif
