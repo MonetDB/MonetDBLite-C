@@ -281,14 +281,16 @@ gdk_export ATOMIC_TYPE volatile GDKlocksleepcnt;
  * @- MT Semaphore API
  */
 
+
+
+#if !defined(HAVE_PTHREAD_H) && defined(_MSC_VER)
+typedef HANDLE pthread_sema_t;
+#else
 typedef struct {
 	int cnt;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 } pthread_sema_t;
-
-#if !defined(HAVE_PTHREAD_H) && defined(WIN32)
-typedef HANDLE pthread_sema_t;
 #endif
 
 gdk_export void pthread_sema_init(pthread_sema_t *s, int flag, int nresources);
