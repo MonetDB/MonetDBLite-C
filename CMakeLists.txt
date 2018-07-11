@@ -367,6 +367,10 @@ add_library(libmonetdb5 SHARED
 add_executable(test_readme 
         tests/readme/readme.c
 )
+set(lib "monetdb5 pthread dl m")
+if (WIN32)
+        set(lib "libmonetdb5")
+endif()
 
 add_executable(test_tpchq1
         tests/tpchq1/test1.c
@@ -387,4 +391,5 @@ endif()
 target_link_libraries(test_readme ${lib})
 target_link_libraries(test_tpchq1 ${lib})
 target_link_libraries(test_sqlitelogic ${lib})
+
 
