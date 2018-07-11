@@ -64,7 +64,7 @@ GDKlockstatistics(int what)
 
 
 
-#if !defined(HAVE_PTHREAD_H) && defined(WIN32)
+#if !defined(HAVE_PTHREAD_H) && defined(WIN32) && defined(_MSC_VER)
 static struct winthread {
 	struct winthread *next;
 	HANDLE hdl;
