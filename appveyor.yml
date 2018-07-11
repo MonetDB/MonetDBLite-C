@@ -1,36 +1,45 @@
 clone_depth: 1
 
+image:
+- Visual Studio 2017
+- Visual Studio 2015
+
 environment:
   matrix:
     - name: vs32-2017
       install: cmake .
       build_script: cmake --build .
       test_script: Debug\readme.exe
-      image: Visual Studio 2017 
+      only:
+      - image: Visual Studio 2017 
 
     - name: vs32-2015
       install_script: cmake .
       install: cmake --build .
       test_script: Debug\readme.exe
-      image: Visual Studio 2015
+      only:
+      - image: Visual Studio 2015
 
     - name: mingw32-6.3.0
       install_script: set "PATH=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;%PATH%"
       build_script: mingw32-make
       test_script: mingw32-make test
-      image: Visual Studio 2015
+      only:
+      - image: Visual Studio 2015
 
     - name: mingw64-6.3.0
       install_script: set "PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;%PATH%"
       build_script: mingw32-make
       test_script: mingw32-make test
-      image: Visual Studio 2015     
+      only:
+      - image: Visual Studio 2015     
 
     - name: mingw64-7.3.0
       install_script: set "PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH%"
       build_script: mingw32-make
       test_script: mingw32-make test
-      image: Visual Studio 2015     
+      only:
+      - image: Visual Studio 2015     
 
 install:
   - "%install_script%"
