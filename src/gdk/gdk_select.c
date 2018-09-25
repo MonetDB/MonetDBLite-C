@@ -1649,6 +1649,7 @@ BATselect(BAT *b, BAT *s, const void *tl, const void *th,
 			}
 		}
 		return virtualize(bn);
+
 	}
 
 	/* upper limit for result size */

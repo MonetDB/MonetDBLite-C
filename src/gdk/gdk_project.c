@@ -520,7 +520,6 @@ BATprojectchain(BAT **bats)
 			if (bn->ttype == TYPE_void)
 				BATtseqbase(bn, tseq);
 		}
-
 		return bn;
 	}
 
@@ -535,7 +534,6 @@ BATprojectchain(BAT **bats)
 	bn = COLnew(hseq, tpe, cnt, TRANSIENT);
 	if (bn == NULL || cnt == 0) {
 		GDKfree(ba);
-
 		return bn;
 	}
 	bn->tnil = false;	/* we're not paying attention to this */
@@ -730,7 +728,6 @@ BATprojectchain(BAT **bats)
 	bn->tsorted |= issorted;
 	bn->tseqbase = oid_nil;
 	GDKfree(ba);
-
 	return bn;
 
   bunins_failed:

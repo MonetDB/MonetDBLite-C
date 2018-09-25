@@ -1372,7 +1372,6 @@ stmt_uselect(backend *be, stmt *op1, stmt *op2, comp_type cmptype, stmt *sub, in
 		k = getDestVar(q);
 	} else {
 		assert (cmptype != cmp_filter);
-
 		if (cmptype == cmp_equal_nil) {
 			q = newStmt(mb, algebraRef, selectRef);
 			q = pushArgument(mb, q, l);

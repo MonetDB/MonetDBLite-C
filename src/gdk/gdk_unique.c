@@ -49,6 +49,7 @@ BATunique(BAT *b, BAT *s)
 			/* we can return a slice of the candidate list */
 			oid lo = b->hseqbase;
 			oid hi = lo + BATcount(b);
+
 			b = BATselect(s, NULL, &lo, &hi, true, false, false);
 			if (b == NULL)
 				return NULL;
@@ -338,6 +339,7 @@ BATunique(BAT *b, BAT *s)
 		b->batDirtydesc = true;
 	}
 	bn = virtualize(bn);
+
 	return bn;
 
   bunins_failed:

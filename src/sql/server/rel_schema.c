@@ -947,7 +947,6 @@ rel_create_table(mvc *sql, sql_schema *ss, int temp, const char *sname, const ch
 
 		if (tt == tt_remote) {
 			return sql_error(sql, 02, SQLSTATE(42S01) "No remote table in embedded mode :)");
-
 		} else {
 			t = mvc_create_table(sql, s, name, tt, 0, SQL_DECLARED_TABLE, commit_action, -1);
 		}
@@ -1051,7 +1050,6 @@ rel_create_view(mvc *sql, sql_schema *ss, dlist *qname, dlist *column_spec, symb
 			} else {
 				str output;
 				if((output = mvc_drop_table(sql, s, t, 0)) != NULL) {
-					sql_error(sql, 02, SQLSTATE(42000) "%s", output);
 					GDKfree(output);
 					return NULL;
 				}

@@ -1403,6 +1403,8 @@ sql_update_aug2018(Client c, mvc *sql)
 	return err;		/* usually MAL_SUCCEED */
 }
 
+
+
 static str
 sql_drop_functions_dependencies_Xs_on_Ys(Client c, mvc *sql)
 {
@@ -1551,6 +1553,5 @@ SQLupgrades(Client c, mvc *m)
 		if (output != NULL)
 			res_tables_destroy(output);
 	}
-
 
 }

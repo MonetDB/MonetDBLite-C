@@ -1013,6 +1013,7 @@ BATslice(BAT *b, BUN l, BUN h)
 		bn->trevsorted = b->trevsorted;
 		BATkey(bn, BATtkey(b));
 	}
+
 	return bn;
       bunins_failed:
 	BBPreclaim(bn);
@@ -1065,12 +1066,9 @@ BATkeyed(BAT *b)
 			b->tkey = true;
 		} else if (BATcheckhash(b) ||
 			   (b->batPersistence == PERSISTENT &&
-			    BAThash(b) == GDK_SUCCEED)
-#ifndef DISABLE_PARENT_HASH
-			   || (VIEWtparent(b) != 0 &&
-			       BATcheckhash(BBPdescriptor(VIEWtparent(b))))
-#endif
-			) {
+			    BAThash(b) == GDK_SUCCEED) ||
+			   (VIEWtparent(b) != 0 &&
+			    BATcheckhash(BBPdescriptor(VIEWtparent(b))))) {
 			/* we already have a hash table on b, or b is
 			 * persistent and we could create a hash
 			 * table, or b is a view on a bat that already
@@ -1225,7 +1223,6 @@ BATordered(BAT *b)
 		 * that if we didn't record evidence about *reverse*
 		 * sortedness, we know that the BAT is also reverse
 		 * sorted */
-
 		b->tsorted = true;
 		if (!b->trevsorted && b->tnorevsorted == 0) {
 			b->trevsorted = true;

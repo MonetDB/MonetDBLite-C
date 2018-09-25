@@ -181,7 +181,6 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 {
 	char nme[sizeof(h->filename)], *ext = NULL;
 	const char *failure = "None";
-	int fd;
 	if (h->filename[0] != '\0' && !GDKinmemory()) {
 		strncpy(nme, h->filename, sizeof(nme));
 		nme[sizeof(nme) - 1] = 0;
@@ -244,26 +243,26 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 		}
 		/* too big: convert it to a disk-based temporary heap */
 		if (!GDKinmemory() && h->filename[0] != '\0') {
-			assert(h->storage == STORE_MEM);
-				assert(ext != NULL);
-				/* if the heap file already exists, we want to switch
-				 * to STORE_PRIV (copy-on-write memory mapped files),
-				 * but if the heap file doesn't exist yet, the BAT is
-				 * new and we can use STORE_MMAP */
-				int fd = GDKfdlocate(h->farmid, nme, "rb", ext);
-				if (fd >= 0) {
-					close(fd);
-				} else {
-					/* no pre-existing heap file, so create a new
-					 * one */
-					h->base = HEAPcreatefile(h->farmid, &h->size, h->filename);
-					if (h->base) {
-						h->newstorage = h->storage = STORE_MMAP;
-						memcpy(h->base, bak.base, bak.free);
-						HEAPfree(&bak, false);
-						return GDK_SUCCEED;
-					}
 
+
+		assert(h->storage == STORE_MEM);
+		assert(ext != NULL);
+		/* if the heap file already exists, we want to switch
+		 * to STORE_PRIV (copy-on-write memory mapped files),
+		 * but if the heap file doesn't exist yet, the BAT is
+		 * new and we can use STORE_MMAP */
+		int fd = GDKfdlocate(h->farmid, nme, "rb", ext);
+		if (fd >= 0) {
+			close(fd);
+		} else {
+			/* no pre-existing heap file, so create a new
+			 * one */
+			h->base = HEAPcreatefile(h->farmid, &h->size, h->filename);
+			if (h->base) {
+				h->newstorage = h->storage = STORE_MMAP;
+				memcpy(h->base, bak.base, bak.free);
+				HEAPfree(&bak, false);
+				return GDK_SUCCEED;
 			}
 		}
 		fd = GDKfdlocate(h->farmid, nme, "wb", ext);
@@ -312,6 +311,8 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 	}
 	GDKerror("HEAPextend: failed to extend for %s%s%s: %s\n", nme, ext ? "." : "", ext ? ext : "", failure);
 	return GDK_FAIL;
+	}
+ 	return GDK_SUCCEED;
 }
 
 gdk_return
@@ -712,7 +713,6 @@ HEAPsave_intern(Heap *h, const char *nme, const char *ext, const char *suffix)
 	} else if (store != STORE_MEM) {
 		store = h->storage;
 	}
-
 	return GDKsave(h->farmid, nme, ext, h->base, h->free, store, true);
 }
 

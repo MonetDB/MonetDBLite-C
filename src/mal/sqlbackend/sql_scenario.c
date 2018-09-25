@@ -204,7 +204,6 @@ SQLepilogue(void *ret)
 	return MAL_SUCCEED;
 }
 
-
 #define SQLglobal(name, val, failure)                                                                             \
 	if(!stack_push_var(sql, name, &ctype) || !stack_set_var(sql, name, VALset(&src, ctype.type->localtype, val))) \
 		failure--;
@@ -258,6 +257,7 @@ global_variables(mvc *sql, char *user, char *schema)
 
 static char*
 SQLprepareClient(Client c, int login)
+
 {
 	mvc *m;
 	str schema;
@@ -373,12 +373,6 @@ SQLinit(Client c)
 #endif
 
 	MT_lock_set(&sql_contextLock);
-
-	/*
-	 * Based on the initialization return value we can prepare a SQLinit
-	 * string with all information needed to initialize the catalog
-	 * based on the mandatory scripts to be executed.
-	 */
 	memset((char *) &be_funcs, 0, sizeof(backend_functions));
 	be_funcs.fstack = &monet5_freestack;
 	be_funcs.fcode = &monet5_freecode;
@@ -404,7 +398,40 @@ SQLinit(Client c)
 		throw(SQL, "SQLinit", SQLSTATE(42000) "Catalogue initialization failed");
 	}
 	SQLinitialized = TRUE;
+	sqlinit = GDKgetenv("sqlinit");
+	if (sqlinit) {		/* add sqlinit to the fdin stack */
+		buffer *b = (buffer *) GDKmalloc(sizeof(buffer));
+		size_t len = strlen(sqlinit);
+		char* cbuf = _STRDUP(sqlinit);
+		stream *buf;
+		bstream *fdin;
 
+		if( b == NULL || cbuf == NULL) {
+			MT_lock_unset(&sql_contextLock);
+			GDKfree(b);
+			GDKfree(cbuf);
+			throw(SQL,"sql.init",SQLSTATE(HY001) MAL_MALLOC_FAIL);
+		}
+
+		buffer_init(b, cbuf, len);
+		buf = buffer_rastream(b, "si");
+		if( buf == NULL) {
+			MT_lock_unset(&sql_contextLock);
+			buffer_destroy(b);
+			throw(SQL,"sql.init",SQLSTATE(HY001) MAL_MALLOC_FAIL);
+		}
+
+		fdin = bstream_create(buf, b->len);
+		if( fdin == NULL) {
+			MT_lock_unset(&sql_contextLock);
+			buffer_destroy(b);
+			throw(SQL,"sql.init",SQLSTATE(HY001) MAL_MALLOC_FAIL);
+		}
+
+		bstream_next(fdin);
+		if( MCpushClientInput(c, fdin, 0, "") < 0)
+			fprintf(stderr, "SQLinit:Could not switch client input stream");
+	}
 	if ((msg = SQLprepareClient(c, 0)) != NULL) {
 		MT_lock_unset(&sql_contextLock);
 		fprintf(stderr, "%s\n", msg);

@@ -1319,14 +1319,6 @@ strPut(Heap *h, var_t *dst, const char *v)
 			GDKerror("strPut: string heaps gets larger than limit.\n");
 			return 0;
 		}
-		if (HEAPextend(h, newsize, true) != GDK_SUCCEED) {
-			return 0;
-		}
-#ifndef NDEBUG
-		/* fill should solve initialization problems within
-		 * valgrind */
-		memset(h->base + h->free, 0, h->size - h->free);
-#endif
 
 		/* make bucket point into the new heap */
 		bucket = ((stridx_t *) h->base) + off;

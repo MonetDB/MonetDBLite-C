@@ -50,7 +50,6 @@
 #include "rel_dump.h"
 #include "rel_remote.h"
 
-
 int
 constantAtom(backend *sql, MalBlkPtr mb, atom *a)
 {

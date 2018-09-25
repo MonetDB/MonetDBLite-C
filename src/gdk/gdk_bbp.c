@@ -1358,7 +1358,6 @@ BBPinit(void)
 	memset(BBP, 0, sizeof(BBP));
 	ATOMIC_SET(BBPsize, 1, BBPsizeLock);
 	BBP_dirty = true;
-
 	if (!GDKinmemory()) {
 		bbpversion = BBPheader(fp);
 	}
@@ -1753,6 +1752,7 @@ BBPdir(int cnt, bat *subcommit)
 		fclose(fp);
 	return GDK_FAIL;
 }
+
 
 /*
  * @+ BBP Readonly Interface

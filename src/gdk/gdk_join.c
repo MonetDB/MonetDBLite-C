@@ -240,7 +240,6 @@ nomatch(BAT *r1, BAT *r2, BAT *l, BAT *r, BUN lstart, BUN lend,
 			r2->trevsorted = true;
 			r2->tnorevsorted = 0;
 		}
-
 		return GDK_SUCCEED;
 	}
 	if (lcand) {
@@ -3525,7 +3524,6 @@ fetchjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, lng t0)
 	r1->tsorted = r->tsorted || e - b <= 1;
 	r1->trevsorted = r->trevsorted || e - b <= 1;
 	r1->tseqbase = e == b ? 0 : e - b == 1 ? *(const oid *)Tloc(r1, 0) : oid_nil;
-
 	return GDK_SUCCEED;
   bailout:
 	BBPreclaim(r1);
@@ -3583,7 +3581,6 @@ leftjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	if (r2p)
 		*r2p = r2;
 	if (maxsize == 0) {
-
 		return GDK_SUCCEED;
 	}
 	if (!nil_on_miss && !semi && !only_misses &&
@@ -3772,7 +3769,6 @@ BATjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, bool nil_matches
 		}
 		*r1p = r1;
 		*r2p = r2;
-
 		return GDK_SUCCEED;
 	}
 	if ((maxsize = joininitresults(&r1, &r2, lcount, rcount, l->tkey, r->tkey, false, false, false, estimate)) == BUN_NONE)
@@ -3780,7 +3776,6 @@ BATjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr, bool nil_matches
 	*r1p = r1;
 	*r2p = r2;
 	if (maxsize == 0) {
-
 		return GDK_SUCCEED;
 	}
 	swap = false;
@@ -3918,7 +3913,6 @@ BATbandjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	lng t0 = 0;
 	gdk_return rc = GDK_SUCCEED;
 
-
 	*r1p = NULL;
 	*r2p = NULL;
 	if (joinparamcheck(l, r, NULL, sl, sr, "BATbandjoin") != GDK_SUCCEED)
@@ -3929,8 +3923,6 @@ BATbandjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	*r2p = r2;
 	if (maxsize != 0)
 		rc = bandjoin(r1, r2, l, r, sl, sr, c1, c2, li, hi, maxsize);
-
-
 	return rc;
 }
 
