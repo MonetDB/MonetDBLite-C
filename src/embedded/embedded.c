@@ -546,19 +546,12 @@ GENERATE_BASE_HEADERS(monetdb_data_timestamp, timestamp);
 			msg = GDKstrdup("Malloc failure!");                                \
 			goto wrapup;                                                       \
 		}                                                                      \
-		if (b->tdense) {                                       \
-			size_t it = 0;                                                     \
-			tpe val = b->T.seq;                                                \
-			/* bat is dense, materialize it */                                 \
-			for (it = 0; it < bat_data->count; it++) {                         \
-				bat_data->data[it] = val++;                                    \
-			}                                                                  \
-		} else {                                                               \
-			/* bat is not dense, copy it */                                    \
-			tpe* baseptr = (tpe *)Tloc(b, 0);                                  \
-			memcpy(bat_data->data, baseptr,                                    \
-				bat_data->count * sizeof(bat_data->null_value));               \
-		}                                                                      \
+		size_t it = 0;                                                     \
+		tpe val = b->T.seq;                                                \
+		/* bat is dense, materialize it */                                 \
+		for (it = 0; it < bat_data->count; it++) {                         \
+			bat_data->data[it] = val++;                                    \
+		}                                                                  \
 	}
 
 

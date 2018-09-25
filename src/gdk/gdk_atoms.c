@@ -1150,7 +1150,7 @@ strHash(const char *s)
 }
 
 void
-strCleanHash(Heap *h, int rebuild)
+strCleanHash(Heap *h, bool rebuild)
 {
 	stridx_t newhash[GDK_STRHASHTABLE];
 	size_t pad, pos;
@@ -1319,7 +1319,7 @@ strPut(Heap *h, var_t *dst, const char *v)
 			GDKerror("strPut: string heaps gets larger than limit.\n");
 			return 0;
 		}
-		if (HEAPextend(h, newsize, TRUE) != GDK_SUCCEED) {
+		if (HEAPextend(h, newsize, true) != GDK_SUCCEED) {
 			return 0;
 		}
 #ifndef NDEBUG
