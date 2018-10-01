@@ -270,8 +270,6 @@ BATimpsync(void *arg)
 	BAT *b = arg;
 	Imprints *imprints;
 	int fd;
-	const char *failed = " failed";
-
 
 	MT_lock_set(&GDKimprintsLock(b->batCacheid));
 	if ((imprints = b->timprints) != NULL) {
@@ -284,7 +282,6 @@ BATimpsync(void *arg)
 					/* sync-on-disk checked bit */
 					((size_t *) hp->base)[0] |= (size_t) 1 << 16;
 					if (write(fd, hp->base, SIZEOF_SIZE_T) >= 0) {
-						failed = ""; /* not failed */
 						if (!(GDKdebug & NOSYNCMASK)) {
 #if defined(NATIVE_WIN32)
 							_commit(fd);

@@ -45,8 +45,6 @@
 #include "bat5.h"
 #include "sql_upgrades.h"
 
-extern unsigned char* createdb_inline;
-
 static int SQLinitialized = 0;
 static int SQLnewcatalog = 0;
 int SQLdebug = 0;
@@ -346,6 +344,10 @@ SQLresetClient(Client c)
 		GDKfree(other);
 	return msg;
 }
+
+#ifdef HAVE_EMBEDDED
+extern char* createdb_inline;
+#endif
 
 MT_Id sqllogthread, idlethread;
 

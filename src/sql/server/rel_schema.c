@@ -946,6 +946,10 @@ rel_create_table(mvc *sql, sql_schema *ss, int temp, const char *sname, const ch
 		sql_table *t;
 
 		if (tt == tt_remote) {
+			(void) loc;
+			(void) username;
+			(void) password;
+			(void) pw_encrypted;
 			return sql_error(sql, 02, SQLSTATE(42S01) "No remote table in embedded mode :)");
 		} else {
 			t = mvc_create_table(sql, s, name, tt, 0, SQL_DECLARED_TABLE, commit_action, -1);

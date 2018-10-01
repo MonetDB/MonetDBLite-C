@@ -193,8 +193,6 @@ BATproject(BAT *l, BAT *r)
 	int tpe = ATOMtype(r->ttype);
 	bool nilcheck = true, stringtrick = false;
 	BUN lcount = BATcount(l), rcount = BATcount(r);
-	lng t0 = 0;
-
 
 	assert(ATOMtype(l->ttype) == TYPE_oid);
 

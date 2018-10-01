@@ -593,7 +593,6 @@ pcrejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	BUN n, nl;
 	BUN newcap;
 	oid lo, ro;
-	int rskipped = 0;	/* whether we skipped values in r */
 	char *msg = MAL_SUCCEED;
 
 	ALGODEBUG fprintf(stderr, "#pcrejoin(l=%s#" BUNFMT "[%s]%s%s,"
@@ -707,8 +706,6 @@ pcrejoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 		if (nl > 1) {
 			r2->tkey = 0;
 			r1->trevsorted = 0;
-		} else if (nl == 0) {
-			rskipped = BATcount(r2) > 0;
 		}
 	}
 	assert(BATcount(r1) == BATcount(r2));

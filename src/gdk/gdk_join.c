@@ -214,6 +214,9 @@ nomatch(BAT *r1, BAT *r2, BAT *l, BAT *r, BUN lstart, BUN lend,
 	bool nil_on_miss, bool only_misses, const char *func, lng t0)
 {
 	BUN cnt;
+	(void) r;
+	(void) func;
+	(void) t0;
 
 	r1->tkey = true;
 	r1->tnokey[0] = r1->tnokey[1] = 0;
@@ -295,7 +298,7 @@ selectjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	BUN lstart, lend, lcnt;
 	BAT *bn = NULL;
 
-
+	(void) swapped;
 	assert(BATcount(l) > 0);
 	CANDINIT(l, sl, lstart, lend, lcnt, lcand, lcandend);
 	if (lcand)
@@ -424,6 +427,8 @@ mergejoin_void(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr,
 	BUN cnt, i;
 	const oid *lvals;
 	oid o, seq;
+
+	(void) swapped;
 
 	/* r is dense, and if there is a candidate list, it too is
 	 * dense.  This means we don't have to do any searches, we
@@ -857,6 +862,7 @@ mergejoin_int(BAT *r1, BAT *r2, BAT *l, BAT *r,
 	oid lv;
 	BUN i;
 
+	(void) swapped;
 	assert(ATOMtype(l->ttype) == ATOMtype(r->ttype));
 	assert(r->tsorted || r->trevsorted);
 
@@ -1134,6 +1140,7 @@ mergejoin_lng(BAT *r1, BAT *r2, BAT *l, BAT *r,
 	oid lv;
 	BUN i;
 
+	(void) swapped;
 
 	assert(ATOMtype(l->ttype) == ATOMtype(r->ttype));
 	assert(r->tsorted || r->trevsorted);
@@ -2499,7 +2506,9 @@ hashjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, bool nil_matches,
 	Hash *restrict hsh;
 	int t;
 
-
+	(void) swapped;
+	(void) reason;
+	(void) t0;
 
 	assert(!BATtvoid(r));
 	assert(ATOMtype(l->ttype) == ATOMtype(r->ttype));
@@ -2928,6 +2937,7 @@ thetajoin(BAT *r1, BAT *r2, BAT *l, BAT *r, BAT *sl, BAT *sr, int opcode, BUN ma
 	lng loff = 0, roff = 0;
 	oid lval = oid_nil, rval = oid_nil;
 
+	(void) t0;
 
 	assert(ATOMtype(l->ttype) == ATOMtype(r->ttype));
 	assert(sl == NULL || sl->tsorted);
@@ -3498,6 +3508,7 @@ fetchjoin(BAT *r1, BAT *r2, BAT *l, BAT *r, lng t0)
 	oid lo = l->tseqbase, hi = lo + BATcount(l);
 	BUN b = SORTfndfirst(r, &lo), e = SORTfndlast(r, &hi), p;
 
+	(void) t0;
 
 	if (r2) {
 		if (BATextend(r2, e - b) != GDK_SUCCEED)
@@ -3910,7 +3921,6 @@ BATbandjoin(BAT **r1p, BAT **r2p, BAT *l, BAT *r, BAT *sl, BAT *sr,
 {
 	BAT *r1, *r2;
 	BUN maxsize;
-	lng t0 = 0;
 	gdk_return rc = GDK_SUCCEED;
 
 	*r1p = NULL;
