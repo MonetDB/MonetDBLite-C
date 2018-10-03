@@ -283,9 +283,7 @@ MT_init(void)
 
 #define CATNAP		50	/* time to sleep in ms for catnaps */
 
-#ifndef HAVE_EMBEDDED
 static int THRinit(void);
-#endif
 static void GDKlockHome(int farmid);
 
 #ifndef STATIC_CODE_ANALYSIS
@@ -336,9 +334,9 @@ GDKinit(str dbpath)
 	if (mnstr_init() < 0)
 		return 0;
 	MT_init_posix();
-#ifndef HAVE_EMBEDDED
 	if (THRinit() < 0)
 		return 0;
+#ifndef HAVE_EMBEDDED
 #ifndef NATIVE_WIN32
 	if (BATSIGinit() < 0)
 		return 0;
@@ -1149,7 +1147,6 @@ THRhighwater(void)
  * the network.  The code below should be improved to gain speed.
  */
 
-#ifndef HAVE_EMBEDDED
 static int
 THRinit(void)
 {
@@ -1167,7 +1164,6 @@ THRinit(void)
 	}
 	return 0;
 }
-#endif
 
 void
 THRsetdata(int n, ptr val)

@@ -181,6 +181,7 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 {
 	char nme[sizeof(h->filename)], *ext = NULL;
 	const char *failure = "None";
+
 	if (h->filename[0] != '\0' && !GDKinmemory()) {
 		strncpy(nme, h->filename, sizeof(nme));
 		nme[sizeof(nme) - 1] = 0;
@@ -227,6 +228,7 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 		Heap bak = *h;
 		int exceeds_swap = size >= 4 * GDK_mmap_pagesize && size + GDKmem_cursize() >= GDK_mem_maxsize;
 		int must_mmap = !GDKinmemory() && h->filename[0] != '\0' && (exceeds_swap || h->newstorage != STORE_MEM || size >= (h->farmid == 0 ? GDK_mmap_minsize_persistent : GDK_mmap_minsize_transient));
+		int fd, existing = 0;
 
 		h->size = size;
 
@@ -243,32 +245,33 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 		}
 		/* too big: convert it to a disk-based temporary heap */
 		if (!GDKinmemory() && h->filename[0] != '\0') {
-
-
-		assert(h->storage == STORE_MEM);
-		assert(ext != NULL);
-		/* if the heap file already exists, we want to switch
-		 * to STORE_PRIV (copy-on-write memory mapped files),
-		 * but if the heap file doesn't exist yet, the BAT is
-		 * new and we can use STORE_MMAP */
-		int fd = GDKfdlocate(h->farmid, nme, "rb", ext);
-		if (fd >= 0) {
-			close(fd);
-		} else {
-			/* no pre-existing heap file, so create a new
-			 * one */
-			h->base = HEAPcreatefile(h->farmid, &h->size, h->filename);
-			if (h->base) {
-				h->newstorage = h->storage = STORE_MMAP;
-				memcpy(h->base, bak.base, bak.free);
-				HEAPfree(&bak, false);
-				return GDK_SUCCEED;
+			assert(h->storage == STORE_MEM);
+			assert(ext != NULL);
+			/* if the heap file already exists, we want to switch
+			 * to STORE_PRIV (copy-on-write memory mapped files),
+			 * but if the heap file doesn't exist yet, the BAT is
+			 * new and we can use STORE_MMAP */
+			fd = GDKfdlocate(h->farmid, nme, "rb", ext);
+			if (fd >= 0) {
+				existing = 1;
+				close(fd);
+			} else {
+				/* no pre-existing heap file, so create a new
+				 * one */
+				sprintf(h->filename, "%s.%s", nme, ext);
+				h->base = HEAPcreatefile(h->farmid, &h->size, h->filename);
+				if (h->base) {
+					h->newstorage = h->storage = STORE_MMAP;
+					memcpy(h->base, bak.base, bak.free);
+					HEAPfree(&bak, false);
+					return GDK_SUCCEED;
+				}
 			}
 		}
 		fd = GDKfdlocate(h->farmid, nme, "wb", ext);
 		if (fd >= 0) {
 			close(fd);
-			h->storage = h->newstorage == STORE_MMAP && !h->forcemap && !mayshare ? STORE_PRIV : h->newstorage;
+			h->storage = h->newstorage == STORE_MMAP && existing && !h->forcemap && !mayshare ? STORE_PRIV : h->newstorage;
 			/* make sure we really MMAP */
 			if (must_mmap && h->newstorage == STORE_MEM)
 				h->storage = STORE_MMAP;
@@ -311,8 +314,6 @@ HEAPextend(Heap *h, size_t size, bool mayshare)
 	}
 	GDKerror("HEAPextend: failed to extend for %s%s%s: %s\n", nme, ext ? "." : "", ext ? ext : "", failure);
 	return GDK_FAIL;
-	}
- 	return GDK_SUCCEED;
 }
 
 gdk_return

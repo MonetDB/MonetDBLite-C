@@ -832,7 +832,7 @@ TYPE##Write(const TYPE *a, stream *s, size_t cnt)			\
 atom_io(bat, Int, int)
 atom_io(bit, Bte, bte)
 
-atomtostr(bte, "%hhd", )
+atomtostr(bte, "%hd", (sht))
 atom_io(bte, Bte, bte)
 
 atomtostr(sht, "%hd", )
@@ -841,7 +841,7 @@ atom_io(sht, Sht, sht)
 atomtostr(int, "%d", )
 atom_io(int, Int, int)
 
-atomtostr(lng, LLFMT, )
+atomtostr(lng, (LLFMT), )
 atom_io(lng, Lng, lng)
 
 #ifdef HAVE_HGE
@@ -1313,7 +1313,6 @@ strPut(Heap *h, var_t *dst, const char *v)
 			GDKerror("strPut: string heaps gets larger than %zuGiB.\n", (size_t) VAR_MAX >> 30);
 			return 0;
 		}
-		HEAPDEBUG fprintf(stderr, "#HEAPextend in strPut %s %zu %zu\n", h->filename, h->size, newsize);
 		if (HEAPextend(h, newsize, true) != GDK_SUCCEED) {
 			return 0;
 		}
