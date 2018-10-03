@@ -1,6 +1,6 @@
 OPTIMIZE=$(OPT)
 ifneq ($(OPTIMIZE), true)
-	OPTFLAGS=-g -Wall -Wextra
+	OPTFLAGS=-g3 -Wall -Wextra
 	# -Werror
 	OBJDIR=build/debug
 else

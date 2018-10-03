@@ -832,7 +832,7 @@ TYPE##Write(const TYPE *a, stream *s, size_t cnt)			\
 atom_io(bat, Int, int)
 atom_io(bit, Bte, bte)
 
-atomtostr(bte, "%hd", (sht))
+atomtostr(bte, "%hhd", )
 atom_io(bte, Bte, bte)
 
 atomtostr(sht, "%hd", )
@@ -841,7 +841,7 @@ atom_io(sht, Sht, sht)
 atomtostr(int, "%d", )
 atom_io(int, Int, int)
 
-atomtostr(lng, (LLFMT), )
+atomtostr(lng, LLFMT, )
 atom_io(lng, Lng, lng)
 
 #ifdef HAVE_HGE
@@ -918,10 +918,6 @@ atom_io(ptr, Int, int)
 #else /* SIZEOF_VOID_P == SIZEOF_LNG */
 atom_io(ptr, Lng, lng)
 #endif
-#if defined(_MSC_VER) && !defined(isfinite)
-/* with more recent Visual Studio, isfinite is defined */
-#define isfinite(x)	_finite(x)
-#endif
 
 ssize_t
 dblFromStr(const char *src, size_t *len, dbl **dst)
@@ -959,9 +955,7 @@ dblFromStr(const char *src, size_t *len, dbl **dst)
 			p = pe;
 		n = (ssize_t) (p - src);
 		if (n == 0 || (errno == ERANGE && (d < -1 || d > 1))
-#ifdef isfinite
 		    || !isfinite(d) /* no NaN or Infinte */
-#endif
 		    ) {
 			GDKerror("overflow or not a number\n");
 			return -1;
@@ -1316,9 +1310,18 @@ strPut(Heap *h, var_t *dst, const char *v)
 		assert(newsize);
 
 		if (h->free + pad + len + extralen >= (size_t) VAR_MAX) {
-			GDKerror("strPut: string heaps gets larger than limit.\n");
+			GDKerror("strPut: string heaps gets larger than %zuGiB.\n", (size_t) VAR_MAX >> 30);
 			return 0;
 		}
+		HEAPDEBUG fprintf(stderr, "#HEAPextend in strPut %s %zu %zu\n", h->filename, h->size, newsize);
+		if (HEAPextend(h, newsize, true) != GDK_SUCCEED) {
+			return 0;
+		}
+#ifndef NDEBUG
+		/* fill should solve initialization problems within
+		 * valgrind */
+		memset(h->base + h->free, 0, h->size - h->free);
+#endif
 
 		/* make bucket point into the new heap */
 		bucket = ((stridx_t *) h->base) + off;
@@ -2167,4 +2170,21 @@ ATOMunknown_name(int i)
 {
 	assert(unknown[-i]);
 	return unknown[-i];
+}
+
+void
+ATOMunknown_clean(void)
+{
+	int i;
+
+	MT_lock_set(&GDKthreadLock);
+	for (i = 1; i < MAXATOMS; i++) {
+		if(unknown[i]) {
+			GDKfree(unknown[i]);
+			unknown[i] = NULL;
+		} else {
+			break;
+		}
+	}
+	MT_lock_unset(&GDKthreadLock);
 }
