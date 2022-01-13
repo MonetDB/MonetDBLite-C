@@ -1,3 +1,5 @@
+This repository has been archived. Please see MonetDB/e ([code examples here](https://github.com/MonetDBSolutions/monetdbe-examples)) for the replacement project.
+
 # MonetDBLite for C
 
 [![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C.svg)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-C)[![Build Status](https://ci.appveyor.com/api/projects/status/github/hannesmuehleisen/MonetDBLite-C?branch=master&svg=true)](https://ci.appveyor.com/project/hannesmuehleisen/MonetDBLite-C)
